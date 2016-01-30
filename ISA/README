@@ -1,0 +1,29 @@
+Offline NetFlow exporter
+
+Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz> (c)2015
+
+Analyzes PCAP file and processes packets to flows which are then sent to a given collector.
+
+Usage:
+	-i [--input] <file> filename of the pcap file to be processed (STDIN in case of no argument)
+	-c [--collector] <neflow_collector:port> IPv4 address, or hostname of NetFlow collector. Optional UDP port (default 127.0.0.1:2055)
+	-I [--interval] <interval> - interval in seconds after which the flows are exported on the collector (300)
+	-m [--max-flows] <count> - maximum number of flows in flow cache (50)
+	-t [--tcp-timeout] <seconds> - interval for TCP flow timeout (300)
+	-h [--help] – what do you think, huh?
+	-b [--body] – how many points I want. Over 9 000 of course!
+
+Example usage
+	export to example.com collector:	./isa_exporter -i example.pcap -c example.com:2055 -I 100 -v
+	reading pcap from stdin: 			./isa_exporter -t 10 -m 100
+	everything to default:				./isa_exporter
+
+Files:
+	isa_exporter.cpp
+	flow.cpp
+	udp_connector.cpp
+	read-pcap.h
+	manual.pdf
+	README
+	example.pcap
+
