@@ -53,31 +53,32 @@ int main (int argc, char *argv[])
 
 	File::BinData codeword;
 
-	for (size_t i = 0; i < inFile.length(); i += 28) {
+	size_t i;
+
+	for (i = 0; i < inFile.length(); i += 28) {
 		unsigned char tmp_codeword[28];
+		int erasures[1];
 
 		copy(&(inFile.get())[i], &(inFile.get())[i + 28], tmp_codeword);
 
-		//encode_data(&(inFile.get())[i], 24, tmp_codeword);
-
-		//cout << tmp_codeword << endl;
+		for (auto it : tmp_codeword)
+			cout << it;
+		cout << endl;
 
 		decode_data(tmp_codeword, 28);
 
-		int erasures[1];
-
-		/* check if syndrome is all zeros */
-	//	if (check_syndrome() != 0) {
 		correct_errors_erasures(tmp_codeword, 28, 0, erasures);
 
 		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 24);
 
 		for (auto it : tmp_codeword)
-			cout << it;
-
+			cout << hex << (int) it << " ";
 		cout << endl;
+	}
 
-
+	if (inFile.length() % 28 != 0) {
+		cout << "removing " << i/28 << endl;
+		codeword.erase(codeword.end()- (inFile.length() % 28), codeword.end());
 	}
 
 	outFile.write(codeword);
