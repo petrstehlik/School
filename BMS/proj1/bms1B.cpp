@@ -41,7 +41,7 @@ int main (int argc, char *argv[])
 	}
 
 	string loc(argv[1]);
-	string outPath(loc + "_encoded");
+	string outPath(loc + "_decoded");
 
 	File inFile(argv[1]);
 	File outFile(outPath.c_str());
@@ -53,61 +53,36 @@ int main (int argc, char *argv[])
 
 	File::BinData codeword;
 
-	for (size_t i = 0; i < inFile.length(); i += 24) {
+	size_t i;
+
+	for (i = 0; i < inFile.length(); i += 28) {
 		unsigned char tmp_codeword[28];
+		int erasures[1];
 
-		encode_data(&(inFile.get())[i], 24, tmp_codeword);
+		copy(&(inFile.get())[i], &(inFile.get())[i + 28], tmp_codeword);
 
-		//cout << tmp_codeword << endl;
-
-		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 28);
-
-		/*for (auto it : codeword)
+		for (auto it : tmp_codeword)
 			cout << it;
+		cout << endl;
 
-		cout << endl;*/
+		decode_data(tmp_codeword, 28);
+
+		correct_errors_erasures(tmp_codeword, 28, 0, erasures);
+
+		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 24);
+
+		for (auto it : tmp_codeword)
+			cout << hex << (int) it << " ";
+		cout << endl;
 	}
 
-/*for (int i = 0; i < inFile.length(); i = i + 2) {
-		cout << *(start + i)  << endl;
-	}*/
+	if (inFile.length() % 28 != 0) {
+		cout << "removing " << i/28 << endl;
+		codeword.erase(codeword.end()- (inFile.length() % 28), codeword.end());
+	}
 
-//	encode_data(inFile.toChar(), inFile.length(), &codeword[0]);
-//	cout << "File size:" << inFile.length() << endl;
+	outFile.write(codeword);
 
-outFile.write(codeword);
-
-  /* ************** */
-  /* Encode data into codeword, adding NPAR parity bytes */
-  //encode_data(string, fsize+1, codeword);
-
- 
-//printf("Encoded data is: \"%s\"\n", codeword);
- 
-#define ML (sizeof (string) + NPAR)
-
-//printf("with some errors: \"%s\"\n", codeword);
-
-  /* We need to indicate the position of the erasures.  Eraseure
-     positions are indexed (1 based) from the end of the message... */
-
-  //erasures[nerasures++] = ML-17;
-  //erasures[nerasures++] = ML-19;
-
- 
-  /* Now decode -- encoded codeword size must be passed */
-  //decode_data(codeword, ML);
-
-  /* check if syndrome is all zeros */
-  /*if (check_syndrome () != 0) {
-    correct_errors_erasures (codeword, 
-			     ML,
-			     nerasures, 
-			     erasures);
- 
-    printf("Corrected codeword: \"%s\"\n", codeword);
-  }*/
- 
-  exit(0);
+	exit(0);
 }
 
