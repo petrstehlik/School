@@ -49,10 +49,32 @@ int main (int argc, char *argv[])
 
 	File::BinData codeword;
 
-	encode_data(inFile.toChar(), inFile.length(), &codeword[0]);
-	cout << "File size:" << inFile.length() << endl;
+	auto start = inFile.get().begin();
 
-	outFile.write(codeword);
+
+	for (size_t i = 0; i < inFile.length(); i += 24) {
+		unsigned char tmp_codeword[28];
+
+		encode_data(&(inFile.get())[i], 24, tmp_codeword);
+
+		cout << tmp_codeword << endl;
+
+		codeword.insert(codeword.end(), *tmp_codeword, *tmp_codeword + 28);
+
+		for (auto it : codeword)
+			cout << it;
+
+		cout << endl;
+	}
+
+/*for (int i = 0; i < inFile.length(); i = i + 2) {
+		cout << *(start + i)  << endl;
+	}*/
+
+//	encode_data(inFile.toChar(), inFile.length(), &codeword[0]);
+//	cout << "File size:" << inFile.length() << endl;
+
+outFile.write(codeword);
 
   /* ************** */
   /* Encode data into codeword, adding NPAR parity bytes */
