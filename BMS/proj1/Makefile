@@ -23,3 +23,6 @@ rscode:
 
 clean:
 	rm bms1A bms1B
+
+purge:
+	rm ecc.h libecc.a
