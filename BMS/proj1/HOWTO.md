@@ -14,3 +14,6 @@ napsat testovaci skript
 
 ## Poznamky
 idealni pomer: (28/20) * (32/26) = 1.723 x velikost puvodniho souboru (max 175%). Vezmeme stejny princip jako se pouziva v CD (prvni pruchod slabe kodovani, druhe silnejsi). Dokaze odstranit i vetsi burstove chyby.
+
+
+38/30 * 29/21 = 1,7492063492
