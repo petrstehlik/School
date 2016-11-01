@@ -53,32 +53,29 @@ int main (int argc, char *argv[])
 
 	File::BinData codeword;
 
-	size_t i;
+	int i;
+	int erasures[1];
 
-	for (i = 0; i < inFile.length(); i += 28) {
+	for (i = 0; i < inFile.size() - 28; i += 28) {
 		unsigned char tmp_codeword[28];
-		int erasures[1];
 
 		copy(&(inFile.get())[i], &(inFile.get())[i + 28], tmp_codeword);
-
-		for (auto it : tmp_codeword)
-			cout << it;
-		cout << endl;
 
 		decode_data(tmp_codeword, 28);
 
 		correct_errors_erasures(tmp_codeword, 28, 0, erasures);
 
 		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 24);
-
-		for (auto it : tmp_codeword)
-			cout << hex << (int) it << " ";
-		cout << endl;
 	}
 
-	if (inFile.length() % 28 != 0) {
-		cout << "removing " << i/28 << endl;
-		codeword.erase(codeword.end()- (inFile.length() % 28), codeword.end());
+	int diff = inFile.size() % 28;
+
+	if (diff > 0) {
+		unsigned char tmp_codeword[diff];
+		copy(&(inFile.get())[i], &(inFile.get())[i + diff], tmp_codeword);
+		decode_data(tmp_codeword, diff);
+		correct_errors_erasures(tmp_codeword, diff, 0, erasures);
+		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + diff-4);
 	}
 
 	outFile.write(codeword);

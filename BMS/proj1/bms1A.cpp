@@ -53,61 +53,29 @@ int main (int argc, char *argv[])
 
 	File::BinData codeword;
 
-	for (size_t i = 0; i < inFile.length(); i += 24) {
+	int i = 0;
+
+	for (; i < inFile.size()-24; i += 24) {
 		unsigned char tmp_codeword[28];
 
 		encode_data(&(inFile.get())[i], 24, tmp_codeword);
 
-		//cout << tmp_codeword << endl;
-
 		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 28);
-
-		/*for (auto it : codeword)
-			cout << it;
-
-		cout << endl;*/
 	}
 
-/*for (int i = 0; i < inFile.length(); i = i + 2) {
-		cout << *(start + i)  << endl;
-	}*/
+	// Dokroceni
+	int diff = inFile.size() % 24;
 
-//	encode_data(inFile.toChar(), inFile.length(), &codeword[0]);
-//	cout << "File size:" << inFile.length() << endl;
+	if (diff > 0) {
+		unsigned char tmp_codeword[diff];
 
-outFile.write(codeword);
+		encode_data(&(inFile.get())[i], diff, tmp_codeword);
 
-  /* ************** */
-  /* Encode data into codeword, adding NPAR parity bytes */
-  //encode_data(string, fsize+1, codeword);
+		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + diff + 4);
+	}
 
- 
-//printf("Encoded data is: \"%s\"\n", codeword);
- 
-#define ML (sizeof (string) + NPAR)
+	outFile.write(codeword);
 
-//printf("with some errors: \"%s\"\n", codeword);
-
-  /* We need to indicate the position of the erasures.  Eraseure
-     positions are indexed (1 based) from the end of the message... */
-
-  //erasures[nerasures++] = ML-17;
-  //erasures[nerasures++] = ML-19;
-
- 
-  /* Now decode -- encoded codeword size must be passed */
-  //decode_data(codeword, ML);
-
-  /* check if syndrome is all zeros */
-  /*if (check_syndrome () != 0) {
-    correct_errors_erasures (codeword, 
-			     ML,
-			     nerasures, 
-			     erasures);
- 
-    printf("Corrected codeword: \"%s\"\n", codeword);
-  }*/
- 
-  exit(0);
+	exit(0);
 }
 
