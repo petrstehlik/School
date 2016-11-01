@@ -16,6 +16,8 @@ public:
 		std::ifstream input(m_path, std::ios::binary);
 		m_file = BinData(std::istreambuf_iterator<char>(input),
             std::istreambuf_iterator<char>());
+
+		m_size = m_file.size();
 	}
 
 	void write(BinData &data)
@@ -32,6 +34,11 @@ public:
 		return m_file.size();
 	}
 
+	int size()
+	{
+		return m_size;
+	}
+
 	unsigned char* toChar()
 	{
 		return &m_file[0];
@@ -45,5 +52,6 @@ public:
 private:
 	const char* m_path;
 	BinData m_file;
+	int m_size = 0;
 
 };
