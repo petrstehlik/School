@@ -48,3 +48,19 @@ for (i = 0; i < N; i++)
 
 `#pragma omp parralel for` - rozbije na vlakna
 
+# Co je vektorizovatelne (!! i pri statnicich)
+### Countable
+musime znat pocet opakovani v dobe kompilace
+smycka se rozdeli na 3 casti: nabeh, vektorizovatelne, dobeh -> pouzivat `const`
+
+### Single entry and exit
+pouze jeden exit, bez break
+
+### Straight line code
+* bez `switch`, bez maskovani, bez `if else` (bez podminek)
+
+	>> vyresit pomoci precondition (rozdelit na dane podminky dopredu)
+
+* Bez vnitrnich smycek
+
+* Bez 'function calls' - vyjimkou sin, log, inline, elemental, OMP SIMD fce
