@@ -2,11 +2,14 @@
 
 dosahnout aspon 14 GFLOPS pri optimalizaci (nejlepsi projekty jsou 18 GFLOPS).
 
-3 GHz x 16 operaci = 48 GFLOPS
+`3 GHz x 16 operaci = 48 GFLOPS`
+
+--
 
 memory bound - omezuje me pamet
 
 naroky na pamet: `48 GFLOPS x 8 B = 192 GB/s` - potrebujeme
+
 mame pamet: `DDR3 > 2 GHz x 8 B (64 b sirka) = 16 GB/s x 4 kanaly = 64 GB/s`
 
 vysoka numericka intenzita - hodne operaci na malo dat
@@ -23,7 +26,7 @@ rovna lajna - limit CPU
 
 cache bypass - napriklad `a[i] = 0` -> nepotrebuji cist -> rovnou zapisu do pameti bez cache
 
-** SSE2 ** : podporuji vsechny CPU a kompilatory
+**SSE2** : podporuji vsechny CPU a kompilatory
 
 SIMD - problem: cim sirsi SIMD, tim slozitejsi je krmit daty
 
