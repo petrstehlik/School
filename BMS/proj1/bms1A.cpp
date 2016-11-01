@@ -27,7 +27,7 @@
 #include <iostream>
 
 extern "C" {
-	#include "rscode/ecc.h"
+	#include "ecc.h"
 }
 #include "file.h"
 
@@ -35,6 +35,10 @@ using namespace std;
 
 int main (int argc, char *argv[])
 {
+	if (argc != 2) {
+		cerr << "incorrect number of arguments, should be ./bms1A 'input file'" << endl;
+		exit(1);
+	}
 
 	string loc(argv[1]);
 	string outPath(loc + "_encoded");
@@ -49,22 +53,19 @@ int main (int argc, char *argv[])
 
 	File::BinData codeword;
 
-	auto start = inFile.get().begin();
-
-
 	for (size_t i = 0; i < inFile.length(); i += 24) {
 		unsigned char tmp_codeword[28];
 
 		encode_data(&(inFile.get())[i], 24, tmp_codeword);
 
-		cout << tmp_codeword << endl;
+		//cout << tmp_codeword << endl;
 
-		codeword.insert(codeword.end(), *tmp_codeword, *tmp_codeword + 28);
+		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 28);
 
-		for (auto it : codeword)
+		/*for (auto it : codeword)
 			cout << it;
 
-		cout << endl;
+		cout << endl;*/
 	}
 
 /*for (int i = 0; i < inFile.length(); i = i + 2) {
