@@ -1,10 +1,17 @@
 # Proj1
 
-dosahnout aspon 14 GFLOPS pri optimalizaci (nejlepsi projekty jsou 18 GFLOPS).
+* dosahnout aspon 14 GFLOPS pri optimalizaci (nejlepsi projekty jsou 18 GFLOPS).
 
-`3 GHz x 16 operaci = 48 GFLOPS`
+* pridame jedno cislo aby se zarovnalo pole (0, nebo NaN) - tak aby radek mel velikost nasobnu SIMDu (16 B)
+
+* zarovnat adresu (N - zarovnani)
+	* heap: `_mm_malloc(size, N)` pro x86 a pak `_mm_free()`
+	* zasobnik: `__declspec(align(N))`
+	* `__asume_aligned(name, N)` jako argument nebo nad smycku `#pragma vector aligned`
 
 --
+
+`3 GHz x 16 operaci = 48 GFLOPS`
 
 memory bound - omezuje me pamet
 
