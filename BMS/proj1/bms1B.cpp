@@ -30,6 +30,7 @@ extern "C" {
 	#include "ecc.h"
 }
 #include "file.h"
+#include "encoder.h"
 
 using namespace std;
 
@@ -41,42 +42,29 @@ int main (int argc, char *argv[])
 	}
 
 	string loc(argv[1]);
-	string outPath(loc + "_decoded");
+	string outPath(loc + ".ok");
 
 	File inFile(argv[1]);
 	File outFile(outPath.c_str());
 
+	cout << "Start" << endl;
+
 	/* Initialization the ECC library */
 	initialize_ecc();
+
+	cout << "initialized" << endl;
 
 	inFile.read();
 
 	File::BinData codeword;
+	File::BinData codeword_2;
 
-	int i;
-	int erasures[1];
+	//RS::Encoder decoder(605,350);
+	RS::Encoder decoder(255,146);
+	//RS::Encoder decoder_2(125,100);
 
-	for (i = 0; i < inFile.size() - 28; i += 28) {
-		unsigned char tmp_codeword[28];
-
-		copy(&(inFile.get())[i], &(inFile.get())[i + 28], tmp_codeword);
-
-		decode_data(tmp_codeword, 28);
-
-		correct_errors_erasures(tmp_codeword, 28, 0, erasures);
-
-		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 24);
-	}
-
-	int diff = inFile.size() % 28;
-
-	if (diff > 0) {
-		unsigned char tmp_codeword[diff];
-		copy(&(inFile.get())[i], &(inFile.get())[i + diff], tmp_codeword);
-		decode_data(tmp_codeword, diff);
-		correct_errors_erasures(tmp_codeword, diff, 0, erasures);
-		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + diff-4);
-	}
+	decoder.decode(inFile.get(), codeword);
+	//decoder_2.decode(codeword, codeword_2);
 
 	outFile.write(codeword);
 

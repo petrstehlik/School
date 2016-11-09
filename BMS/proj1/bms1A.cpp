@@ -30,6 +30,7 @@ extern "C" {
 	#include "ecc.h"
 }
 #include "file.h"
+#include "encoder.h"
 
 using namespace std;
 
@@ -41,38 +42,27 @@ int main (int argc, char *argv[])
 	}
 
 	string loc(argv[1]);
-	string outPath(loc + "_encoded");
+	string outPath(loc + ".out");
 
 	File inFile(argv[1]);
 	File outFile(outPath.c_str());
 
+	cout << "Start" << endl;
 	/* Initialization the ECC library */
 	initialize_ecc();
+	cout << "initialized" << endl;
 
 	inFile.read();
 
 	File::BinData codeword;
+	File::BinData codeword_2;
 
-	int i = 0;
+	//RS::Encoder encoder(605,350);
+	RS::Encoder encoder(255,146);
+	//RS::Encoder encoder_2(90,65);
 
-	for (; i < inFile.size()-24; i += 24) {
-		unsigned char tmp_codeword[28];
-
-		encode_data(&(inFile.get())[i], 24, tmp_codeword);
-
-		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + 28);
-	}
-
-	// Dokroceni
-	int diff = inFile.size() % 24;
-
-	if (diff > 0) {
-		unsigned char tmp_codeword[diff];
-
-		encode_data(&(inFile.get())[i], diff, tmp_codeword);
-
-		codeword.insert(codeword.end(), tmp_codeword, tmp_codeword + diff + 4);
-	}
+	encoder.encode(inFile.get(), codeword);
+	//encoder_2.encode(codeword, codeword_2);
 
 	outFile.write(codeword);
 

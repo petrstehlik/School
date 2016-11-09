@@ -1,9 +1,10 @@
 #pragma once
 
 #include <strings.h>
+#include <cstring>
 
 #include "file.h"
-#include "galois.h"
+#include "ecc.h"
 
 namespace RS {
 class Encoder {
@@ -14,55 +15,84 @@ public:
 	 * k - raw data
 	 * (n-k) - parity bytes
 	 */
-	Encoder(unsigned int n = 28, unsigned int k = 24)
+	Encoder(unsigned int n = 28, unsigned int k = 20)
 	{
 		m_n = n;
 		m_k = k;
 		m_parity = n - k;
+
+		if (m_parity != NPAR) {
+			std::cerr << "parity must be " << NPAR << std::endl;
+			exit(1);
+		}
 	}
 
 	void encode(File::BinData &src, File::BinData &dst)
 	{
-		int i, LFSR[m_parity+1], dbyte, j;
+		unsigned int i = 0;
 
-		bzero(LFSR, m_parity+1);
+		for (; i <= src.size() - m_k; i += m_k) {
+			unsigned char tmp_codeword[m_n];
+			//memset(&tmp_codeword[0], 0, sizeof(tmp_codeword));
 
-		for (i = 0; i < src->size(); i++)
-		{
-			dbyte = src[i] ^ LFSR[m_parity - 1];
+			encode_data(&(src)[i], m_k, tmp_codeword);
 
-			for (j = m_parity - 1; j > 0; j--)
-				LFSR[j] = LFSR[j-1] ^ gmult(genPoly[j], dbyte);
-
-			LFSR[0] = gmult(genPoly[0], dbyte);
+			dst.insert(dst.end(), tmp_codeword, tmp_codeword + m_n);
 		}
 
-		for (i = 0; i < m_parity; i++)
-			pBytes[i] = LFSR[i];
+		// Dokroceni
+		unsigned int diff = src.size() - i;
 
-		/* Append the parity bytes at the end of the destination vector */
-		m_dst = m_src;
-		m_dst.insert(m_dst.end(), m_pBytes.begin(), m_pBytes.end());
+		if (diff > 0) {
+			unsigned char tmp_codeword[diff + NPAR];
+			//memset(&tmp_codeword[0], 0, sizeof(tmp_codeword));
+
+			encode_data(&(src)[i], diff, tmp_codeword);
+
+			dst.insert(dst.end(), tmp_codeword, tmp_codeword + diff + NPAR);
+		}
 	}
 
-	void setSource(File::BinData &src)
+	void decode(File::BinData &src, File::BinData &dst)
 	{
-		m_src = src;
-	}
+		unsigned int i;
+		int erasures[1];
 
-	void setDestination(File::BinData &dst)
-	{
-		m_dst = dst;
+		for (i = 0; i <= src.size() - m_n; i += m_n) {
+			unsigned char tmp_codeword[m_n];
+
+			std::copy(&(src)[i], &(src)[i + m_n], tmp_codeword);
+
+			decode_data(tmp_codeword, m_n);
+
+			if (check_syndrome() != 0) {
+				correct_errors_erasures(tmp_codeword, m_n, 0, erasures);
+			}
+
+			dst.insert(dst.end(), tmp_codeword, tmp_codeword + m_k);
+		}
+
+		int diff = src.size() - i;
+
+		if (diff > 0) {
+			unsigned char tmp_codeword[diff];
+			std::copy(&(src)[i], &(src)[i + diff], tmp_codeword);
+			decode_data(tmp_codeword, diff);
+			if (check_syndrome() != 0) {
+				correct_errors_erasures(tmp_codeword, diff, 0, erasures);
+			}
+
+			File::BinData tmp;
+
+			tmp.insert(tmp.end(), tmp_codeword, tmp_codeword + diff - NPAR);
+
+			dst.insert(dst.end(), tmp.begin(), tmp.end());
+		}
 	}
 
 private:
-	compute_genpoly() {}
 	unsigned int m_n = 0;
 	unsigned int m_k = 0;
 	unsigned int m_parity = 0;
-
-	File::BinData &m_src;
-	File::BinData m_dst;
-	File::BinData m_pBytes;
 };
 }
