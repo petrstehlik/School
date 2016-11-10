@@ -1,36 +1,28 @@
-/* Example use of Reed-Solomon library 
+/*
+ * BMS project 1
+ * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+ * Description: Encoder using Reed-Solomon algorithms with interleaving
+ * License: GNU GPL
  *
- * (C) Universal Access Inc. 1996 
- * hqm@alum.mit.edu
- *
- * This same code demonstrates the use of the encodier and 
- * decoder/error-correction routines. 
- *
- * We are assuming we have at least four bytes of parity (NPAR >= 4).
- * 
- * This gives us the ability to correct up to two errors, or 
- * four erasures. 
- *
- * In general, with E errors, and K erasures, you will need
- * 2E + K bytes of parity to be able to correct the codeword
- * back to recover the original message data.
- *
- * You could say that each error 'consumes' two bytes of the parity,
- * whereas each erasure 'consumes' one byte.
- *
- * Thus, as demonstrated below, we can inject one error (location unknown)
- * and two erasures (with their locations specified) and the 
- * error-correction routine will be able to correct the codeword
- * back to the original message.
- * */
+ * Acknowledgment: this program uses external library RSCode
+ * (http://rscode.sourceforge.net).
+ **/
 
 #include <iostream>
 
+// RSCode library precompiled with NPAR = 109
 extern "C" {
 	#include "ecc.h"
 }
+
+// File manipulation
 #include "file.h"
+
+// Actually the whole en/decoder
 #include "encoder.h"
+
+// De/interleaver
+#include "interleaver.h"
 
 using namespace std;
 
@@ -41,30 +33,34 @@ int main (int argc, char *argv[])
 		exit(1);
 	}
 
+	// Initialize input and output File instances
 	string loc(argv[1]);
 	string outPath(loc + ".out");
 
 	File inFile(argv[1]);
 	File outFile(outPath.c_str());
 
-	cout << "Start" << endl;
-	/* Initialization the ECC library */
-	initialize_ecc();
-	cout << "initialized" << endl;
-
-	inFile.read();
-
+	// Codewords are already encoded parts
 	File::BinData codeword;
-	File::BinData codeword_2;
+	File::BinData codeword_int;
 
-	//RS::Encoder encoder(605,350);
+	// Encoder instance with configuration RS(255,146) which means 109 parity
+	// bytes which gives us about 174.6% size of the original file.
 	RS::Encoder encoder(255,146);
-	//RS::Encoder encoder_2(90,65);
 
+	// Interleaver must be with the same configuration as encoder
+	RS::Interleaver inter(255,146);
+
+	// Initialization of the RSCode library
+	initialize_ecc();
+
+	// Read the input file, encode it and interleave the encoded data
+	inFile.read();
 	encoder.encode(inFile.get(), codeword);
-	//encoder_2.encode(codeword, codeword_2);
+	inter.interleave(codeword, codeword_int);
 
-	outFile.write(codeword);
+	// Write the finalized codeword
+	outFile.write(codeword_int);
 
 	exit(0);
 }
