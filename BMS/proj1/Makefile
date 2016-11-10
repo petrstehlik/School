@@ -3,10 +3,10 @@ CC = g++ -std=c++11
 all: bms1A bms1B encoder.h
 
 bms1A: bms1A.cpp
-	$(CC) -g -Wall -Wextra -O0 -o bms1A bms1A.cpp -L. -lecc
+	$(CC) -g -Wall -Wextra -O2 -o bms1A bms1A.cpp -L. -lecc
 
 bms1B: bms1B.cpp
-	$(CC) -g -Wall -Wextra -O0 -o bms1B bms1B.cpp -L. -lecc
+	$(CC) -g -Wall -Wextra -O2 -o bms1B bms1B.cpp -L. -lecc
 
 subdir:
 	$(CC) -o bms1A bms1A.cpp -Lrscode -lecc
