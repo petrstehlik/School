@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,24cm},top=3cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\graphicspath{ {img/} }
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Bezpečnost informačních systémů -- projekt 1}\\
+	\large{Vysoké učení technické v Brně}
+	\vspace{0.5cm}
+
+	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>
+
+	\vspace{0.2cm}
+
+	\today
+
+\end{center}
+
+\section{Mapování serverů}
+
+Po připojení na server bis.fit.vutbr.cz jsem prvně zmapoval celou lokální síť, která sídlí v rozsahu 192.168.122.0/24, což jsem zjistil z nástroje ifconfig. Síť jsem mapoval pomocí dostupného nástroje nmap s následnými parametry: \texttt{nmap -v -sn 192.168.122.0/24}.
+
+Z výsledků jsem následně zjistil, že je připojeno velké množství studentů, ty jsem odfiltroval z výsledku a našel jsem celkem 4 servery ptest1 -- ptest4, které jsem následně analyzoval.
+
+Provedl jsem mapování portů a služeb, co na nich beží.
+
+\subsection{ptest1}
+
+\texttt{\$ nmap -p- ptest1\\
+PORT     STATE SERVICE\\
+22/tcp   open  ssh\\
+80/tcp   open  http\\
+8080/tcp open  http-proxy\\
+}
+
+\subsection{ptest2}
+\texttt{\$ nmap -p- ptest2\\
+PORT     STATE SERVICE\\
+21/tcp   open  ftp\\
+22/tcp   open  ssh\\
+80/tcp   open  http\\
+3306/tcp open  mysql\\
+}
+
+\subsection{ptest3}
+\texttt{\$ nmap -p- ptest3\\
+PORT   STATE SERVICE\\
+22/tcp open  ssh\\
+23/tcp open  telnet\\
+}
+
+\subsection{ptest4}
+\texttt{\$ nmap -p- ptest4\\
+PORT      STATE  SERVICE\\
+22/tcp    open   ssh\\
+80/tcp    open   http\\
+41326/tcp closed unknown\\
+41327/tcp closed unknown\\
+41328/tcp closed unknown\\
+41329/tcp closed unknown\\
+41330/tcp closed unknown\\
+41331/tcp closed unknown\\
+41332/tcp closed unknown\\
+41333/tcp closed unknown\\
+41334/tcp closed unknown\\
+41335/tcp closed unknown\\
+41336/tcp closed unknown\\
+41337/tcp open   unknown\\
+}
+
+\section{Získání jednotlivých tajemství}
+
+Tajemství jsem získával náhodně dle postupného prohledávání a zkoumání serverů. Zde je uvedu v abecedním pořadí.
+
+\subsection{Tajemství A}
+Toto tajemství je umístěno na serveru ptest1 a je získatelné přes HTTP proxy na portu 8080. Zde je umístěn velmi jednoduchý přihlašovací formulář. Analyzoval jsem HTTP hlavičky odpovědi serveru a zjistil jsem, že server při neúspěšném přihlášení nastaví cookie \texttt{LOGGED_IN} na hodnotu \texttt{False}. Tuto cookie jsem upravil a nastavil její hodnotu na \texttt{True}. Poté stačilo znova poslat požadavek na server a byl jsem přihlášen. Na dané stránce získal tajemství.
+
+\subsection{Tajemství B}
+Tajemství B je též umístěno na serveru ptest1. Po prozkoumání internetové stránky na portu 80 jsem si všiml, že se vždy přesměruje na adresu ptest1/xsmith07. Pročetl jsem celý obsah stránek a usoudil, že se zkusím připojit přes SSH na ptest1 pomocí uživatele xsmith07. Jedno z nejpoužívanějších hesel je jméno domácího mazlíčka, které je zmíněno hned na hlavní stránce (Micák). Toto heslo jsem zkusil v několika kombinacích a heslo jsem uhádl. Tajemství B je přímo v domovském adresáři uživatele xsmith07.
+
+\subsection{Tajemství C}
+
+
+
+\end{document}
