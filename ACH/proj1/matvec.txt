@@ -1,0 +1,68 @@
+Architektura procesorů (ACH 2016)
+Projekt č. 1 (matvec)
+Login: xstehl14
+
+
+Krok 0: vypnuté optimalizace
+============================
+Celkový čas [s]: 4.37
+Výkon skalárních operací [MFLOPS]: 456.245
+Výkon vektorových operací [MFLOPS]: 456.245
+
+Jaké instrukce kompilátor použil?
+	mulss (SSE instrukce)
+
+
+Krok 1: zapnutí optimalizací
+============================
+Celkový čas [s]: 0.63
+Výkon skalárních operací [MFLOPS]: 1669.66
+Výkon vektorových operací [MFLOPS]: 4114.01
+
+Kolikrát byla smyčka rozbalena?
+	2x
+
+Jaké instrukce kompilátor použil?
+	vmulss (AVX instrukce)
+
+
+Krok 2: datové závislosti
+=========================
+Celkový čas [s]: 0.625492
+Výkon skalárních operací [MFLOPS]: 1728.26
+Výkon vektorových operací [MFLOPS]: 4255.46
+
+Proč je vygenerovaný kód tak dlouhý?
+	Protoze data nejsou v pameti zarovnana a musi byt ruzne premistovana mezi
+	ruznymi registry.
+
+
+Krok 3: zarovnání dat v paměti
+==============================
+Celkový čas [s]: 0.542963
+Výkon skalárních operací [MFLOPS]: 1062.64
+Výkon vektorových operací [MFLOPS]: 5319.35
+
+Na kolik bytů musí být data zarovnána?
+	32 bytů
+
+Jaké změny ve vygenerovaném kódu pozorujete?
+	Zarovnanim dat v pameti vyrazne ubylo mnozstvi moznych skoku a instrukci
+	"pohybujicich" s daty.
+
+Je vektorová jednotka využita efektivně?
+	Neni, je zde stale mnoho skalarnich instrukci.
+
+
+Krok 4: padding
+===============
+Celkový čas [s]: 0.16
+Výkon skalárních operací [MFLOPS]: 400.003
+Výkon vektorových operací [MFLOPS]: 19733.3
+
+Změnila se nějak vnitřní smyčka?
+	Ne.
+
+Vysvětlete rozdíl ve výkonu oproti předchozímu kroku.
+	Efektivnejsi vyuziti vektorove jednotky diky lepsi praci s daty. Vektorova
+	jednotka je rychleji "krmena" daty.
