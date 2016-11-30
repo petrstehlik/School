@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     PapiCounterList papi_routines;
     papi_routines.AddRoutine("nbody");
 
-	t_particles __declspec(align(32)) particles;
+	t_particles particles;
 
     if (argc != 3)
     {
