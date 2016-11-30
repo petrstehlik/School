@@ -1,0 +1,41 @@
+﻿Architektura procesorů (ACH 2016)
+Projekt č. 2
+Login: xlogin00
+
+
+Krok 0: základní implementace
+=============================
+vláken/blok    čas [s]
+32             ...
+...            ...
+1024           ...
+
+Ideální počet vláken na blok:
+
+
+Krok 1: sdílená paměť
+=====================
+Došlo ke zrychlení?
+
+Zdůvodněte:
+
+
+Porovnejte metriky s předchozím krokem:
+
+
+
+Krok 2: analýza výkonu
+======================
+N        čas CPU [s]    čas GPU [s]    zrychlení [-]
+1024     ...            ...            ...
+2048     ...            ...            ...
+4096     ...            ...            ...
+...      ...            ...            ...
+131072   ...            ...            ...
+
+Od jakého počtu částic se vyplatí počítat na grafické kartě?
+
+
+Bonus: jiná mikroarchitektura GPU
+===================================
+

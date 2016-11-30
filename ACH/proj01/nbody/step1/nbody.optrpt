@@ -1,0 +1,158 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+
+    Report from: Interprocedural optimizations [ipo]
+
+  WHOLE PROGRAM (SAFE) [EITHER METHOD]: false
+  WHOLE PROGRAM (SEEN) [TABLE METHOD]: false
+  WHOLE PROGRAM (READ) [OBJECT READER METHOD]: false
+
+INLINING OPTION VALUES:
+  -inline-factor: 100
+  -inline-min-size: 30
+  -inline-max-size: 230
+  -inline-max-total-size: 2000
+  -inline-max-per-routine: 10000
+  -inline-max-per-compile: 500000
+
+In the inlining report below:
+   "sz" refers to the "size" of the routine. The smaller a routine's size,
+      the more likely it is to be inlined.
+   "isz" refers to the "inlined size" of the routine. This is the amount
+      the calling routine will grow if the called routine is inlined into it.
+      The compiler generally limits the amount a routine can grow by having
+      routines inlined into it.
+
+Begin optimization report for: particles_simulate(t_particles &)
+
+    Report from: Interprocedural optimizations [ipo]
+
+INLINE REPORT: (particles_simulate(t_particles &)) [1/3=33.3%] nbody.cpp(13,1)
+  -> EXTERN: (25,3) memset(void *, int, size_t)
+  -> EXTERN: (26,3) memset(void *, int, size_t)
+  -> EXTERN: (27,3) memset(void *, int, size_t)
+
+
+    Report from: Loop nest, Vector & Auto-parallelization optimizations [loop, vec, par]
+
+
+LOOP BEGIN at nbody.cpp(23,2)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at nbody.cpp(29,3)
+      remark #25096: Loop Interchange not done due to: Imperfect Loop Nest (Either at Source or due to other Compiler Transformations)
+      remark #25451: Advice: Loop Interchange, if possible, might help loopnest. Suggested Permutation : ( 1 2 ) --> ( 2 1 ) 
+      remark #15542: loop was not vectorized: inner loop was already vectorized
+      remark #25015: Estimate of max trip count of loop=1000
+
+      LOOP BEGIN at nbody.cpp(33,4)
+      <Peeled loop for vectorization>
+         remark #25015: Estimate of max trip count of loop=1000
+      LOOP END
+
+      LOOP BEGIN at nbody.cpp(33,4)
+         remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(35,5) ]
+         remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(36,5) ]
+         remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(37,5) ]
+         remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(42,5) ]
+         remark #15388: vectorization support: reference F_x has aligned access   [ nbody.cpp(48,5) ]
+         remark #15388: vectorization support: reference F_x has aligned access   [ nbody.cpp(48,5) ]
+         remark #15388: vectorization support: reference F_y has aligned access   [ nbody.cpp(49,5) ]
+         remark #15388: vectorization support: reference F_y has aligned access   [ nbody.cpp(49,5) ]
+         remark #15388: vectorization support: reference F_z has aligned access   [ nbody.cpp(50,5) ]
+         remark #15388: vectorization support: reference F_z has aligned access   [ nbody.cpp(50,5) ]
+         remark #15305: vectorization support: vector length 8
+         remark #15309: vectorization support: normalized vectorization overhead 1.465
+         remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+         remark #15448: unmasked aligned unit stride loads: 7 
+         remark #15449: unmasked aligned unit stride stores: 3 
+         remark #15475: --- begin vector loop cost summary ---
+         remark #15476: scalar loop cost: 144 
+         remark #15477: vector loop cost: 17.750 
+         remark #15478: estimated potential speedup: 6.950 
+         remark #15488: --- end vector loop cost summary ---
+         remark #25015: Estimate of max trip count of loop=125
+      LOOP END
+
+      LOOP BEGIN at nbody.cpp(33,4)
+      <Remainder loop for vectorization>
+         remark #25015: Estimate of max trip count of loop=1000
+      LOOP END
+   LOOP END
+
+   LOOP BEGIN at nbody.cpp(60,14)
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(61,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(61,4) ]
+      remark #15388: vectorization support: reference F_x has aligned access   [ nbody.cpp(61,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(62,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(62,4) ]
+      remark #15388: vectorization support: reference F_y has aligned access   [ nbody.cpp(62,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(63,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(63,4) ]
+      remark #15388: vectorization support: reference F_z has aligned access   [ nbody.cpp(63,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(65,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(65,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(65,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(66,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(66,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(66,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(67,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(67,4) ]
+      remark #15388: vectorization support: reference p has aligned access   [ nbody.cpp(67,4) ]
+      remark #15305: vectorization support: vector length 8
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15448: unmasked aligned unit stride loads: 12 
+      remark #15449: unmasked aligned unit stride stores: 6 
+      remark #15475: --- begin vector loop cost summary ---
+      remark #15476: scalar loop cost: 44 
+      remark #15477: vector loop cost: 4.500 
+      remark #15478: estimated potential speedup: 9.770 
+      remark #15488: --- end vector loop cost summary ---
+      remark #25456: Number of Array Refs Scalar Replaced In Loop: 3
+      remark #25015: Estimate of max trip count of loop=125
+   LOOP END
+LOOP END
+
+    Report from: Code generation optimizations [cg]
+
+nbody.cpp(25,3):remark #34026: call to memset implemented as a call to optimized library version
+nbody.cpp(26,3):remark #34026: call to memset implemented as a call to optimized library version
+nbody.cpp(27,3):remark #34026: call to memset implemented as a call to optimized library version
+===========================================================================
+
+Begin optimization report for: particles_read(FILE *, t_particles &)
+
+    Report from: Interprocedural optimizations [ipo]
+
+INLINE REPORT: (particles_read(FILE *, t_particles &)) [2/3=66.7%] nbody.cpp(74,1)
+  -> EXTERN: (77,9) fscanf(FILE *, const char *, ...)
+
+
+    Report from: Loop nest, Vector & Auto-parallelization optimizations [loop, vec, par]
+
+
+LOOP BEGIN at nbody.cpp(75,5)
+   remark #15382: vectorization support: call to function fscanf(FILE *, const char *, ...) cannot be vectorized   [ nbody.cpp(77,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed FLOW dependence between p line 77 and p line 77
+   remark #15346: vector dependence: assumed ANTI dependence between p line 77 and p line 77
+LOOP END
+===========================================================================
+
+Begin optimization report for: particles_write(FILE *, t_particles &)
+
+    Report from: Interprocedural optimizations [ipo]
+
+INLINE REPORT: (particles_write(FILE *, t_particles &)) [3/3=100.0%] nbody.cpp(85,1)
+  -> EXTERN: (88,9) fprintf(FILE *, const char *, ...)
+
+
+    Report from: Loop nest, Vector & Auto-parallelization optimizations [loop, vec, par]
+
+
+LOOP BEGIN at nbody.cpp(86,5)
+   remark #15527: loop was not vectorized: function call to fprintf(FILE *, const char *, ...) cannot be vectorized   [ nbody.cpp(88,9) ]
+LOOP END
+===========================================================================

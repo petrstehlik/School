@@ -23,56 +23,40 @@
 
 \end{center}
 
-\section{Mapování serverů}
+\section{Zadání}
+Úkolem bylo získání co nejvíce tajemství ukrytých ve vnitřní síti dostupné přes server bis.fit.vutbr.cz. Následně vypracovat dokumentaci obsahující informace o síti a postup k získání všech nalezených tajemství.
+
+\section{Mapování sítě a dostupných služeb}
 
 Po připojení na server bis.fit.vutbr.cz jsem prvně zmapoval celou lokální síť, která sídlí v rozsahu 192.168.122.0/24, což jsem zjistil z nástroje ifconfig. Síť jsem mapoval pomocí dostupného nástroje nmap s následnými parametry: \texttt{nmap -v -sn 192.168.122.0/24}.
 
-Z výsledků jsem následně zjistil, že je připojeno velké množství studentů, ty jsem odfiltroval z výsledku a našel jsem celkem 4 servery ptest1 -- ptest4, které jsem následně analyzoval.
+Následně jsem zjistil, že je připojeno velké množství studentů. Ty jsem odfiltroval z výsledku a našel celkem 4 servery ptest1 až ptest4, které jsem následně analyzoval.
 
-Provedl jsem mapování portů a služeb, co na nich beží.
+Provedl jsem mapování portů a služeb, co na nich beží. Opět jsem použil nástroj nmap s následujícími parametry: \texttt{nmap -p- ptestX}. Výpisy jsou zkrácené pouze na otevřené porty.
 
 \subsection{ptest1}
 
-\texttt{\$ nmap -p- ptest1\\
-PORT     STATE SERVICE\\
-22/tcp   open  ssh\\
+\texttt{22/tcp   open  ssh\\
 80/tcp   open  http\\
-8080/tcp open  http-proxy\\
+8080/tcp open  http-proxy
 }
 
 \subsection{ptest2}
-\texttt{\$ nmap -p- ptest2\\
-PORT     STATE SERVICE\\
-21/tcp   open  ftp\\
+\texttt{21/tcp   open  ftp\\
 22/tcp   open  ssh\\
 80/tcp   open  http\\
-3306/tcp open  mysql\\
+3306/tcp open  mysql
 }
 
 \subsection{ptest3}
-\texttt{\$ nmap -p- ptest3\\
-PORT   STATE SERVICE\\
-22/tcp open  ssh\\
-23/tcp open  telnet\\
+\texttt{22/tcp open  ssh\\
+23/tcp open  telnet
 }
 
 \subsection{ptest4}
-\texttt{\$ nmap -p- ptest4\\
-PORT      STATE  SERVICE\\
-22/tcp    open   ssh\\
+\texttt{22/tcp    open   ssh\\
 80/tcp    open   http\\
-41326/tcp closed unknown\\
-41327/tcp closed unknown\\
-41328/tcp closed unknown\\
-41329/tcp closed unknown\\
-41330/tcp closed unknown\\
-41331/tcp closed unknown\\
-41332/tcp closed unknown\\
-41333/tcp closed unknown\\
-41334/tcp closed unknown\\
-41335/tcp closed unknown\\
-41336/tcp closed unknown\\
-41337/tcp open   unknown\\
+41337/tcp open   unknown
 }
 
 \section{Získání jednotlivých tajemství}
@@ -80,13 +64,50 @@ PORT      STATE  SERVICE\\
 Tajemství jsem získával náhodně dle postupného prohledávání a zkoumání serverů. Zde je uvedu v abecedním pořadí.
 
 \subsection{Tajemství A}
-Toto tajemství je umístěno na serveru ptest1 a je získatelné přes HTTP proxy na portu 8080. Zde je umístěn velmi jednoduchý přihlašovací formulář. Analyzoval jsem HTTP hlavičky odpovědi serveru a zjistil jsem, že server při neúspěšném přihlášení nastaví cookie \texttt{LOGGED_IN} na hodnotu \texttt{False}. Tuto cookie jsem upravil a nastavil její hodnotu na \texttt{True}. Poté stačilo znova poslat požadavek na server a byl jsem přihlášen. Na dané stránce získal tajemství.
+Toto tajemství je umístěno na serveru ptest1 a je získatelné přes HTTP proxy na portu 8080. Zde je umístěn velmi jednoduchý přihlašovací formulář. Analyzoval jsem HTTP hlavičky odpovědi serveru a zjistil jsem, že server při neúspěšném přihlášení nastaví cookie \texttt{LOGGED\_IN} na hodnotu \texttt{False}. Tuto cookie jsem upravil a nastavil její hodnotu na \texttt{True}. Poté stačilo znova poslat požadavek na server a byl jsem přihlášen. Na dané stránce bylo tajemství umístěné.
 
 \subsection{Tajemství B}
 Tajemství B je též umístěno na serveru ptest1. Po prozkoumání internetové stránky na portu 80 jsem si všiml, že se vždy přesměruje na adresu ptest1/xsmith07. Pročetl jsem celý obsah stránek a usoudil, že se zkusím připojit přes SSH na ptest1 pomocí uživatele xsmith07. Jedno z nejpoužívanějších hesel je jméno domácího mazlíčka, které je zmíněno hned na hlavní stránce (Micák). Toto heslo jsem zkusil v několika kombinacích a heslo jsem uhádl. Tajemství B je přímo v domovském adresáři uživatele xsmith07.
 
 \subsection{Tajemství C}
 
+Na serveru ptest2 je na portu 80 umístěna další webová stránka s databází zaměstnanců. Prvním a správným nápadem bylo vytvořit SQL injection dotaz, kterým jsem se dostal k obsahu jiných tabulek v databázi. Prvně jsem zjistil jaký SQL dotaz je zadáván skriptem do databáze. Ten jsem zjistil pomocí chybové hlášky, která je vytisknuta při chybném dotazu (např. syntax error). Následně jsem vytvořil SQL dotaz na vypsání všech sloupců všech tabulek v databázi: \\
+\\
+\texttt{ý\%"\  UNION SELECT table\_schema, table\_name, column\_name, 0 \\FROM information\_schema.columns \\UNION SELECT id, name, email, address FROM contact WHERE name LIKE "\%á}
+\\
+
+Z výpisu jsem zjistil, že je zde tabulka auth, která obsahu sloupec passwd. Ten je nejčastějším cílem útoku a proto jsem se na něj zaměřil pomocí následujícího dotazu, kterým jsem získal tajemství C, které bylo heslo uživatele admin.
+\\
+\\
+\texttt{ý\%"\ UNION SELECT id, passwd, login, 0 FROM auth UNION SELECT id, name, email, address FROM contact WHERE name LIKE "\%á}
+
+\subsection{Tajemství D}
+Portscan serveru ptest2 obhalil otevřený port 21 s běžící službou FTP. Pokusil jsem se na službu připojit a server oznámil svou verzi (VSFTPD 2.3.4). Tuto verzi jsem nalezl jako zranitelnou skrze "smajlíkový exploit". Ten dovoluje se přihlásit jako jakýkoliv uživatel, aniž by FTP server kontroloval heslo (příp. přijme libovolné heslo), pokud za zadávané uživatelské jméno uvedeme ":)". Následně FTP server zareagoval, otevřel náhodný port na ptest2, který při jakémkoliv požadavku (např. \texttt{nc ptest2 cislo\_portu}) odpovídal tajemstvím D a následně se port uzavřel.
+
+\subsection{Tajemství E}
+
+Ve složce .ssh na serveru bis.fit.vutbr.cz se nacházel privátní klíč pro uživatele smith. Z config souboru jsem zjistil, že tento privatní klíč je pro server ptest3. Díky němu jsem se přihlásil na daný server, kde ale nic nebylo. Nicméně na serveru ptest3 je otevřený port se službou telnet. Ta nešifruje svůj provoz a tudíž jsem zahájil odposlouchávání telnet komunikace pomocí nástroje tcpdump. Mezitím jsem prošel dostupné části serveru ptest3 a zjistil existenci druhého uživatele "ada". Na toto uživatelské jméno jsem se zaměřil v zachycené telnet komunikaci a našel heslo pro uživatele ada pro přihlášení na server ptest3. Uživatel ada měl již tajemství E uložené ve své domovské složce.
+
+\subsection{Tajemství F}
+
+Po portscanu ptest4 jsem našel otevřený nestandardní port, na který jsem se zkusil připojit pomocí různých služeb. Na tomto portu běžel FTP server. Připojil jsem se na něj a běžel v anonymous režimu. To znamená, že uživatel anonymous nevyžaduje heslo. Připojil jsem se na server a po příkazu \texttt{DIR} jsem našel tajemství F přímo v domovské složce, které jsem stáhl na server bis.fit.vutbr.cz pomocí daného FTP serveru.
+
+\subsection{Tajemství G}
+
+Tajemství G jsem získal skrze program ZSNES, na který máme v naší domovské složce na serveru bis.fit.vutbr.cz symlink. Zjistil jsem verzi programu a našel exploit pomocí stack-based buffer overflow. Přímo tento exploit jsem našel implementovaný v jazyku Python. Skript jsem spustil na serveru a tajemství bylo vyzrazeno.
+
+\subsection{Tajemství H}
+
+Připojil jsem na server ptest4 na port 80, kde běžel webový server, který měl povolený directory listing. Prošel jsem všechny dostupné soubory na webovém serveru a našel sql.conf (cesta \texttt{etc/raddb/sql.conf}), které obsahovalo tajemství H.
+
+\subsection{Tajemství I}
+
+Tajemství I je umístěno stejně jako tajemství H v souboru dostupném na webovém serveru ptest4, avšak je schováno v PDF souboru Internal.pdf v Keyword metainformaci.
+
+
+\section{Závěr}
+
+Podařilo se mi získat celkem 9 tajemství dostupných na serverech a jsem přesvědčen, že více tajemství se zde nenachází. Využil jsem mnoho odlišných přístupů a vyzkoušel vždy několik útoků z čehož byl vždy jeden úspěšný.
 
 
 \end{document}

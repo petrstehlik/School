@@ -1,0 +1,65 @@
+Architektura procesorů (ACH 2016)
+Projekt č. 1 (nbody)
+Login: xstehl14
+
+
+Krok 0: základní implementace
+=============================
+Celkový čas [s]: 12.17
+Výkon skalárních operací [MFLOPS]: 1478.29
+Výkon vektorových operací [MFLOPS]: 1478.29
+
+
+Krok 1: optimalizovaná implementace
+===================================
+Celkový čas [s]: 1.86
+Výkon skalárních operací [MFLOPS]: 67.2143
+Výkon vektorových operací [MFLOPS]: 15662.2
+
+Jaké optimalizace byly použity? Vysvětlete dopad jednotlivých optimalizací.
+	* vyuziti #pragma omp simd
+	* vyuziti redukce pro scitani
+	* odstraneni datovych zavislosti (vyuziti SIMD a vektorizace)
+	* zarovnani pole struktur na 32 bytu (kvuli AVX)
+	* refaktorizace: uprava matematickych vzorcu (provedeno uz v step0)
+
+
+Krok 2: analýza paměťové hierarchie
+===================================
+HW countery pro L1: PAPI_L1_DCM|PAPI_LD_INS|PAPI_SR_INS
+HW countery pro L2: PAPI_L2_DCM|PAPI_L2_DCA
+HW countery pro L3: PAPI_L3_TCM|PAPI_L3_TCA
+
+Vyplňte následující tabulku, zvolte vhodné hodnoty počtu částic N
+
+N		L1 miss [%]	L2 miss [%]	L3 miss [%]	výkon [MFLOPS]
+1 000	0.2725		0.0172		19.2		15832.2
+1 100	0.2711		0.0318		16.86		15574.9
+1 250	0.8589		0.00337		12.5		17269.7
+1 500	4.3026		0.00187		10.1		15589.3
+5 000	1.4413		0.0795		6.78		17182.9
+8 000	1.4139		1.36		0.728		16930.4
+9 000	1.4284		3.09		0.692		17230.1
+12 000	1.4138		4.58		0.304		17438.5
+16 000	1.4127		4.54		0.336		17431.8
+
+Maximální počet částic v L1:
+	* experimentalne: ~ 1250
+	* teoreticky: 32 * 1 024 / 28 = ~ 1 170 castic
+
+Maximální počet částic v L2:
+	* experimentalne: ~ 8000
+	* teoreticky: 256 * 1 024 / 28 = ~ 9 362 castic
+
+Maximální počet částic v L3:
+	* experimentalne: nelze overit v rozumnem case
+	* teoreticky: 20 480 * 1 024 / 28 = ~ 748 982 castic
+
+Popište, jaký dopad na výkon mají výpadky v~cache.
+	Na vykon nemaji vypadky v cache temer zadny vliv v pripade L1 a L2 cache.
+	V pripade L3 by uz tento dopad mel byt znatelnejsi.
+
+Jak byste tento vliv omezili?
+	* maximalni vyuziti vsech urovni cache pomoci efektivnejsi organizace dat
+		--> predelat na strukturu poli
+	* pouzivat male struktury, ty se lepe "naskladaji" do L1 a L2
