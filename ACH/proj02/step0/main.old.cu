@@ -39,33 +39,16 @@ int main(int argc, char **argv)
     printf("steps: %d\n", steps);
     printf("threads/block: %d\n", thr_blc);
 
-	int blocksPerGrid = (thr_blc + N -1) / thr_blc;
-
-	if (blocksPerGrid == 0) {
-		blocksPerGrid = 1;
-		thr_blc = N;
-	}
-
-	if (thr_blc > N) {
-		thr_blc = N;
-	}
-	cout << "blocks: " << blocksPerGrid << endl; 
-	cout << "threads/block: " << thr_blc << endl; 
-
 	//const size_t size = N * sizeof(float);
     // alokace pameti na CPU
     t_particles particles_cpu;
-    int size = N/thr_blc;
-    if (N % thr_blc != 0)
-    	size++;
+    const int size = N/thr_blc + thr_blc;
 
-    size *= thr_blc;
-
-    cout << "size of array: " << size << endl;
+    cout << "size: " << size << endl;
 
     /* Host allocation */
-    cudaHostAlloc(&particles_cpu.pos, size * sizeof(float3),cudaHostAllocDefault);
-    cudaHostAlloc(&particles_cpu.vel, size * sizeof(float4), cudaHostAllocDefault);
+    cudaHostAlloc(&particles_cpu.pos, N * sizeof(float3), cudaHostAllocDefault);
+    cudaHostAlloc(&particles_cpu.vel, N * sizeof(float4), cudaHostAllocDefault);
 	
 	const float GDT = G * dt;
 
@@ -85,27 +68,42 @@ int main(int argc, char **argv)
         // alokace pameti na GPU
         // ZDE DOPLNTE ALOKACI PAMETI NA GPU
 
-		cudaMalloc(&(particles_gpu[i].pos), size * sizeof(float3));
-		cudaMalloc(&(particles_gpu[i].vel), size * sizeof(float4));
+		cudaMalloc(&(particles_gpu[i].pos), N * sizeof(float3));
+		cudaMalloc(&(particles_gpu[i].vel), N * sizeof(float4));
 
         // kopirovani castic na GPU
         // ZDE DOPLNTE KOPIROVANI DAT Z CPU NA GPU
 		cudaMemcpy(particles_gpu[i].pos, particles_cpu.pos,
-				size * sizeof(float3), cudaMemcpyHostToDevice);
+				N * sizeof(float3), cudaMemcpyHostToDevice);
 		cudaMemcpy(particles_gpu[i].vel, particles_cpu.vel,
-				size * sizeof(float4), cudaMemcpyHostToDevice);
+				N * sizeof(float4), cudaMemcpyHostToDevice);
     }
+
+	int blocksPerGrid = (thr_blc + N -1) / thr_blc;
+
+	if (blocksPerGrid == 0) {
+		blocksPerGrid = 1;
+		thr_blc = N;
+	}
+
+	if (thr_blc > N) {
+		thr_blc = N;
+	}
+
+	cout << "blocks: " << blocksPerGrid << endl; 
+	cout << "threads: " << thr_blc << endl; 
+
 
     // vypocet
     gettimeofday(&t1, 0);
     for (int s = 0; s < steps; s++)
     {
         // ZDE DOPLNTE SPUSTENI KERNELU
-		particles_simulate <<<blocksPerGrid, thr_blc>>> (particles_gpu[0], particles_gpu[1], N, dt, GDT);
-		//particles_pos<<<blocksPerGrid, thr_blc>>> (particles_gpu[0], particles_gpu[1], dt);
-		t_particles tmp = particles_gpu[0];
-		particles_gpu[1] = particles_gpu[0];
-		particles_gpu[0] = tmp;
+		particles_simulate <<<blocksPerGrid, thr_blc>>> (particles_gpu[1], particles_gpu[1], N, dt, GDT);
+		particles_pos<<<blocksPerGrid, thr_blc>>> (particles_gpu[1], dt);
+		//t_particles *tmp = &(particles_gpu[0]);
+		//particles_gpu[1] = particles_gpu[0];
+		//particles_gpu[0] = *tmp;
     }
     // ZDE DOPLNTE SYNCHRONIZACI
     cudaDeviceSynchronize();

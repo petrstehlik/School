@@ -30,6 +30,9 @@ N        čas CPU [s]    čas GPU [s]    zrychlení [-]
 1024     ...            ...            ...
 2048     ...            ...            ...
 4096     ...            ...            ...
+8192     ...            ...            ...
+16384
+32768	 ...            ...            ...
 ...      ...            ...            ...
 131072   ...            ...            ...
 
@@ -39,3 +42,21 @@ Od jakého počtu částic se vyplatí počítat na grafické kartě?
 Bonus: jiná mikroarchitektura GPU
 ===================================
 
+
+
+
+
+
+
+
+
+N: 131072
+dt: 0.001000
+steps: 1000
+threads/block: 128
+blocks: 1024
+threads/block: 128
+size of array: 131072
+
+
+Time: 361.535133 s
