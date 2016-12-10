@@ -71,3 +71,6 @@ pouze jeden exit, bez break
 * Bez vnitrnich smycek
 
 * Bez 'function calls' - vyjimkou sin, log, inline, elemental, OMP SIMD fce
+
+Proc nejde udelat barieru v CUDA bloku?
+Protoze by vsichni zastavili na bariere a cekaji az se ostatni dostanou k bariere -> deadlock
