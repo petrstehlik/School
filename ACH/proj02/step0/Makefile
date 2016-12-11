@@ -1,8 +1,8 @@
 # Architektura procesoru (ACH 2016)
 # Projekt c. 2 (cuda)
-# Login: xlogin00
+# Login: xstehl14
 
-N=131072
+N=8192#131072
 DT=0.001f
 STEPS=1000
 THREADS_PER_BLOCK=128
@@ -12,7 +12,7 @@ THREADS_PER_BLOCK=128
 #INPUT=../test/thompson_points_932.dat
 
 INPUT=131072.dat
-OUTPUT=step0.dat
+OUTPUT=../step0.dat
 
 N_T = 2
 DT_T=0.00001f
@@ -20,10 +20,7 @@ STEPS_T=543847
 INPUT_T=test.dat
 OUTPUT_T=step0.dat
 
-CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" \
-           -O3 -std=c++11 -arch=sm_20  \
-    	#--generate-code arch=compute_20,code=sm_20  #  \
-#     --generate-code arch=compute_35,code=sm_35
+CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" -O3 -arch=sm_20
 
 all:
 	nvcc -Xptxas="-v" $(CXXFLAGS) nbody.cu main.cu -o nbody
@@ -32,7 +29,7 @@ gen:
 	icpc gen.cpp -o gen
 
 clean:
-	rm -f *.o nbody
+	rm -f *.o nbody gen
 
 run:
 	./nbody $(N) $(DT) $(STEPS) $(THREADS_PER_BLOCK) $(INPUT) $(OUTPUT)
