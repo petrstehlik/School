@@ -1,0 +1,7 @@
+Maximum distance: 0.393196096378
+Minimum distance: 0.389655133774
+Distance difference: 0.00354096260336 < 0.01 - OK
+
+Maximum angle: 0.16383943448 deg
+Minimum angle: 0.00217063818842 deg
+OK
