@@ -12,7 +12,7 @@ output=step0.dat
 
 echo "N		thr_blc		Time [s]"
 
-for t in `seq 4 7`
+for t in `seq 7 -1 4`
 do
 	T=$((2**t))
 
