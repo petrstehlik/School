@@ -8,8 +8,6 @@
 #include <cfloat>
 #include "nbody.h"
 
-#define BLOCK_SIZE 128
-
 __device__ void particles_pos_dev(t_particles p_out, float dt, int i);
 
 __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, float dt, const float GDT)
@@ -52,12 +50,6 @@ __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, f
 	p_out.pos[i].x = fmaf(p_out.vel[i].x, dt, p_in.pos[i].x);
 	p_out.pos[i].y = fmaf(p_out.vel[i].y, dt, p_in.pos[i].y);
 	p_out.pos[i].z = fmaf(p_out.vel[i].z, dt, p_in.pos[i].z);
-}
-
-__global__ void particles_pos(t_particles p_in, t_particles p_out, float dt)
-{
-	//int i = blockIdx.x * blockDim.x + threadIdx.x;
-			__syncthreads();
 }
 
 void particles_read(FILE *fp, t_particles &p, int N)
