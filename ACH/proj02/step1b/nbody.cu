@@ -54,12 +54,6 @@ __global__ void particles_simulate(t_particles p_in, t_particles p_out, const in
 	p_out.pos[i].z = fmaf(p_out.vel[i].z, dt, p_in.pos[i].z);
 }
 
-__global__ void particles_pos(t_particles p_in, t_particles p_out, float dt)
-{
-	//int i = blockIdx.x * blockDim.x + threadIdx.x;
-			__syncthreads();
-}
-
 void particles_read(FILE *fp, t_particles &p, int N)
 {
     for (int i = 0; i < N; i++)
