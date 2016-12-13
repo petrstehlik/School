@@ -12,7 +12,7 @@
 
 __device__ void particles_pos_dev(t_particles p_out, float dt, int i);
 
-__global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, float dt, const float GDT)
+__global__ void particles_simulate(t_particles p_in, t_particles p_out, const int N, const float dt, const float GDT)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 

@@ -29,8 +29,7 @@ typedef struct
 
 } t_particles;
 
-__global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, float dt, const float GDT);
-__global__ void particles_pos(t_particles p_in, t_particles p_out, float dt);
+__global__ void particles_simulate(t_particles p_in, t_particles p_out, const int N, const float dt, const float GDT);
 
 void particles_read(FILE *fp, t_particles &p, int N);
 
