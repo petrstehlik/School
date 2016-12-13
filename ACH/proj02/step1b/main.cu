@@ -34,6 +34,8 @@ int main(int argc, char **argv)
     steps = atoi(argv[3]);
     thr_blc = atoi(argv[4]);
 
+	cudaSetDevice(0);
+
     printf("N: %d\n", N);
     printf("dt: %f\n", dt);
     printf("steps: %d\n", steps);
