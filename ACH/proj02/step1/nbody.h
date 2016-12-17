@@ -13,24 +13,18 @@
 /* gravitacni konstanta */
 #define G 6.67384e-11f
 
+// Constant for shared memory
+#define BLOCK_SIZE 128
+
 /* struktura castic */
 typedef struct
 {
-	// ZDE DOPLNTE CLENY STRUKTURY CASTIC
-    //float *pos_x;
-    //float *pos_y;
-    //float *pos_z;
     float4 *pos;
     float3 *vel;
-    //float *vel_x;
-    //float *vel_y;
-    //float *vel_z;
-    //float *weight;
 
 } t_particles;
 
 __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, float dt, const float GDT);
-__global__ void particles_pos(t_particles p_in, t_particles p_out, float dt);
 
 void particles_read(FILE *fp, t_particles &p, int N);
 
