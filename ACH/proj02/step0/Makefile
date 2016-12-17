@@ -2,19 +2,15 @@
 # Projekt c. 2 (cuda)
 # Login: xstehl14
 
-N=8192#131072
+N=8192
 DT=0.001f
 STEPS=1000
 THREADS_PER_BLOCK=128
-#N=932
-#DT=0.00001f
-#STEPS=15000
-#INPUT=../test/thompson_points_932.dat
 
-INPUT=131072.dat
+INPUT=../input.dat
 OUTPUT=../step0.dat
 
-N_T = 2
+N_T=2
 DT_T=0.00001f
 STEPS_T=543847
 INPUT_T=test.dat
@@ -23,7 +19,7 @@ OUTPUT_T=step0.dat
 CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" -O3 -arch=sm_20
 
 all:
-	nvcc -Xptxas="-v" $(CXXFLAGS) nbody.cu main.cu -o nbody
+	nvcc -Xptxas="-v" --use_fast_math $(CXXFLAGS) nbody.cu main.cu -o nbody
 
 gen:
 	icpc gen.cpp -o gen

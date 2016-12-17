@@ -16,13 +16,12 @@ __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, f
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	float3 pos_i = p_in.pos[i];
-	float4 vel_i = p_in.vel[i];
 	float3 d;
+	float3 F_i = {0.0f, 0.0f, 0.0f};
 
 	#pragma unroll 128
 	for (int j = 0; j < N; j++) {
 		// Calculate distance between two points in each axis
-			
 		d.x = p_in.pos[j].x - pos_i.x;
 		d.y = p_in.pos[j].y - pos_i.y;
 		d.z = p_in.pos[j].z - pos_i.z;
@@ -32,25 +31,20 @@ __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, f
 		//float inv_dist = rsqrtf(dist_R);
 		float inv_dist_3R = dist_R * dist_R * dist_R;
 
-		float F = G * (p_in.vel[j].w) * inv_dist_3R;
+		float F = GDT * (p_in.vel[j].w) * inv_dist_3R;
 
-		vel_i.x = fmaf(F * dt, d.x, vel_i.x);
-		vel_i.y = fmaf(F * dt, d.y, vel_i.y);
-		vel_i.z = fmaf(F * dt, d.z, vel_i.z);
+		F_i.x = fmaf(F, d.x, F_i.x);
+		F_i.y = fmaf(F, d.y, F_i.y);
+		F_i.z = fmaf(F, d.z, F_i.z);
 	}
 
-	__syncthreads();
+	p_out.vel[i].x = p_in.vel[i].x + F_i.x;
+	p_out.vel[i].y = p_in.vel[i].y + F_i.y;
+	p_out.vel[i].z = p_in.vel[i].z + F_i.z;
 
-	p_out.vel[i] = vel_i;
 	p_out.pos[i].x = fmaf(p_out.vel[i].x,dt, p_in.pos[i].x);
 	p_out.pos[i].y = fmaf(p_out.vel[i].y,dt, p_in.pos[i].y);
 	p_out.pos[i].z = fmaf(p_out.vel[i].z,dt, p_in.pos[i].z);
-}
-
-__global__ void particles_pos(t_particles p_in, t_particles p_out, float dt)
-{
-	//int i = blockIdx.x * blockDim.x + threadIdx.x;
-			__syncthreads();
 }
 
 void particles_read(FILE *fp, t_particles &p, int N)

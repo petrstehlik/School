@@ -37,7 +37,6 @@ int main(int argc, char **argv)
     printf("N: %d\n", N);
     printf("dt: %f\n", dt);
     printf("steps: %d\n", steps);
-    printf("threads/block: %d\n", thr_blc);
 
 	int blocksPerGrid = (thr_blc + N -1) / thr_blc;
 
@@ -52,9 +51,10 @@ int main(int argc, char **argv)
 	cout << "blocks: " << blocksPerGrid << endl; 
 	cout << "threads/block: " << thr_blc << endl; 
 
-	//const size_t size = N * sizeof(float);
     // alokace pameti na CPU
     t_particles particles_cpu;
+    
+    // Calculate size of array to be rounded to thr_blc
     int size = N/thr_blc;
     if (N % thr_blc != 0)
     	size++;
@@ -83,13 +83,10 @@ int main(int argc, char **argv)
     for (int i = 0; i < 2; i++)
     {
         // alokace pameti na GPU
-        // ZDE DOPLNTE ALOKACI PAMETI NA GPU
-
 		cudaMalloc(&(particles_gpu[i].pos), size * sizeof(float3));
 		cudaMalloc(&(particles_gpu[i].vel), size * sizeof(float4));
 
         // kopirovani castic na GPU
-        // ZDE DOPLNTE KOPIROVANI DAT Z CPU NA GPU
 		cudaMemcpy(particles_gpu[i].pos, particles_cpu.pos,
 				size * sizeof(float3), cudaMemcpyHostToDevice);
 		cudaMemcpy(particles_gpu[i].vel, particles_cpu.vel,
@@ -102,16 +99,17 @@ int main(int argc, char **argv)
     {
         // ZDE DOPLNTE SPUSTENI KERNELU
 		particles_simulate <<<blocksPerGrid, thr_blc>>> (particles_gpu[0], particles_gpu[1], N, dt, GDT);
-		//particles_pos<<<blocksPerGrid, thr_blc>>> (particles_gpu[0], particles_gpu[1], dt);
 		t_particles tmp = particles_gpu[0];
 		particles_gpu[1] = particles_gpu[0];
 		particles_gpu[0] = tmp;
     }
-    // ZDE DOPLNTE SYNCHRONIZACI
+
+    // synchronization
     cudaDeviceSynchronize();
+
     gettimeofday(&t2, 0);
 
-	// check for error
+	// check for errors in kernel
 	cudaError_t error = cudaGetLastError();
 	if(error != cudaSuccess)
 	{
@@ -124,8 +122,7 @@ int main(int argc, char **argv)
     double t = (1000000.0 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec) / 1000000.0;
     printf("Time: %f s\n", t);
 
-    // kpirovani castic zpet na CPU
-    // ZDE DOPLNTE KOPIROVANI DAT Z GPU NA CPU
+    // kopirovani castic zpet na CPU
 	cudaMemcpy(particles_cpu.pos, particles_gpu[1].pos,
 			N * sizeof(float3), cudaMemcpyDeviceToHost);
 	cudaMemcpy(particles_cpu.vel, particles_gpu[1].vel,
