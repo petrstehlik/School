@@ -6,57 +6,55 @@ Login: xlogin00
 Krok 0: základní implementace
 =============================
 vláken/blok    čas [s]
-32             ...
-...            ...
-1024           ...
+32             2.387941
+64			   1.476654
+128			   1.468634
+256			   1.569755
+512			   1.924041
+1024           1.963657
 
-Ideální počet vláken na blok:
+Ideální počet vláken na blok: Experimentalne jsem zjistil, ze nejvhodnejsi je 128 vlaken na blok. 
+
+Pozn: V pripade sdilene pameti je tento pocet vhodny do 32 000 castic. Pro vyssi pocty castic vykazovalo 1024 vlaken na blok lepsi cas.
 
 
 Krok 1: sdílená paměť
 =====================
 Došlo ke zrychlení?
 
-Zdůvodněte:
+Ano
+
+Zdůvodněte: Pri pouziti sdilene pameti vyuzivame nekolikrat stejny kus pameti (stejna data). To znamena ze se snizi pocet pristupu do globalni pameti. Navic sdilena pamet ma vyssi prenosove rychlosti nez globalni. Timto se snizi vliv memory-bound problemu.
 
 
-Porovnejte metriky s předchozím krokem:
-
-
+Porovnejte metriky s předchozím krokem: Kod se sdilenou pameti je rychlejsi cca o 40%. Cache hit je oproti 96% v prvnim kroce na 0% diky sdilene pameti, kterou nyni efektivneji spravujeme oproti cacheovani.
 
 Krok 2: analýza výkonu
 ======================
-N        čas CPU [s]    čas GPU [s]    zrychlení [-]
-1024     ...            ...            ...
-2048     ...            ...            ...
-4096     ...            ...            ...
-8192     ...            ...            ...
-16384
-32768	 ...            ...            ...
-...      ...            ...            ...
-131072   ...            ...            ...
+N        čas CPU [s]    čas GPU [s]		zrychlení [-]
+1 024    2.09           0.169272		12.4
+2 048    8.36           0.325671		26.1
+4 096    27.96          0.612903        45.6
+8 192    133.69         1.041903        127.9
+16 384	 447.63			3.500181		127.7
+32 768	 1790.43        14.024196       127.7
+65 536   --				52.328272 (1024)     --
+131072   --				209.347751 (1024)    --
+
+Pozn: zrychleni je vypocitano bez paralelizace vypoctu na CPU pres vlakna. Toto reseniby melo byt, jak je receno, 10x rychlejsi.
 
 Od jakého počtu částic se vyplatí počítat na grafické kartě?
 
+Jiz pri 1024 casticich je rychlost vypoctu vyznamne rychlejsi, ale dalsim faktorem je priprava pro spusteni kernelu na graficke karte, ktera je sama o sobe v takto malych poctech castic nekolikanasobne delsi nez samotny vypocet.
+
+Pokud budeme hledet pouze na zrychleni, to se ustali od 8192 castic a v tuto chvili lze povazovat rezii okolo spousteni kernelu za zanedbatelne.
+
+Pozn k implementaci: V Makefile je mozne si vsimnout upravenych flagu pro kompilaci. Zejmena dulezity flag je --use_fast_math, ktery zlepsil rychlost o cca 30% a vysledna presnost neutrpela (prvni 3 desetinna mista se nezmenila).
 
 Bonus: jiná mikroarchitektura GPU
 ===================================
+Projekt jsem spustil i na svem domacim PC s grafickou kartou NVidia GTX 1060 6GB s architekturou Pascal. Tato karta je postavena na nejnovejsi architekture od NVidia, coz je velmi znatelne poznat na vysledcich, pokud je porovname s vysleky na Tesla K20 (architektura Kepler), ktera je na Anselmu.
 
+Vysledky jsou zaznamenany v souboru res_gtx1060.txt, meril jsem step1 s implementovanou sdilenou pameti a zapnutym "fast_math".
 
-
-
-
-
-
-
-
-N: 131072
-dt: 0.001000
-steps: 1000
-threads/block: 128
-blocks: 1024
-threads/block: 128
-size of array: 131072
-
-
-Time: 361.535133 s
+Tento rozdil je zejmena diky vyssim taktum grafickeho jadra (700 vs 1500 MHz) a novejsi verzi NVidia CUDA 8.0. Dalsim faktorem muze byt vykonnejsi implementace matematickych operaci, kterych jsem se snazil co nejvice vyuzit v projektu pres CUDA Math API.
