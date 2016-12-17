@@ -51,6 +51,14 @@ int main(int argc, char **argv)
 	}
 	cout << "blocks: " << blocksPerGrid << endl; 
 	cout << "threads/block: " << thr_blc << endl; 
+/*
+	if (thr_blc > BLOCK_SIZE) {
+		cerr << "thr_blc must be 128 or less" << endl;
+		exit(-1);
+	}
+	*/
+
+	cudaSetDevice(0);
 
 	//const size_t size = N * sizeof(float);
     // alokace pameti na CPU
@@ -92,13 +100,13 @@ int main(int argc, char **argv)
 		cudaMemcpy(particles_gpu[i].vel, particles_cpu.vel,
 				size * sizeof(float3), cudaMemcpyHostToDevice);
     }
-
+	cudaDeviceSynchronize();
     // vypocet
     gettimeofday(&t1, 0);
     
     for (int s = 0; s < steps; s++)
     {
-		particles_simulate <<<blocksPerGrid, thr_blc>>> (particles_gpu[0], particles_gpu[1], N, dt, GDT);
+		particles_simulate <<<blocksPerGrid, thr_blc, sizeof(float4) * thr_blc>>> (particles_gpu[0], particles_gpu[1], N, dt, GDT);
 		t_particles tmp = particles_gpu[0];
 		particles_gpu[1] = particles_gpu[0];
 		particles_gpu[0] = tmp;

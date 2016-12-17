@@ -5,8 +5,8 @@
 N=8192#131072
 DT=0.001f
 STEPS=1000
-THREADS_PER_BLOCK=256#128
-#=932
+THREADS_PER_BLOCK=128
+#N=932
 #DT=0.00001f
 #STEPS=15000
 #INPUT=../test/thompson_points_932.dat
@@ -20,10 +20,10 @@ STEPS_T=543847
 INPUT_T=test.dat
 OUTPUT_T=step0.dat
 
-CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" -O3 -arch=sm_20
+CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" -O2 -arch=sm_20
 
 all:
-	nvcc -Xptxas="-v" $(CXXFLAGS) nbody.cu main.cu -o nbody
+	nvcc -Xptxas="-v" --use_fast_math $(CXXFLAGS) nbody.cu main.cu -o nbody
 
 gen:
 	icpc gen.cpp -o gen

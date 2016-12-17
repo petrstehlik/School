@@ -10,11 +10,12 @@ output=step0.dat
 
 #8192 0.001f 1000 128 ../input.dat ../step0.dat
 
-echo "N		thr_blc		Time [s]"
+echo "N	thr_blc	Time [s]"
 
-for t in `seq 4 7`
-do
-	T=$((2**t))
+#for t in `seq 7 -1 4`
+#do
+	T=1024
+	#$((2**t))
 
 	for i in `seq $pow 17`
 	do
@@ -28,5 +29,5 @@ do
 		echo "${N}	${T}	 ${timer}"
 
 	done
-done
+#done
 

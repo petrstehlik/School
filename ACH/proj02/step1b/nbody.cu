@@ -8,6 +8,8 @@
 #include <cfloat>
 #include "nbody.h"
 
+extern __shared__ float4 spos[];
+
 __device__ void particles_pos_dev(t_particles p_out, float dt, int i);
 
 __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, float dt, const float GDT)
@@ -20,12 +22,12 @@ __global__ void particles_simulate(t_particles p_in, t_particles p_out, int N, f
 	float3 F_i = {0.0f, 0.0f, 0.0f};
 
 	for (int tile = 0; tile < gridDim.x; tile++) {
-		__shared__ float4 spos_j[BLOCK_SIZE];
+		float4* spos_j = (float4*)spos;
 		spos_j[threadIdx.x] = p_in.pos[tile * blockDim.x + threadIdx.x];
 		__syncthreads();      
 
-		#pragma unroll 4
-		for (int j = 0; j < BLOCK_SIZE; j++) {
+		#pragma unroll
+		for (int j = 0; j < blockDim.x; j++) {
 			// Calculate distance between two points in each axis
 			d.x = spos_j[j].x - pos_i.x;
 			d.y = spos_j[j].y - pos_i.y;
