@@ -1,0 +1,60 @@
+N: 131072
+dt: 0.001000
+steps: 1
+threads/block: 128
+blocks: 1024
+threads/block: 128
+size of array: 131072
+==97859== NVPROF is profiling process 97859, command: ./nbody 131072 0.001f 1 128 131072.dat step0.dat
+==97859== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==97859== Replaying kernel "particles_simulate(t_particles, t_particles, int, float, float)" (done)           
+Time: 104.064671 s
+==97859== Profiling application: ./nbody 131072 0.001f 1 128 131072.dat step0.dat
+==97859== Profiling result:
+==97859== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "Tesla K20m (0)"
+	Kernel: particles_simulate(t_particles, t_particles, int, float, float)
+          1                        flop_sp_efficiency              FLOP Efficiency(Peak Single)      25.96%      25.96%      25.96%
+          1                             sm_efficiency                   Multiprocessor Activity      98.27%      98.27%      98.27%
+          1                        alu_fu_utilization      Arithmetic Function Unit Utilization    High (7)    High (7)    High (7)
+          1                          gld_transactions                  Global Load Transactions  2147606528  2147606528  2147606528
+          1                  l1_cache_global_hit_rate                        L1 Global Hit Rate      98.99%      98.99%      98.99%
+          1                             flop_count_sp  Floating Point Operations(Single Precisi  3.2642e+11  3.2642e+11  3.2642e+11
+          1                         flop_count_sp_add  Floating Point Operations(Single Precisi  6.8719e+10  6.8719e+10  6.8719e+10
+          1                         flop_count_sp_mul  Floating Point Operation(Single Precisio  8.5899e+10  8.5899e+10  8.5899e+10
+          1                         flop_count_sp_fma  Floating Point Operations(Single Precisi  8.5900e+10  8.5900e+10  8.5900e+10
+          1                     flop_count_sp_special  Floating Point Operations(Single Precisi  1.7180e+10  1.7180e+10  1.7180e+10
+          1                   stall_memory_dependency        Issue Stall Reasons (Data Request)       0.00%       0.00%       0.00%
+
+
+
+
+N: 16384
+dt: 0.001000
+steps: 1
+threads/block: 128
+blocks: 128
+threads/block: 128
+size of array: 16384
+==97535== NVPROF is profiling process 97535, command: ./nbody 16384 0.001f 1 128 131072.dat step0.dat
+==97535== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==97535== Replaying kernel "particles_simulate(t_particles, t_particles, int, float, float)" (done)           
+Time: 1.321372 s
+==97535== Profiling application: ./nbody 16384 0.001f 1 128 131072.dat step0.dat
+==97535== Profiling result:
+==97535== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "Tesla K20m (0)"
+	Kernel: particles_simulate(t_particles, t_particles, int, float, float)
+          1                        flop_sp_efficiency              FLOP Efficiency(Peak Single)      25.58%      25.58%      25.58%
+          1                             sm_efficiency                   Multiprocessor Activity      98.02%      98.02%      98.02%
+          1                        alu_fu_utilization      Arithmetic Function Unit Utilization    High (7)    High (7)    High (7)
+          1                          gld_transactions                  Global Load Transactions    33569792    33569792    33569792
+          1                  l1_cache_global_hit_rate                        L1 Global Hit Rate      99.66%      99.66%      99.66%
+          1                             flop_count_sp  Floating Point Operations(Single Precisi  5100371968  5100371968  5100371968
+          1                         flop_count_sp_add  Floating Point Operations(Single Precisi  1073741824  1073741824  1073741824
+          1                         flop_count_sp_mul  Floating Point Operation(Single Precisio  1342177280  1342177280  1342177280
+          1                         flop_count_sp_fma  Floating Point Operations(Single Precisi  1342226432  1342226432  1342226432
+          1                     flop_count_sp_special  Floating Point Operations(Single Precisi   268435456   268435456   268435456
+          1                   stall_memory_dependency        Issue Stall Reasons (Data Request)       0.01%       0.01%       0.01%

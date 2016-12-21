@@ -2,21 +2,25 @@
 # Projekt c. 2 (cuda)
 # Login: xstehl14
 
-N=8192
+N=8192#131072
 DT=0.001f
 STEPS=1000
 THREADS_PER_BLOCK=128
+#N=932
+#DT=0.00001f
+#STEPS=15000
+#INPUT=../test/thompson_points_932.dat
 
-INPUT=../input.dat
-OUTPUT=../step0.dat
+INPUT=../input.dat#131072.dat
+OUTPUT=../step1.dat
 
-N_T=2
+N_T = 2
 DT_T=0.00001f
 STEPS_T=543847
 INPUT_T=test.dat
 OUTPUT_T=step0.dat
 
-CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" -O3 -arch=sm_20
+CXXFLAGS = -Xcompiler="-Wall -O3 -fopenmp" -O2 -arch=sm_20
 
 all:
 	nvcc -Xptxas="-v" --use_fast_math $(CXXFLAGS) nbody.cu main.cu -o nbody
@@ -46,5 +50,6 @@ profile:
 		--metrics alu_fu_utilization \
 		--metrics gld_transactions \
 		--metrics l1_cache_global_hit_rate \
+		--metrics l1_shared_utilization \
 		--metrics stall_data_request \
-		./nbody $(N) $(DT) 1 $(THREADS_PER_BLOCK) $(INPUT) $(OUTPUT)
+		./nbody $(N) $(DT) 10 $(THREADS_PER_BLOCK) $(INPUT) $(OUTPUT)

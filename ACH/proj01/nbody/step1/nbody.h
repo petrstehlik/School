@@ -16,21 +16,21 @@
 /* struktura castice (hmotneho bodu) */
 typedef struct
 {
-    float pos_x;
-    float pos_y;
-    float pos_z;
-    float vel_x;
-    float vel_y;
-    float vel_z;
-    float weight;
-} t_particle;
+    float __declspec(align(32)) pos_x[N];
+    float __declspec(align(32)) pos_y[N];
+    float __declspec(align(32)) pos_z[N];
+    float __declspec(align(32)) vel_x[N];
+    float __declspec(align(32)) vel_y[N];
+    float __declspec(align(32)) vel_z[N];
+    float __declspec(align(32)) weight[N];
+} t_particles;
 
-typedef t_particle t_particles[N];
+//typedef t_particle t_particles[N];
 
-void particles_simulate(t_particles p);
+void particles_simulate(t_particles &p);
 
-void particles_read(FILE *fp, t_particles p);
+void particles_read(FILE *fp, t_particles &p);
 
-void particles_write(FILE *fp, t_particles p);
+void particles_write(FILE *fp, t_particles &p);
 
 #endif /* __NBODY_H__ */
