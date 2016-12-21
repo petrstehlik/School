@@ -1,17 +1,22 @@
-﻿Architektura procesorů (ACH 2016)
+Architektura procesorů (ACH 2016)
 Projekt č. 2
-Login: xlogin00
+Login: xstehl14
 
+Pozn: implementoval jsem i alternativni reseni step0 a step1.
+
+step0b: vypocet nbody pomoci dvou kernelu (druhy kernel spocital pouze posun v prostoru). Tim lze odstranit prohazovani hodnot pri vypoctu. Toto reseni nemelo zadny vliv na vykon.
+
+step1b: sdilena pamet implementovana jako dynamicka sdilena pamet (velikost pameti je nastavena pri spusteni programu, ne pri kompilaci). Toto reseni je pomalejsi nez staticky definovana sdilena pamet. Tuto zmenu mi me znalosti CUDA nedokazi vysvelit
 
 Krok 0: základní implementace
 =============================
-vláken/blok    čas [s]
-32             2.387941
-64			   1.476654
-128			   1.468634
-256			   1.569755
-512			   1.924041
-1024           1.963657
+vláken/blok    	čas [s]
+32             	2.387941
+64		1.476654
+128		1.468634
+256		1.569755
+512		1.924041
+1024		1.963657
 
 Ideální počet vláken na blok: Experimentalne jsem zjistil, ze nejvhodnejsi je 128 vlaken na blok. 
 
@@ -24,7 +29,7 @@ Došlo ke zrychlení?
 
 Ano
 
-Zdůvodněte: Pri pouziti sdilene pameti vyuzivame nekolikrat stejny kus pameti (stejna data). To znamena ze se snizi pocet pristupu do globalni pameti. Navic sdilena pamet ma vyssi prenosove rychlosti nez globalni. Timto se snizi vliv memory-bound problemu.
+Zdůvodněte: Pri pouziti sdilene pameti vyuzivame nekolikrat stejny kus pameti (stejna data). To znamena ze se snizi pocet pristupu do globalni pameti. Navic sdilena pamet ma vyssi prenosove rychlosti nez globalni. Timto se celkove snizi vliv memory-bound problemu.
 
 
 Porovnejte metriky s předchozím krokem: Kod se sdilenou pameti je rychlejsi cca o 40%. Cache hit je oproti 96% v prvnim kroce na 0% diky sdilene pameti, kterou nyni efektivneji spravujeme oproti cacheovani.
@@ -34,14 +39,16 @@ Krok 2: analýza výkonu
 N        čas CPU [s]    čas GPU [s]		zrychlení [-]
 1 024    2.09           0.169272		12.4
 2 048    8.36           0.325671		26.1
-4 096    27.96          0.612903        45.6
-8 192    133.69         1.041903        127.9
-16 384	 447.63			3.500181		127.7
-32 768	 1790.43        14.024196       127.7
-65 536   --				52.328272 (1024)     --
-131072   --				209.347751 (1024)    --
+4 096    27.96          0.612903        	45.6
+8 192    133.69         1.041903        	127.9
+16 384	 447.63		3.500181		127.7
+32 768	 1790.43        14.024196       	127.7
+65 536   --		52.328272 (1024)     	--
+131072   --		209.347751 (1024)    	--
 
-Pozn: zrychleni je vypocitano bez paralelizace vypoctu na CPU pres vlakna. Toto reseniby melo byt, jak je receno, 10x rychlejsi.
+Pozn: Pokud tomu neni uvedeno v zavorce, cas vypoctu na GPU je meren se 128 vlakny na blok.
+
+Pozn 2: zrychleni je vypocitano bez paralelizace vypoctu na CPU pres vlakna. Toto reseni by melo byt, jak je receno, 10x rychlejsi. Pro 65 000 castic a vice jsou casy vypoctu natolik dlouhe, ze je na Anselmu nedokoncim.
 
 Od jakého počtu částic se vyplatí počítat na grafické kartě?
 
@@ -55,6 +62,6 @@ Bonus: jiná mikroarchitektura GPU
 ===================================
 Projekt jsem spustil i na svem domacim PC s grafickou kartou NVidia GTX 1060 6GB s architekturou Pascal. Tato karta je postavena na nejnovejsi architekture od NVidia, coz je velmi znatelne poznat na vysledcich, pokud je porovname s vysleky na Tesla K20 (architektura Kepler), ktera je na Anselmu.
 
-Vysledky jsou zaznamenany v souboru res_gtx1060.txt, meril jsem step1 s implementovanou sdilenou pameti a zapnutym "fast_math".
+Vysledky jsou zaznamenany v souboru res_gtx1060.txt, meril jsem step1 s implementovanou sdilenou pameti a zapnutym "fast_math". Rozdil je cca 45% ve prospech GTX 1060.
 
 Tento rozdil je zejmena diky vyssim taktum grafickeho jadra (700 vs 1500 MHz) a novejsi verzi NVidia CUDA 8.0. Dalsim faktorem muze byt vykonnejsi implementace matematickych operaci, kterych jsem se snazil co nejvice vyuzit v projektu pres CUDA Math API.

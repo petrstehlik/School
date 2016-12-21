@@ -1,7 +1,7 @@
 /*
  * Architektura procesoru (ACH 2016)
  * Projekt c. 2 (cuda)
- * Login: xlogin00
+ * Login: xstehl14
  */
 
 #include <cmath>

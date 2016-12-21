@@ -1,6 +1,6 @@
 # Architektura procesoru (ACH 2016)
 # Projekt c. 2 (cuda)
-# Login: xlogin00
+# Login: xstehl14
 
 N=8192
 DT=0.001f
