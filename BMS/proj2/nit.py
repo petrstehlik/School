@@ -26,15 +26,49 @@ def readDescriptors(filehandle, k):
 NIT = dict()
 
 def printNIT():
-	print "Network name: ", NIT['network_name']
-	print "Network ID: ", NIT['network_id']
-	print "Bandwidth: ", NIT['bandwidth']
-	print "Constellation: ", NIT['constellation']
-	print "Guard interval: ", NIT['guard_interval']
-	print "Code rate: ", NIT['code_rate']
+	print "Network name: %s" % NIT['network_name']
+	print "Network ID: %s" % NIT['network_id']
+	print "Bandwidth: %s" % NIT['bandwidth']
+	print "Constellation: %s" % NIT['constellation']
+	print "Guard interval: %s" % NIT['guard_interval']
+	print "Code rate: %s" % NIT['code_rate']
 	print ""
 
+def calcBitrate():
+	base = 49764705.88
 
+	if NIT['constellation'] == '64-QAM':
+		modulation = 0.75
+	elif NIT['constellation'] == '16-QAM':
+		modulation = 0.5
+	elif NIT['constellation'] == 'QPSK':
+		modulation = 0.25
+
+	if NIT['code_rate'] == '1/2':
+		code_rate = 0.5
+	elif NIT['code_rate'] == '2/3':
+		code_rate = 2.0/3.0
+	elif NIT['code_rate'] == '3/4':
+		code_rate = 0.75
+	elif NIT['code_rate'] == '5/6':
+		code_rate = 5.0/6.0
+	elif NIT['code_rate'] == '7/8':
+		code_rate = 7.0/8.0
+
+	if NIT['guard_interval'] == '1/32':
+		guard_interval = 32.0/33.0
+	elif NIT['guard_interval'] == '1/16':
+		guard_interval = 16.0/17.0
+	elif NIT['guard_interval'] == '1/8':
+		guard_interval = 8.0/9.0
+	elif NIT['guard_interval'] == '1/4':
+		guard_interval = 4.0/5.0
+
+	mbps = 1000.0 * 1000.0
+
+	C = base * modulation * code_rate * guard_interval
+
+	return(C / mbps)
 
 NIT_desc = [0x40, 0x41, 0x42, 0x43, 0x44, 0x4A, 0x5A,0x5B,0x5F,0x62,0x6C, 0x6D, 0x73, 0x77, 0x79, 0x7D, 0x7E, 0x7F]
 
