@@ -15,11 +15,16 @@ import tkMessageBox
 import tkFileDialog
 import sys
 from optparse import OptionParser
+from cStringIO import StringIO
+import pdb
+
+from nit import printNIT, parseNITSection
 
 programs = dict()
 packets = dict()
-found = False
+SDTpacket = ""
 NIT = {"network_id" : 0}
+zero = 0
 
 class SystemClock:
 	def __init__(self):
@@ -165,18 +170,17 @@ def parsePESHeader(filehandle, startPos,PESPktInfo):
 		auType = parseIndividualPESPayload(filehandle, n+k)
 		PESPktInfo.setAUType(auType)
 
+
+PAT = dict()
+
 def parsePATSection(filehandle, k, p=False):
 
 	local = readFile(filehandle,k,4)
 	table_id = (local>>24)
 	if (table_id != 0x0):
-		print 'Ooops! error in parsePATSection()!'
-		return
+		raise Exception('Table ID not valid (' + str(table_id) + ')')
 
-	if p: print '------- PAT Information -------'
 	section_length = (local>>8)&0xFFF
-	if p: print 'section_length = %d' %section_length
-
 	transport_stream_id = (local&0xFF) << 8;
 	local = readFile(filehandle, k+4, 4)
 	transport_stream_id += (local>>24)&0xFF
@@ -185,30 +189,22 @@ def parsePATSection(filehandle, k, p=False):
 	current_next_indicator = (local>>16)&0x1
 	section_number = (local>>8)&0xFF
 	last_section_number = local&0xFF;
-	if p: print 'section_number = %d, last_section_number = %d' %(section_number, last_section_number)
 
 	length = section_length - 4 - 5
 	j = k + 8
 
 	while (length > 0):
 		local = readFile(filehandle, j, 4)
-		program_number = (local >> 16)
-		program_map_PID = local & 0x1FFF
-		if p: print 'program_number = 0x%X' %program_number
-		if (program_number == 0):
-			if p: print 'network_PID = 0x%X' %program_map_PID
-		else:
-			if p: print 'program_map_PID = 0x%4X' %program_map_PID
+		program_number = (local>>16)
+		program_map_PID = local&0x1FFF
+			#if p: print 'program_map_PID = 0x%04X' %program_map_PID
 
-		if program_map_PID not in programs:
-			programs[program_map_PID] = { "packets" : 1 }
-		else:
-			programs[program_map_PID]["packets"] += 1
+		if program_number != 0 and hex(program_map_PID) not in NIT:
+			PAT["0x{:04X}".format(program_map_PID)] = {"service_provider": "", "service_name" : "", "program_number" : hex(program_number)}
 
 		length = length - 4;
 		j += 4
 
-		if p: print ''
 
 def parsePMTSection(filehandle, k):
 
@@ -334,119 +330,93 @@ def parseSITSection(filehandle, k):
 		length -= 4 + service_loop_length
 	print ''
 
-def readDescriptors(filehandle, k):
-	desc = readFile(filehandle, k, 2)
-	return (desc)&0xFF, (desc>>8)&0xFF
 
-NIT_done = False
 
-NIT_desc = [0x40, 0x41, 0x42, 0x43, 0x44, 0x4A, 0x5A,0x5B,0x5F,0x62,0x6C, 0x6D, 0x73, 0x77, 0x79, 0x7D, 0x7E, 0x7F]
 
-#5A terestial delivery
 
-def parseNITSection(filehandle, k):
+
+def parseSDTSection(rawPacket, k):
+	#pdb.set_trace()
+	#print('----------------SDT packet-----------')
+	global NIT
+	filehandle = StringIO(rawPacket)
+
+	#print(filehandle.read().encode('hex'))
+
 	table_id = readFile(filehandle, k, 1)
-	section_length = readFile(filehandle, k+1, 2) & 0xFFF
-	network_id = readFile(filehandle, k+3, 2)
-	desc_length = (readFile(filehandle, k + 8, 2))&0xFFF
+	section_length = (readFile(filehandle, k+1, 2) & 0xFFF) - 12
+	ts_id = readFile(filehandle, k +3, 2)
+	current_next_indicator = readFile(filehandle, k+5, 1)&0x1
+	section_number = readFile(filehandle, k+6, 1)
+	last_section_number = readFile(filehandle, k+7, 1)
+	orig_network_id = readFile(filehandle, k+8, 2)
 
-	NIT['table_id'] = hex(table_id)
-	NIT['network_id'] = network_id
-	NIT['desc_length'] = desc_length
+	#print("section_length: " + str(section_length))
 
-	print("desc_length: " + str(desc_length))
+	try:
+		sec = 0
+		while sec < section_length:
+			service_id = readFile(filehandle, k + 11 + sec, 2)
+			#print("service_id", hex(service_id))
 
-	# first part of NIT
-	if desc_length != 0:
-		i = 0
-		while i <= NIT['desc_length']:
-			length, tag = readDescriptors(filehandle, k + 10 + i)
+			desc_loop_len = readFile(filehandle, k + 14 + sec, 2)& 0xFFF
+			#print("desc_loop_len", desc_loop_len)
 
-			#if int(tag) not in NIT_desc and tag < 0x80:
-			#	raise Exception("BAD DESCRIPTOR")
+			i = 0
+			m = k + 14 + 2 + sec
+			while i <= desc_loop_len:
+				#print("i", i)
+				tag = readFile(filehandle, m + i, 1)
+				length = readFile(filehandle, m + i + 1, 1)
 
-			#print(tag)
-			print("tag: " + str(tag) + " len: " + str(length))
+				# parse service_descriptor
+				if tag == 0x48:
+					provider_name = ""
+					provider_name_len = readFile(filehandle,  m + i + 3, 1)
+					#print('provider_name_len', provider_name_len)
+					j = 1
+					while j <= provider_name_len:
+						provider_name += chr(readFile(filehandle, m + i + 3 + j, 1))
+						j += 1
 
-			if tag == 0x40:
-				name = ""
-				j = 2
-				while j <= length+1:
-					name += chr(readFile(filehandle, k + 10 + i + j, 1))
-					j += 1
-				NIT['network_name'] = name
+					service_name = ""
+					service_name_len = readFile(filehandle,  m + i + provider_name_len + 4, 1)
 
-			elif tag == 0x5A:
-				local = readFile(filehandle, k + 16 + i, 1)
-				NIT["bandwidth"] = local&0xE0
-				print("bandwidth" + str(local&0xE0))
-				print(NIT)
-				exit(0)
+					j = 1
+					while j <= service_name_len:
+						service_name += chr(readFile(filehandle, m + 4 + i + j + provider_name_len, 1))
+						j += 1
 
-			i += length + 2
-	m = k + desc_length + 10
 
-	NIT['ts_length'] = (readFile(filehandle, m, 2))&0xFFF
+					#print(provider_name)
+					#print(service_name)
 
-	if NIT['ts_length'] > 0:
-		desc_len = readFile(filehandle, m+6, 2)&0xFFF
+					for key in PAT:
+						print "prog num", PAT[key]["program_number"]
+						print "service_id", hex(service_id)
+						if hex(service_id) == PAT[key]["program_number"]:
+							print("match!")
+							PAT[key]["service_name"] = service_name
+							PAT[key]["service_provider"] = provider_name
+							print(PAT)
 
-		i = 0
 
-		while i < desc_len:
-			length, tag = readDescriptors(filehandle, m + 8 + i)
-			print("#2 tag: " + str(tag) + " len: " + str(length))
+				i += length + 2
+			sec += desc_loop_len + 5
+			#print("sec:", sec)
+	except IOError:
+		print("io error")
+		filehandle.seek(0,0)
+		print(filehandle.read().encode('hex'))
+		filehandle.seek(0,0)
+		print(filehandle.read())
+		return
 
-			if tag == 0x5A:
-				NIT['bandwidth'] = readFile(filehandle, m + 8 + i + 6, 1)>>5
 
-				if NIT['bandwidth'] != 0:
-					raise Exception("I am ready only for 8 MHz bandwidth")
-				else:
-					NIT['bandwidth'] = '8 Mhz'
 
-				m += 1
-
-				loc = readFile(filehandle, m + 8 + i + 6, 2)
-
-				constellation = loc>>14
-
-				if constellation == 0:
-					NIT['constellation'] = 'QPSK'
-				elif constellation == 1:
-					NIT['constellation'] = '16-QAM'
-				elif constellation == 2:
-					NIT['constellation'] = '64-QAM'
-
-				code_rate = (loc>>8)&0x7
-
-				if code_rate == 0:
-					NIT['code_rate'] = '1/2'
-				elif code_rate == 1:
-					NIT['code_rate'] = '2/3'
-				elif code_rate == 2:
-					NIT['code_rate'] = '3/4'
-				elif code_rate == 3:
-					NIT['code_rate'] = '5/6'
-				elif code_rate == 4:
-					NIT['code_rate'] = '7/8'
-
-				guard_interval = (loc>>3)&0x3
-
-				if guard_interval == 0:
-					NIT['guard_interval'] = '1/32'
-				elif guard_interval == 1:
-					NIT['guard_interval'] = '1/16'
-				elif guard_interval == 2:
-					NIT['guard_interval'] = '1/8'
-				elif guard_interval == 3:
-					NIT['guard_interval'] = '1/4'
-
-			i += length + 2
-
-	print NIT
-
+	#print("0x{:04X}".format(ts_id))
 def parseTSMain(filehandle, packet_size, mode, pid, psi_mode, searchItem):
+	global SDTpacket, zero
 
 	PCR = SystemClock()
 	PESPktInfo = PESPacketInfo()
@@ -520,30 +490,38 @@ def parseTSMain(filehandle, packet_size, mode, pid, psi_mode, searchItem):
 				elif (((PESstartCode&0xFFFFFF00) != 0x00000100)&(payload_unit_start_indicator == 1)):
 """
 				pointer_field = (PESstartCode >> 24)
-				table_id = readFile(filehandle,n+Adaptation_Field_Length+4+1+pointer_field,1)
 
 				#if ((table_id == 0x0)&(PID != 0x0)):
 				#		print(table_id)
 				#		print 'Something wrong in packet No. %d' %packetCount
 
+				if (adapt_field == 0x3):
+					Adaptation_Field_Length = readFile(filehandle, n + 4, 1)
+
 				k = n+Adaptation_Field_Length+4+1+pointer_field
+				table_id = readFile(filehandle, k, 1)
 
 				# PAT packet
-				"""if (table_id == 0x0):
-					if PID not in PIDList:
-						PIDList.append(PID)
-					else:
-						n += packet_size
-						packetCount += 1
-						continue"""
-
+				if (PID == 0x0):
 					#print 'pasing PAT Packet! packet No. %d, PID = 0x%X' %(packetCount, PID)
-					#parsePATSection(filehandle, k)
+					parsePATSection(filehandle, k, p=True)
 
 				# NIT packet
-				if (PID == 0x10):
-					#if (table_id == 0x0040):
+				elif (PID == 0x10):
+					#print("found NIT packet")
 					parseNITSection(filehandle, k)
+
+				# SDT
+				elif PID == 0x11:
+					#pdb.set_trace()
+					if payload_unit_start_indicator == 1:
+						if SDTpacket != "":
+							parseSDTSection(SDTpacket, 0)
+						filehandle.seek(k,0)
+						SDTpacket = filehandle.read(184)
+					else:
+						filehandle.seek(k - pointer_field,0)
+						SDTpacket += filehandle.read(184)
 
 
 				# PMT packet
@@ -664,15 +642,21 @@ def Main():
 
 
 if __name__ == "__main__":
+	global NIT
 
 	Main()
-	print(programs)
-	print(packets)
+	#print(programs)
+	#print(packets)
 
-	for pid in packets:
-		if pid in programs:
-			print("\t\t" + hex(pid))
-			print(packets[pid])
-			print(programs[pid])
+	#for pid in packets:
+#		if pid in programs:
+#			print("\t\t" + hex(pid))
+#			print(packets[pid])
+#			print(programs[pid])
 
-	print found
+	printNIT()
+
+	print PAT
+
+	for key, value in sorted(PAT.iteritems()):
+		print "%s: %s" % (key, value)
