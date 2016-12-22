@@ -45,3 +45,4 @@ tags
 
 
 *.dSYM
+*/*.DS_Store

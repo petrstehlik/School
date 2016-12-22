@@ -13,11 +13,14 @@
 /* gravitacni konstanta */
 #define G 6.67384e-11f
 
+// Constant for shared memory
+#define BLOCK_SIZE 128
+
 /* struktura castic */
 typedef struct
 {
-    float3 *pos;
-    float4 *vel;
+    float4 *pos;
+    float3 *vel;
 
 } t_particles;
 

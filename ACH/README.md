@@ -71,3 +71,29 @@ pouze jeden exit, bez break
 * Bez vnitrnich smycek
 
 * Bez 'function calls' - vyjimkou sin, log, inline, elemental, OMP SIMD fce
+
+Proc nejde udelat barieru v CUDA bloku?
+Protoze by vsichni zastavili na bariere a cekaji az se ostatni dostanou k bariere -> deadlock
+
+
+# CUDA samples (anselm):
+/apps/all/CUDA/7.5.18/samples
+
+!!!nulovat musim mimo kernel (memset)!!!
+
+bacha na kernel
+	m[x] se nenacacheuje pokud m je parametr
+	zarovnavat na 32*float
+	nemusim mit 1 prvek na 1 vlakno
+	x-souradnice vzdy 32
+	nedelat divergenci v ramci jednoho warpu
+
+Redukce
+	* scitame dve hodnoty az nam vyjde jedna hodnota
+	* *divergence kodu*: ruzna vlakna v jednom warpu vykonavaji ruzne instrukce
+
+
+TEST
+`if (blockIdx.x == 0 && threadIdx.x == 0) sum = 0.0f;`
+	--> toto nemuzu udelat, protoze kernel mi nezajistuje spousteni vporadi u threadu a bloku > musim nulovat na host
+

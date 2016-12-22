@@ -37,6 +37,7 @@ int main(int argc, char **argv)
     printf("N: %d\n", N);
     printf("dt: %f\n", dt);
     printf("steps: %d\n", steps);
+    //printf("threads/block: %d\n", thr_blc);
 
 	int blocksPerGrid = (thr_blc + N -1) / thr_blc;
 
@@ -50,11 +51,18 @@ int main(int argc, char **argv)
 	}
 	cout << "blocks: " << blocksPerGrid << endl; 
 	cout << "threads/block: " << thr_blc << endl; 
+/*
+	if (thr_blc > BLOCK_SIZE) {
+		cerr << "thr_blc must be 128 or less" << endl;
+		exit(-1);
+	}
+	*/
 
+	cudaSetDevice(0);
+
+	//const size_t size = N * sizeof(float);
     // alokace pameti na CPU
     t_particles particles_cpu;
-    
-    // Calculate size of array to be rounded to thr_blc
     int size = N/thr_blc;
     if (N % thr_blc != 0)
     	size++;
@@ -64,8 +72,8 @@ int main(int argc, char **argv)
     cout << "size of array: " << size << endl;
 
     /* Host allocation */
-    cudaHostAlloc(&particles_cpu.pos, size * sizeof(float3),cudaHostAllocDefault);
-    cudaHostAlloc(&particles_cpu.vel, size * sizeof(float4), cudaHostAllocDefault);
+    cudaHostAlloc(&particles_cpu.pos, size * sizeof(float4),cudaHostAllocDefault);
+    cudaHostAlloc(&particles_cpu.vel, size * sizeof(float3), cudaHostAllocDefault);
 	
 	const float GDT = G * dt;
 
@@ -83,33 +91,30 @@ int main(int argc, char **argv)
     for (int i = 0; i < 2; i++)
     {
         // alokace pameti na GPU
-		cudaMalloc(&(particles_gpu[i].pos), size * sizeof(float3));
-		cudaMalloc(&(particles_gpu[i].vel), size * sizeof(float4));
+		cudaMalloc(&(particles_gpu[i].pos), size * sizeof(float4));
+		cudaMalloc(&(particles_gpu[i].vel), size * sizeof(float3));
 
         // kopirovani castic na GPU
 		cudaMemcpy(particles_gpu[i].pos, particles_cpu.pos,
-				size * sizeof(float3), cudaMemcpyHostToDevice);
-		cudaMemcpy(particles_gpu[i].vel, particles_cpu.vel,
 				size * sizeof(float4), cudaMemcpyHostToDevice);
+		cudaMemcpy(particles_gpu[i].vel, particles_cpu.vel,
+				size * sizeof(float3), cudaMemcpyHostToDevice);
     }
-
+	cudaDeviceSynchronize();
     // vypocet
     gettimeofday(&t1, 0);
+    
     for (int s = 0; s < steps; s++)
     {
-        // ZDE DOPLNTE SPUSTENI KERNELU
 		particles_simulate <<<blocksPerGrid, thr_blc>>> (particles_gpu[0], particles_gpu[1], N, dt, GDT);
 		t_particles tmp = particles_gpu[0];
 		particles_gpu[1] = particles_gpu[0];
 		particles_gpu[0] = tmp;
     }
-
-    // synchronization
     cudaDeviceSynchronize();
-
     gettimeofday(&t2, 0);
 
-	// check for errors in kernel
+	// check for error
 	cudaError_t error = cudaGetLastError();
 	if(error != cudaSuccess)
 	{
@@ -122,11 +127,12 @@ int main(int argc, char **argv)
     double t = (1000000.0 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec) / 1000000.0;
     printf("Time: %f s\n", t);
 
-    // kopirovani castic zpet na CPU
-	cudaMemcpy(particles_cpu.pos, particles_gpu[1].pos,
-			N * sizeof(float3), cudaMemcpyDeviceToHost);
-	cudaMemcpy(particles_cpu.vel, particles_gpu[1].vel,
+    // kpirovani castic zpet na CPU
+    // ZDE DOPLNTE KOPIROVANI DAT Z GPU NA CPU
+	cudaMemcpy(particles_cpu.pos, particles_gpu[0].pos,
 			N * sizeof(float4), cudaMemcpyDeviceToHost);
+	cudaMemcpy(particles_cpu.vel, particles_gpu[0].vel,
+			N * sizeof(float3), cudaMemcpyDeviceToHost);
 
     // ulozeni castic do souboru
     fp = fopen(argv[6], "w");
