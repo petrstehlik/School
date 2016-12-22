@@ -1,6 +1,17 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+# Description: project #2 module for BMS course @ FIT VUT
+# This module parses NIT and stores info about the stream
+
 import struct
 
+NIT = dict()
+
 def readFile(filehandle, startPos, width):
+	"""
+	Same as in the main file, just lazy to link it
+	"""
 	filehandle.seek(startPos,0)
 	if width == 4:
 		string = filehandle.read(4)
@@ -22,9 +33,6 @@ def readDescriptors(filehandle, k):
 	desc = readFile(filehandle, k, 2)
 	return (desc)&0xFF, (desc>>8)&0xFF
 
-
-NIT = dict()
-
 def printNIT():
 	print "Network name: %s" % NIT['network_name']
 	print "Network ID: %s" % NIT['network_id']
@@ -35,6 +43,11 @@ def printNIT():
 	print ""
 
 def calcBitrate():
+	"""
+	Calculate bitrate of the whole stream
+
+	Origin: http://www.dveo.com/broadcast/bit-rate-calculation-for-COFDM-modulation.shtml
+	"""
 	base = 49764705.88
 
 	if NIT['constellation'] == '64-QAM':
@@ -70,14 +83,17 @@ def calcBitrate():
 
 	return(C / mbps)
 
-NIT_desc = [0x40, 0x41, 0x42, 0x43, 0x44, 0x4A, 0x5A,0x5B,0x5F,0x62,0x6C, 0x6D, 0x73, 0x77, 0x79, 0x7D, 0x7E, 0x7F]
-
 def parseNITSection(filehandle, k):
+	"""
+	Parse NIT and extract all needed info from descriptors
+	"""
+
 	table_id = readFile(filehandle, k, 1)
 	section_length = readFile(filehandle, k+1, 2) & 0xFFF
 	network_id = readFile(filehandle, k+3, 2)
 	desc_length = (readFile(filehandle, k + 8, 2))&0xFFF
 
+	# We need to parse the table only the first time we have NIT packet
 	if 'network_id' in NIT and network_id == NIT['network_id']:
 		return
 
@@ -90,9 +106,6 @@ def parseNITSection(filehandle, k):
 		i = 0
 		while i <= NIT['desc_length']:
 			length, tag = readDescriptors(filehandle, k + 10 + i)
-
-			#if int(tag) not in NIT_desc and tag < 0x80:
-			#	raise Exception("BAD DESCRIPTOR")
 
 			if tag == 0x40:
 				name = ""
@@ -167,3 +180,4 @@ def parseNITSection(filehandle, k):
 					NIT['guard_interval'] = '1/4'
 
 			i += length + 2
+
