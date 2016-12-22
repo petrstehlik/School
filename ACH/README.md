@@ -75,7 +75,6 @@ pouze jeden exit, bez break
 Proc nejde udelat barieru v CUDA bloku?
 Protoze by vsichni zastavili na bariere a cekaji az se ostatni dostanou k bariere -> deadlock
 
-
 # CUDA samples (anselm):
 /apps/all/CUDA/7.5.18/samples
 
