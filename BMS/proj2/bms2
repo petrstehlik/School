@@ -1,0 +1,304 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import struct
+import sys
+from cStringIO import StringIO
+from os.path import basename, splitext
+
+from nit import printNIT, parseNITSection, calcBitrate
+
+packets = dict()
+SDTpacket = ""
+NIT = {"network_id" : 0}
+PAT = dict()
+packetCount = 0
+
+def readFile(filehandle, startPos, width):
+	filehandle.seek(startPos,0)
+	if width == 4:
+		string = filehandle.read(4)
+		if string == '':
+			raise IOError
+		return struct.unpack('>L',string[:4])[0]
+	elif width == 2:
+		string = filehandle.read(2)
+		if string == '':
+			raise IOError
+		return struct.unpack('>H',string[:2])[0]
+	elif width == 1:
+		string = filehandle.read(1)
+		if string == '':
+			raise IOError
+		return struct.unpack('>B',string[:1])[0]
+
+def parsePATSection(filehandle, k):
+
+	local = readFile(filehandle,k,4)
+	table_id = (local>>24)
+	if (table_id != 0x0):
+		raise Exception('Table ID not valid (' + str(table_id) + ')')
+
+	section_length = (local>>8)&0xFFF
+	transport_stream_id = (local&0xFF) << 8;
+	local = readFile(filehandle, k+4, 4)
+	transport_stream_id += (local>>24)&0xFF
+	transport_stream_id = (local >> 16)
+	version_number = (local>>17)&0x1F
+	current_next_indicator = (local>>16)&0x1
+	section_number = (local>>8)&0xFF
+	last_section_number = local&0xFF;
+
+	length = section_length - 4 - 5
+	j = k + 8
+
+	while (length > 0):
+		local = readFile(filehandle, j, 4)
+		program_number = (local>>16)
+		program_map_PID = local&0x1FFF
+
+		if program_number != 0 and hex(program_map_PID) not in PAT:
+			PAT[hex(program_map_PID)] = {
+					"service_provider": "",
+					"service_name" : "",
+					"program_number" : hex(program_number),
+					"pmt" : []
+				}
+
+		length = length - 4;
+		j += 4
+
+
+def parsePMTSection(filehandle, k, PID):
+	"""
+	Parse PMT (Program Map Table) in order to map all PIDs to each program
+	"""
+
+	local = readFile(filehandle,k,4)
+	table_id = (local>>24)
+	section_length = (local>>8)&0xFFF
+	program_number = (local&0xFF)<<8;
+
+	if (table_id != 0x2):
+		raise Exception('table_id doesn\'t match 0x2 (' + hex(table_id) +')!')
+
+	local = readFile(filehandle, k+4, 4)
+	program_number += (local>>24)&0xFF
+	version_number = (local>>17)&0x1F
+	current_next_indicator = (local>>16)&0x1
+	section_number = (local>>8)&0xFF
+	last_section_number = local&0xFF;
+
+	local = readFile(filehandle, k+8, 4)
+	PCR_PID = (local>>16)&0x1FFF
+	program_info_length = local&0xFFF
+
+	# Read first descriptor field
+	n = program_info_length
+	m = k + 12;
+	while (n>0):
+		descriptor_tag = readFile(filehandle, m, 1)
+		descriptor_length = readFile(filehandle, m+1, 1)
+		n -= descriptor_length + 2
+		m += descriptor_length + 2
+
+	j = k + 12 + program_info_length
+	length = section_length - 13 - program_info_length
+
+	# Read second descriptor field
+	# We are really interested only in elementary PID
+	while (length > 0):
+		local1 = readFile(filehandle, j, 1)
+		local2 = readFile(filehandle, j+1, 4)
+
+		stream_type = local1;
+		elementary_PID = (local2>>16)&0x1FFF
+		ES_info_length = local2&0xFFF
+
+		if elementary_PID not in PAT[hex(PID)]["pmt"]:
+			PAT[hex(PID)]["pmt"].append(elementary_PID)
+
+		n = ES_info_length
+		m = j + 5;
+		while (n>0):
+			descriptor_tag = readFile(filehandle, m, 1)
+			descriptor_length = readFile(filehandle, m+1, 1)
+			n -= descriptor_length + 2
+			m += descriptor_length + 2
+
+		j += 5 + ES_info_length
+		length -= 5 + ES_info_length
+
+
+def parseSDTSection(rawPacket, k):
+	global NIT
+	filehandle = StringIO(rawPacket)
+
+	table_id = readFile(filehandle, k, 1)
+	section_length = (readFile(filehandle, k+1, 2) & 0xFFF) - 12
+	ts_id = readFile(filehandle, k +3, 2)
+	current_next_indicator = readFile(filehandle, k+5, 1)&0x1
+	section_number = readFile(filehandle, k+6, 1)
+	last_section_number = readFile(filehandle, k+7, 1)
+	orig_network_id = readFile(filehandle, k+8, 2)
+
+	try:
+		sec = 0
+		while sec < section_length:
+			service_id = readFile(filehandle, k + 11 + sec, 2)
+
+			desc_loop_len = readFile(filehandle, k + 14 + sec, 2)& 0xFFF
+
+			i = 0
+			m = k + 14 + 2 + sec
+			while i <= desc_loop_len:
+				tag = readFile(filehandle, m + i, 1)
+				length = readFile(filehandle, m + i + 1, 1)
+
+				# parse service_descriptor
+				if tag == 0x48:
+					provider_name = ""
+					provider_name_len = readFile(filehandle,  m + i + 3, 1)
+					j = 1
+					while j <= provider_name_len:
+						provider_name += chr(readFile(filehandle, m + i + 3 + j, 1))
+						j += 1
+
+					service_name = ""
+					service_name_len = readFile(filehandle,  m + i + provider_name_len + 4, 1)
+
+					j = 1
+					while j <= service_name_len:
+						service_name += chr(readFile(filehandle, m + 4 + i + j + provider_name_len, 1))
+						j += 1
+
+					for key in PAT:
+						if hex(service_id) == PAT[key]["program_number"]:
+							PAT[key]["service_name"] = service_name
+							PAT[key]["service_provider"] = provider_name
+
+				i += length + 2
+			sec += desc_loop_len + 5
+	except IOError:
+		return
+
+
+
+def parseTSMain():
+	filename = sys.argv[1]
+
+	filehandle = open(filename,'rb')
+
+	global SDTpacket, zero
+
+	n = 0
+	packet_size = 188
+	global packetCount
+
+	try:
+		while(True):
+			PacketHeader = readFile(filehandle,n,4)
+
+			if ((PacketHeader>>24) != 0x47):
+				raise Exception("SyncByte not found!")
+
+			payload_unit_start_indicator = (PacketHeader>>22)&0x1
+
+			PID = (PacketHeader>>8)&0x1FFF
+
+			if PID not in packets:
+				packets[PID] = 0
+			else:
+				packets[PID] += 1
+
+			adapt_field = (PacketHeader>>4)&0x3
+			Adaptation_Field_Length = 0
+
+			if (adapt_field == 0x1) or (adapt_field == 0x3):
+
+				pointer_field = readFile(filehandle, n+4, 4)>>24
+
+				# Adapt Field has length
+				if (adapt_field == 0x3):
+					Adaptation_Field_Length = readFile(filehandle, n+4, 1)
+
+				k = n + Adaptation_Field_Length + 5 + pointer_field
+
+				table_id = readFile(filehandle, k, 1)
+
+				# PAT packet
+				if (PID == 0x0):
+					parsePATSection(filehandle, k)
+
+				# NIT packet
+				elif (PID == 0x10):
+					parseNITSection(filehandle, k)
+
+				# SDT packet
+				elif PID == 0x11:
+					if payload_unit_start_indicator == 1:
+						if SDTpacket != "":
+							parseSDTSection(SDTpacket, 0)
+						filehandle.seek(k,0)
+						SDTpacket = filehandle.read(183)
+					else:
+						filehandle.seek(k - pointer_field-1,0)
+						SDTpacket += filehandle.read(184)
+
+				# PMT packet
+				elif (table_id == 0x2) and hex(PID) in PAT:
+					parsePMTSection(filehandle, k, PID)
+
+			# seek to next packet and increment packet count
+			n += packet_size
+			packetCount += 1
+
+	except IOError:
+		filehandle.close()
+	else:
+		filehandle.close()
+
+
+def calcProgramBitrate(pids, bitrate):
+	prog_packets = 0
+	for pid in pids:
+		try:
+			prog_packets += packets[pid]
+		except:
+			pass
+
+	res = (float(prog_packets) / packetCount) * bitrate
+	return res
+
+def printPAT():
+	tmp_PAT = dict()
+	bitrate = calcBitrate()
+
+	#reorder keys
+	for key, value in PAT.iteritems():
+		tmp_PAT["0x{:04x}".format(int(key, 16))] = value
+
+	for key, value in sorted(tmp_PAT.iteritems()):
+		pids = value['pmt']
+		pids.append(int(key, 16))
+		print "%s-%s-%s: %.2f Mbps" % (key, value['service_provider'], value['service_name'], calcProgramBitrate(pids, bitrate))
+
+
+if __name__ == "__main__":
+	if len(sys.argv) != 2:
+		raise Exception("You can specify only filename to read from!")
+
+	fileout = splitext(sys.argv[1])[0] + '.txt'
+
+	outhandle = open(fileout, 'w')
+	sys.stdout = outhandle
+
+	parseTSMain()
+	bandwidth = calcBitrate()
+
+	printNIT()
+	printPAT()
+
+	outhandle.close()
+
