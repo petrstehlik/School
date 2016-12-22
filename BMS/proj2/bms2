@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+# Description: project #2 for BMS course @ FIT VUT capable of demultiplexing
+# a transport stream and analyzing streams' bitrates
 
 import sys
 import struct
@@ -9,12 +12,14 @@ from os.path import basename, splitext
 
 from nit import printNIT, parseNITSection, calcBitrate
 
+# Some globals because I am lazy
 packets = dict()
 SDTpacket = ""
 NIT = {"network_id" : 0}
 PAT = dict()
 packetCount = 0
 
+# Since Python can't handle binary data properly we are using structs
 def readFile(filehandle, startPos, width):
 	filehandle.seek(startPos,0)
 	if width == 4:
@@ -34,6 +39,9 @@ def readFile(filehandle, startPos, width):
 		return struct.unpack('>B',string[:1])[0]
 
 def parsePATSection(filehandle, k):
+	"""
+	Parsing Program Asociation Table to get program numbers and service providers
+	"""
 
 	local = readFile(filehandle,k,4)
 	table_id = (local>>24)
@@ -132,6 +140,11 @@ def parsePMTSection(filehandle, k, PID):
 
 
 def parseSDTSection(rawPacket, k):
+	"""
+	This function requires a string of packets data since SDTs are usually
+	split into multiple packets. Afterwards it parses all descriptors there
+	and stores all providers and services names
+	"""
 	global NIT
 	filehandle = StringIO(rawPacket)
 
@@ -183,18 +196,21 @@ def parseSDTSection(rawPacket, k):
 	except IOError:
 		return
 
+def parseTS():
+	"""
+	Main loop for analyzing the whole transport stream. It parses the MPEG part
+	and then analyzes packets based on PID and table_id.
 
+	No CRC or other advanced checking mechanism is not implemented.
+	"""
+	
+	filehandle = open(sys.argv[1],'rb')
 
-def parseTSMain():
-	filename = sys.argv[1]
-
-	filehandle = open(filename,'rb')
-
-	global SDTpacket, zero
+	global SDTpacket
+	global packetCount
 
 	n = 0
 	packet_size = 188
-	global packetCount
 
 	try:
 		while(True):
@@ -261,6 +277,11 @@ def parseTSMain():
 
 
 def calcProgramBitrate(pids, bitrate):
+	"""
+	Calculate bitrate of a programe in Mbps
+
+	bitrate = programe packets / total packets * stream bitrate
+	"""
 	prog_packets = 0
 	for pid in pids:
 		try:
@@ -272,6 +293,9 @@ def calcProgramBitrate(pids, bitrate):
 	return res
 
 def printPAT():
+	"""
+	Print PAT in sorted order and required format
+	"""
 	tmp_PAT = dict()
 	bitrate = calcBitrate()
 
@@ -294,8 +318,7 @@ if __name__ == "__main__":
 	outhandle = open(fileout, 'w')
 	sys.stdout = outhandle
 
-	parseTSMain()
-	bandwidth = calcBitrate()
+	parseTS()
 
 	printNIT()
 	printPAT()
