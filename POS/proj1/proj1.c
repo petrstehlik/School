@@ -70,7 +70,9 @@ int main(int argc, char **argv)
 		pthread_create(&threads[i], NULL, thr, &params[i]);
 	}
 
+
 	for (int i = 0; i < N; i++) {
+		pthread_attr_destroy(&params[i]);
 		pthread_join(threads[i], NULL);
 	}
 
