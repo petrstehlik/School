@@ -1,8 +1,12 @@
-CXXFLAGS=-O2 -pedantic -Wall -Wextra -pthread -std=c99
+CXXFLAGS= -pedantic -Wall -Wextra -lpthread -std=c11
+
 all: proj1
 
 proj1: proj1.c
-		gcc $< -o $@ $(CXXFLAGS)
+		gcc $< -o $@ $(CXXFLAGS) -O2
+
+debug: proj1.c
+	gcc $< -o proj1 $(CXXFLAGS) -g -O0 -DDEBUG=1
 
 clean:
 		rm proj1
