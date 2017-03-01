@@ -1,4 +1,7 @@
-CXXFLAGS= -pedantic -Wall -Wextra -lpthread -std=c11
+# POS project #1 2017 LS
+# Author: xstehl14 Petr Stehlik
+
+CXXFLAGS= -pedantic -Wall -Wextra -lpthread -lc -lrt -std=c11
 
 all: proj1
 
