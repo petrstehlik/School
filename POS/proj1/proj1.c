@@ -1,21 +1,21 @@
-/*
- * POS Project #1 Ticket Algorithm
- * Author: Petr Stehlik (xstehl14) <xstehl14@stud.fit.vutbr.cz>
- * 2017
- */
-
-#define _POSIX_C_SOURCE 199506L
+#define _POSIX_C_SOURCE 200809L
 #define _XOPEN_SOURCE
 #define _XOPEN_SOURCE_EXTENDED 1
 
+/*
+ * POS Project #1 Ticket Algorithm
+ * Author: Petr Stehlik (xstehl14) <xstehl14@stud.fit.vutbr.cz>
+ * LS 2017
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
-#include <sys/time.h>
 #include <pthread.h>
 #include <errno.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -23,8 +23,9 @@
 
 // Struct for thread parameters
 typedef struct {
+	int m;
 	int thr_id;
-	int time_seed;
+	long int time_seed;
 } params_t;
 
 // Ticket algoritm functions as specified
@@ -39,11 +40,13 @@ void printHelp(void);
 void* thr(void *);
 
 // Sleep for a random time <0, 0.5>s
-void sleepTime(unsigned int seed);
+void sleepTime(uint64_t seed);
 
-_Thread_local unsigned int seed;
+_Thread_local uint64_t seed;
 
+// Global counter for tickets given out
 int ticketGlob = 0;
+// Global counter for currently active ticket
 int currentTicket = 0;
 
 // Critical section mutex
@@ -58,7 +61,7 @@ int main(int argc, char **argv)
 	int N, M;
 	int res;
 	int threads_created = 0;
-	struct timeval tval;
+	struct timespec tval;
 
 	if (argc != 3) {
 		printHelp();
@@ -99,9 +102,13 @@ int main(int argc, char **argv)
 	}
 
 	for (int i = 0; i < N; i++) {
-		gettimeofday(&tval, NULL);
+		params[i].m = M;
+		// Set thread id
 		params[i].thr_id = i + 1;
-		params[i].time_seed = (long int)tval.tv_sec*1000000L + (long int)tval.tv_usec;
+		// Get monotonic time (random point in time)
+		// and use it as a seed for rand_r
+		clock_gettime(CLOCK_MONOTONIC, &tval);
+		params[i].time_seed = (long int)tval.tv_sec*1000000000L + tval.tv_nsec + i;
 		res = pthread_create(&threads[i], NULL, thr, &params[i]);
 
 		// Check if the thread if created and note successfull creation
@@ -170,6 +177,7 @@ int getticket(void)
 	return ticket;
 }
 
+// Entrance to critical section with given ticket
 void await(int aenter)
 {
 	pthread_mutex_lock(&secMutex);
@@ -183,6 +191,7 @@ void await(int aenter)
 	pthread_mutex_unlock(&secMutex);
 }
 
+// Critical section and exit from it
 void advance(void)
 {
 	pthread_mutex_lock(&nTicketMutex);
@@ -193,26 +202,29 @@ void advance(void)
 	pthread_mutex_unlock(&nTicketMutex);
 }
 
-void sleepTime(unsigned int seed)
+// Sleep for a given time between <0, 0.5> s
+// Uses given seed for randomizing times
+void sleepTime(uint64_t seed)
 {
 	struct timespec t;
-	seed += (unsigned int)pthread_self();
 	t.tv_sec = 0;
-	t.tv_nsec = (rand_r(&seed) % 500000000) + 1;
+	unsigned int useed = (unsigned int)seed;
+	t.tv_nsec = (rand_r(&useed) % 500000000) + 1;
 	nanosleep(&t, NULL);
 }
 
+// Main function for thread using ticket algorithm
 void * thr(void *p)
 {
 	params_t *params = (params_t*)p;
 	int ticket;
 
 	// Get a ticket for critical section
-	while ((ticket = getticket()) < M) {
+	while ((ticket = getticket()) < params->m) {
 		// Random waiting in interval <0.0, 0.5> s
 		sleepTime(params->time_seed);
 
-		// Access the critical section
+		// Enter the critical section
 		await(ticket);
 		printf("%d\t(%d)\n", ticket, params->thr_id);
 		fflush(stdout);
