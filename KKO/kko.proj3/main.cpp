@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "gif2bmp.h"
-#include "file.h"
+//#include "file.h"
 
 using namespace std;
 
@@ -45,11 +45,11 @@ int main(int argc, char **argv) {
 	cout << "output: " << outputPath << endl;
 	cout << "log: " << logPath << endl;
 
-	File inputFile = File(inputPath.c_str());
+	tGIF2BMP sizeInfo;
 
-	inputFile.read();
+	FILE *fp = fopen(inputPath.c_str(), "r+");
 
-	for (auto item : inputFile.get()) {
-		cout << item;
-	}
+	gif2bmp(&sizeInfo, fp, NULL);
+
+	fclose(fp);
 }

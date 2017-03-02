@@ -1,8 +1,8 @@
-CXXFLAGS=-O2 -pedantic -Wall -Wextra -pthread -std=c++11
+CXXFLAGS=-pedantic -Wall -Wextra -std=c++11 -g -lc
 all: proj1
 
-proj1: main.cpp gif2bmp.cpp
-			c++ $< -o $@ $(CXXFLAGS)
+proj1: main.cpp gif2bmp.cpp gif2bmp.h
+			c++ gif2bmp.cpp main.cpp -o $@ $(CXXFLAGS)
 
 clean:
 			rm proj1
