@@ -50,20 +50,20 @@ typedef struct {
 } GCE;
 
 typedef struct {
-	uint16_t pos_left;
-	uint16_t pos_top;
-	uint16_t width;
-	uint16_t height;
-	imgDescPack p;
-} imgDescriptor;
-
-typedef struct {
 	bool LCT_flag;
 	bool interlace_flag;
 	bool sort_flag;
 	uint8_t futureuse;
 	uint8_t LCT_size;
 } imgDescPack;
+
+typedef struct {
+	uint16_t pos_left;
+	uint16_t pos_top;
+	uint16_t width;
+	uint16_t height;
+	imgDescPack p;
+} imgDescriptor;
 
 #pragma pack(pop)
 
@@ -87,4 +87,5 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile);
 
 void readHeader(FILE *f, gifHeader *h);
 void readDescriptor (FILE *f, descriptor *d);
-void parsePackedField (descriptor *d, packedField *p);
+void parsePackedField(descriptor *d, packedField *p);
+void parseImgDescPack(imgDescPack *i, char c);
