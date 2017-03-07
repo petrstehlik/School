@@ -1,4 +1,8 @@
-// GCT 
+// GCT
+
+#ifndef DEBUG
+#define DEBUG false
+#endif
 
 #pragma once
 

@@ -1,8 +1,11 @@
-CXXFLAGS=-pedantic -Wall -Wextra -std=c++11 -g -lc
+CXXFLAGS=-pedantic -Wall -Wextra -std=c++11 -lc
 all: proj1
 
 proj1: main.cpp gif2bmp.cpp gif2bmp.h
 			c++ gif2bmp.cpp main.cpp -o $@ $(CXXFLAGS)
+
+debug: CXXFLAGS += -DDEBUG=1 -g -O0
+debug: proj1
 
 clean:
 			rm proj1
