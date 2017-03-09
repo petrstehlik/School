@@ -4,9 +4,10 @@ import Data.List
 import Data.List.Split
 
 data Rule = Rule {
-	start :: Char
+	nt :: Char
 	, body :: String
 	} deriving (Eq, Show)
+
 
 data CFG = CFG { nonTerminals :: [String]
 				, startSymbol :: Char
@@ -14,34 +15,63 @@ data CFG = CFG { nonTerminals :: [String]
 				, rules :: [Rule]
 			} deriving (Eq, Show)
 
+data Params = Params {
+	first_alg :: Bool
+		, second_alg :: Bool
+		, printFlag :: Bool
+		, inputFile :: String
+		, outputFile :: String
+} deriving (Show, Eq)
+
+defaultParams = Params {
+	first_alg    = False
+	, second_alg = False
+	, printFlag = False
+	, inputFile  = ""
+	, outputFile = ""
+}
+
 main :: IO ()
 main = do
 	args <- getArgs
 	let params = parseArgs args
-	print params
-	content <- (fetchFile params)
+	content <- (fetchFile ( inputFile params ) )
 	let cfg = parseContent (lines content)
 
-	--if checkIFlag params then printCFG cfg
-	print (checkIFlag params)
+	if printFlag params then
+		if length (outputFile params) > 0
+			then saveCFG cfg (outputFile params)
+		else
+			printCFG cfg
+	else print "should continue"
+
 	print cfg
+
 	print "done"
 
-parseArgs :: [[Char]] -> (Bool, Bool, Bool, String, String)
-parseArgs ["-1"] = (True, False, False, "", "")
-parseArgs ["-2"] = (False, True, False, "", "")
-parseArgs ["-i"] = (False, False, True, "", "")
-parseArgs ["-i", inFile] = (False, False, True, inFile, "")
-parseArgs ["-i", inFile, outFile] = (False, False, True, inFile, outFile)
-parseArgs [inFile, outFile] = (False, False, False, inFile, outFile)
-parseArgs [inFile] = (False, False, False, inFile, "")
-parseArgs [] = (False, False, False, "", "")
+parseArgs :: [[Char]] -> Params
+parseArgs ["-i"] = defaultParams { printFlag = True }
+parseArgs ["-i", inFile] = defaultParams {
+	printFlag = True
+	, inputFile = inFile
+}
+parseArgs ["-i", inFile, outFile] = defaultParams {
+	printFlag = True
+	, inputFile = inFile
+	, outputFile = outFile
+}
 
-checkIFlag :: (Bool, Bool, Bool, String, String) -> Bool
-checkIFlag (_:_:i:_:_) = i
+parseArgs ["-1"] = defaultParams { first_alg = True }
+--parseArgs ["-2"] = (False, True, False, "", "")
 
-fetchFile :: (Bool, Bool, Bool, String, String) -> IO String
-fetchFile(_,_,_,inFile,_) = if length inFile > 0
+--parseArgs ["-i"] = (False, False, True, "", "")
+--parseArgs ["-i", inFile] = (False, False, True, inFile, "")
+--parseArgs ["-i", inFile, outFile] = (False, False, True, inFile, outFile)
+parseArgs [] = error "Flag must be set"
+parseArgs [_] = error "Flag must be set"
+
+fetchFile :: String -> IO String
+fetchFile inFile = if length inFile  > 0
 	then readFile inFile
 	else getContents
 
@@ -77,7 +107,7 @@ parseRule (rule) = parseRule' (splitOn "->" rule)
 
 parseRule' :: [String] -> Rule
 parseRule' (nonterm : rule) = Rule {
-									start = nonterm !! 0
+									nt = nonterm !! 0
 									, body = rule !! 0
 								}
 
@@ -87,5 +117,25 @@ splitAtComma seq = let (s, seq') = break (== ',') seq
 		   in s : case seq' of
 			       []	   -> []
 			       (_ : seq'') -> splitAtComma seq''
+
+
+printCFG :: CFG -> IO ()
+printCFG cfg = do
+	putStrLn (intercalate "," ( nonTerminals cfg ) )
+	putStrLn (intercalate "," ( terminals cfg ) )
+	putStrLn ([startSymbol cfg])
+	putStrLn (intercalate "\n" ( map ( ruleToString ) ( rules cfg ) ) )
+
+saveCFG :: CFG -> String -> IO ()
+saveCFG cfg outFile = do
+	writeFile outFile ( (intercalate "," ( nonTerminals cfg ) ) ++ "\n" )
+	appendFile outFile ( (intercalate "," ( terminals cfg ) ) ++ "\n" )
+	appendFile outFile ( ( [startSymbol cfg] ) ++ "\n" )
+	appendFile outFile ((intercalate "\n" ( map ( ruleToString ) ( rules cfg ) ) )++"\n")
+
+--rulesToString :: [Rule] -> [String]
+
+ruleToString :: Rule -> String
+ruleToString rule = [(nt rule)] ++ "->" ++ (body rule)
 
 
