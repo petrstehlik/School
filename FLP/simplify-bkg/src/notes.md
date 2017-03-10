@@ -7,3 +7,6 @@ To check if elem is in list
 ```Haskell
 elem "S" ["A", "S"]
 ```
+
+## Resources
+http://www.sanfoundry.com/automata-theory-cfg-eliminating-useless-symbols/
