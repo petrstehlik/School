@@ -1,7 +1,25 @@
 import System.Environment
 import System.IO
+import Data.Char
 import Data.List
 import Data.List.Split
+import Debug.Trace
+
+import Parameters
+
+debug = flip trace
+
+rmdups :: (Ord a) => [a] -> [a]
+rmdups = map head . group . sort
+
+stripChars :: String -> String -> String
+stripChars = filter . flip notElem
+
+--rmdups' :: [String] -> [[Char]]
+--rmdups' (x:xs) = x ++ (rmdups' xs)
+
+p :: String -> [[Char]]
+p (x:xs) = if length xs == 1 then [[x]] ++ [xs] else ([[x]] ++ (p (xs)))
 
 data Rule = Rule {
 	nt :: Char
