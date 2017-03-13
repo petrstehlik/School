@@ -1,7 +1,10 @@
-all: main
+NAME=simplify
 
-main: main.hs
-	ghc --make @<
+#all: main
+
+all: parsefile.hs params.hs models.hs
+	ghc --make parsefile.hs params.hs models.hs -o simplify
+
 
 clean:
-	rm main.o main main.hi
+	rm simplify params.hi params.o models.o models.hi parsefile.hi parsefile.o
