@@ -6,6 +6,7 @@ import Data.List.Split
 import Debug.Trace
 
 import Parameters
+import Models
 
 debug = flip trace
 
@@ -20,18 +21,6 @@ stripChars = filter . flip notElem
 
 p :: String -> [[Char]]
 p (x:xs) = if length xs == 1 then [[x]] ++ [xs] else ([[x]] ++ (p (xs)))
-
-data Rule = Rule {
-	nt :: Char
-	, body :: String
-	} deriving (Eq, Show)
-
-
-data CFG = CFG { nonTerminals :: [String]
-				, startSymbol :: Char
-				, terminals :: [String]
-				, rules :: [Rule]
-			} deriving (Eq, Show)
 
 main :: IO ()
 main = do
