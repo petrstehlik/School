@@ -1,0 +1,3 @@
+[submodule "FLP/simplify-bkg/tests"]
+	path = FLP/simplify-bkg/tests
+	url = https://github.com/petrstehlik/simplify-bkg-tests
