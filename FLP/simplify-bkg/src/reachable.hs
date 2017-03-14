@@ -1,29 +1,42 @@
 module ReachableState where
 
 import Data.Char
+import Data.List
 import Models
 
-rmdups = map head . group . sort
+import Debug.Trace
 
+debug = flip trace
+
+--rmdups = map head . group . sort
+
+-- Initialize the algorithm with starting symbol of the supplied grammar
+-- @Input CFG
+-- @Output array of reachable states
 findReachableStates :: CFG -> [String]
-findReachableStates cfg = frs' (rules cfg) [[startSymbol cfg]]
+findReachableStates cfg = (frs' (rules cfg) [[startSymbol cfg]])
 
-frs' :: ([Rule] -> [String]) -> [String]
+-- Start the computation of reachable states until the previous and curent
+-- nonTerminals are the same
+-- @Input Set of rules
+-- @Input Set of reachable states (in this context only the starting symbol)
+-- @Output New set of reachable states
+frs' :: [Rule] -> [String] -> [String]
 frs' rules symbols = do
-	let newNT = frs'' rules symbols
-	nub $ until ( /= newNT) (frs'' rules) newNT
+    let newNT = frs'' rules symbols
+    let cleared = nub $ until ( /= newNT) (frs'' rules) newNT
+    -- The last elem is an empty string, remove it
+    init cleared --`debug` (show cleared)
 
 frs'' :: [Rule] -> [String] -> [String]
-frs'' (rule:rules) symbols = if isReachable (filter isUpper rule) symbols
-	then frs'' rules (symbols ++ [[nt rule]])
-	else frs'' rules symbols
+frs'' (rule:rules) symbols = if length ([[nt rule]] \\ symbols) == 0
+    then frs'' rules (symbols ++ (splitString $ filter isUpper (body rule)))
+    else frs'' rules symbols
 
-isReachable :: Rule -> [String] -> Bool
-isReachable rule symbols = map if isUpper x &&  then [x] else []) "sdfAAAAF"
+frs'' [] symbols = symbols
 
-isReachable' :: [String] -> String -> Bool
-isReachable' (symbol:symbols) rule = map (\x -> if symbol == x then True else isReachable' symbols rule) rule
-isReachable' [] rule = False
-
-stripLowerCase :: [String] -> [String]
-stripLowerCase x = map ()
+-- Splits a string into a list of strings
+-- @Bug leaves an empty string at the end
+splitString :: String -> [String]
+splitString (a:aa) = [[a]] ++ (splitString aa)
+splitString [] = [[]]
