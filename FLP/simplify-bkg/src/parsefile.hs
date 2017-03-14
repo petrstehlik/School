@@ -1,3 +1,7 @@
+module Main
+        (main)
+    where
+
 import System.Environment
 import System.IO
 import Data.Char
