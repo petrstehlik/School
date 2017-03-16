@@ -8,7 +8,8 @@
 # Colors for colorful output
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
-NC='\033[0m'
+RED='\033[0;31m'
+NC='\033[0;m'
 
 # This
 TESTCOUNT=`ls -l testfiles/*.in | wc -l`
@@ -22,14 +23,26 @@ fi
 
 for TESTNO in $(seq 1 ${TESTCOUNT}); do
     echo -e "\n${GREEN}### TEST No. ${TESTNO} ###${NC}"
-    echo "# Script output:"
-    ../simplify-bkg -${ALG} testfiles/${TESTNO}-test.in
+    echo "# Script output: ../simplify-bkg -${ALG} testfiles/${TESTNO}-test.in"
+    OUT=`../simplify-bkg -${ALG} testfiles/${TESTNO}-test.in`
+	echo -e "${OUT}"
     echo -e "\n# Correct result"
 
     if [ ${ALG} == "i" ]; then
-        cat testfiles/${TESTNO}-test.in
+        CAT=`cat testfiles/${TESTNO}-test.in`
     else
-        cat testfiles/${TESTNO}-test-${ALG}.out
+        CAT=`cat testfiles/${TESTNO}-test-${ALG}.out`
     fi
+
+	echo -e "${CAT}"
+
+	DIF=`diff <(echo ${OUT}) <(echo ${CAT})`
+
+	if [ -z "$DIF" ]; then
+		echo -e "Result:$GREEN OK $NC"
+	else
+		echo -e "Result:$RED diff not passed but can be correct$NC"
+		echo -e "${DIF}"
+	fi
     echo -e "${CYAN}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~${NC}"
 done
