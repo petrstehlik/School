@@ -31,6 +31,8 @@ The script assumes several things:
     * `{testnumber}-test-1.out` for output of the first algorithm
     * `{testnumber}-test-2.out` for output of the second algorithm
 
+If you want to use the tests for another projects, go ahead. I would be pleased.
+
 ## Resources (mainly for tests)
 http://www.sanfoundry.com/automata-theory-cfg-eliminating-useless-symbols/
 https://en.wikipedia.org/wiki/Useless\_rules
