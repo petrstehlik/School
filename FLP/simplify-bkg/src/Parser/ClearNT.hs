@@ -15,7 +15,7 @@ findTermGenerators (CFG n e p s) = CFG (termGenerators p []) e p s
         termGenerators :: [Rule] -> [Symbol] -> [Symbol]
         termGenerators rules nonTerms = do
             let newNonTerms = (termGenerators'' rules nonTerms)
-            nub $ until ( /= newNonTerms ) (termGenerators'' rules) newNonTerms
+            nub $ until (\x -> not $ null $ x \\ newNonTerms ) (termGenerators'' rules) newNonTerms
 
 termGenerators'' :: [Rule] -> [Symbol] -> [Symbol]
 termGenerators'' (rule:rules) nonTerms =
