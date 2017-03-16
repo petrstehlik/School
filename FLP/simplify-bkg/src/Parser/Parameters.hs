@@ -1,13 +1,8 @@
+-- Project #1 FLP
+-- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+-- Description: Get parameters
 module Parser.Parameters
     where
-
---data Params = Params
---    { first_alg :: Bool
---    , second_alg :: Bool
---    , printFlag :: Bool
---    , inputFile :: String
---    }
---  deriving (Show, Eq)
 
 data Parameter
     = Print                 -- -i
@@ -20,10 +15,9 @@ data PError
     | UnknownFlag
     | BadCombination
 
-
---------------------------------------------------------------------------------
 -- Argument handling
---
+-- @Input List of arguments
+-- @Output Flag and path to file
 parseArgs :: [String] -> (Parameter, String)
 parseArgs [x,y]
     | x == "-1" = ( ClearNonterminals, y )

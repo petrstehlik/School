@@ -1,3 +1,6 @@
+-- Project #1 FLP
+-- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+-- Description: Convert CFG accoring to algorithm 4.3 (course TIN)
 module Main
         (main)
     where
@@ -7,7 +10,6 @@ import System.IO
 import Data.Char
 import Data.List
 import Data.List.Split
-import Debug.Trace
 
 import Type.CFG
 
@@ -16,6 +18,12 @@ import Parser.CFG
 import Parser.ClearNT
 import Parser.ReachableState
 
+import Utils.Cleaners
+
+-- Workflow is as follows:
+--  1) parse argument
+--  2) parse input file
+
 main :: IO ()
 main = do
     (flag,file) <- parseArgs <$> getArgs
@@ -23,65 +31,57 @@ main = do
     if length file > 0
         then do
             cfg <- parseCFG <$> readFile file
+            convert flag cfg
+        else do
+            cfg <- parseCFG <$> getContents
+            convert flag cfg
 
-            case flag of
-                Print -> putStr . either show show $ cfg
-                ClearNonterminals -> clearNonTerminals cfg
-                ClearGrammar -> clearGrammar cfg
-        else undefined
+-- We can begin with the magic
+--              .
+--          \^/|
+--         _/ \|_
+--
+--      I SHALL PASS
+convert :: Parameter -> Either String CFG -> IO ()
+convert flag cfg =
+            case cfg of
+                Right c -> case flag of
+                    Print -> putStr $ show c
+                    ClearNonterminals -> clearNonTerminals c
+                    ClearGrammar -> clearGrammar c
+                Left e -> putStrLn $ "Error!\nReason: " ++ (e)
 
-clearNonTerminals :: Either String CFG -> IO ()
-clearNonTerminals (Right (cfg)) = do
-    if checkCFG cfg
-        then putStr ( show $ ( clearTerminals . clearRules . findTermGenerators ) cfg)
-        else error "Incorrect grammar"
+-- Initial function for Algorithm #4.1
+-- @Input Grammar to clear
+-- @Output IO
+clearNonTerminals :: CFG -> IO ()
+clearNonTerminals cfg
+    | checkCFG cfg = putStr ( show $ ( clearTerminals
+                                     . clearRules
+                                     . findTermGenerators
+                                     ) cfg )
+    | otherwise = error "Incorrect grammar"
 
-clearGrammar :: Either String CFG -> IO ()
-clearGrammar (Right (cfg)) = do
-    if checkCFG cfg
-        then putStr ( show $ ( clearTerminals . clearRules . findReachableStates . clearRules . findTermGenerators ) cfg)
-        else error "Incorrect grammar"
+-- Initial function for Algorithm #4.3 (#4.2 included for free!)
+-- @Input Grammar to clear
+-- @Output IO
+clearGrammar :: CFG -> IO ()
+clearGrammar cfg
+    | checkCFG cfg = putStr ( show $ ( clearTerminals
+                                     . clearRules
+                                     . findReachableStates
+                                     . clearRules
+                                     . findTermGenerators
+                                     ) cfg )
+    | otherwise = error "Incorrect grammar"
 
-
+-- Sanity check of a grammar
+-- @Input Grammar to check
+-- @Output Validity of the given grammar
 checkCFG :: CFG -> Bool
 checkCFG (CFG n e p s)
-    | not $ all isUpper n = error "All nonterminals are not capitals"
-    | not $ ( all isLower e || any (== '#') e ) = error "All terminals must be lower case"
-    | (not $ isUpper s) = error "Incorrect start symbol"
+    | (not $ all isUpper n) = error "All nonterminals are not capitals"
+    | (not $ all isLower (e \\ ['#'])) = error "All terminals must be lower case"
+    | (not $ isUpper s) || (not $ elem s n) = error "Incorrect start symbol"
     | ( length p ) < 1 = error "No rules specified"
     | otherwise = True
-
-clearRules :: CFG -> CFG
-clearRules (CFG n e p s) = CFG n e (clearRules' n p []) s
-    where
-        -- Clear rules of useless rules
-        -- @Input List of acceptable non-terminals
-        -- @input List of all rules
-        -- @Input List of cleared rules
-        clearRules' :: [Symbol] -> [Rule] -> [Rule] -> [Rule]
-        clearRules' nonTerms ((Rule s b) : rules) clr = do
-            let clearedNonTerm = ([s] \\ nonTerms)
-            if null clearedNonTerm
-                then if (all isLower ((nub b) \\ nonTerms))
-                        || (length ((nub b) \\ nonTerms) == 0)
-                        || (b == ['#'])
-                    then clearRules' nonTerms rules (clr ++ [Rule s b])
-                    else clearRules' nonTerms rules clr
-            else clearRules' nonTerms rules clr
-        clearRules' nonTerms [] clr = clr
-
-clearTerminals :: CFG -> CFG
-clearTerminals (CFG n e p s) = CFG n (nub $ clearTerminals' n p []) p s
-    where
-        -- Clear terminals of useless rules
-        -- @Input List of acceptable non-terminals
-        -- @Input List of rules
-        -- @Input List of cleared terminals
-        -- @Output Cleared list of terminals
-        clearTerminals' :: [Symbol] -> [Rule] -> [Symbol] -> [Symbol]
-        clearTerminals' nonTerms ((Rule s b):rules) terms = do
-            let clrBody = (nub b) \\ nonTerms
-            if length clrBody > 0
-                then clearTerminals' nonTerms rules (terms ++ clrBody)
-                else clearTerminals' nonTerms rules terms
-        clearTerminals' nonTerms [] terms = terms

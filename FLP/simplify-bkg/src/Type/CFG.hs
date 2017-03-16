@@ -1,3 +1,6 @@
+-- Project #1 FLP
+-- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+-- Description: Types and utils for CFG
 module Type.CFG
     where
 
