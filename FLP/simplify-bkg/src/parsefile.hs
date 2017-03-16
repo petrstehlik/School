@@ -101,7 +101,7 @@ termGenerators cfg = ( termGenerators' (rules cfg) [[startSymbol cfg]] )
 
 termGenerators' :: [Rule] -> [String] -> [String]
 termGenerators' rules nonTerms = do
-    let newNonTerms = (termGenerators'' rules nonTerms) --`debug` "new: " ++ newNonTerms
+    let newNonTerms = (termGenerators'' rules nonTerms)
     nub $ until ( /= newNonTerms) (termGenerators'' rules) newNonTerms
 
 termGenerators'' :: [Rule] -> [String] -> [String]
@@ -119,12 +119,13 @@ isTermGenerator rule nonTerms = if ( any isLower (body rule) ) &&
     else False --`debug` (body rule)
 
 termGenerator :: String -> [String] -> Bool
-termGenerator (nonT : bodyRule ) nonTerms = if ([[nonT]] \\ nonTerms == [])
-        then termGenerator bodyRule nonTerms
-    else if (isLower nonT)
-        then termGenerator bodyRule nonTerms
+termGenerator rule nonTerms = if ((filter isUpper rule) \\ nonTerms == [])
+    then True
     else False
-termGenerator [] _ = True
+    --else if (isLower nonT)
+    --    then termGenerator bodyRule nonTerms
+    --else False
+termGenerator [] _ = error "Rule must be specified"
 
 -- Clear rules of useless rules
 -- @Input List of acceptable non-terminals
@@ -171,6 +172,26 @@ parseContent content = if (null content || length content < 4)
         , rules = parseRules content
     }
 
+--cfgParser :: ReadP CFG
+--cfgParser = do
+--    nonTerminals <- parseNonTerminals'
+--    newLine
+--    terminals <- parseTerminals'
+--    newLine
+--    startSymbol <- parseStartSymbol'
+--    newLine
+--    rules <- parseRules'
+--    eof
+
+--newLine :: ReadP Char
+--newLine = char '\n'
+--
+--parseNonTerminal' :: ReadP Char
+--parseNonTerminal' = many1 $ satisfy (/= ',')
+--
+--parseNonTerminals' :: ReadP Char
+--parseNonTerminals' = undefined
+
 parseNonTerminals :: [String] -> [String]
 parseNonTerminals (nonTerm : _ ) = splitOn "," nonTerm
 
@@ -198,10 +219,10 @@ parseRule' (nonterm : rule) = Rule { nt = nonterm !! 0, body = rule !! 0 }
 --
 printCFG :: CFG -> IO ()
 printCFG cfg = do
-    putStrLn (intercalate "," ( ( nonTerminals cfg )) )
+    putStrLn (intercalate "," ( nonTerminals cfg ) )
     putStrLn (intercalate "," ( terminals cfg ) )
     putStrLn ([startSymbol cfg])
-    putStrLn (intercalate "\n" ( map ( ruleToString ) ( rules cfg ) ) )
+    putStrLn (intercalate "\n" ( map ruleToString ( rules cfg ) ) )
 
 saveCFG :: CFG -> String -> IO ()
 saveCFG cfg outFile = do
