@@ -8,5 +8,8 @@ To check if elem is in list
 elem "S" ["A", "S"]
 ```
 
+## How to compile
+`ghc --make Main.hs -o ../simplify-bkg -hidir tmp`
+
 ## Resources
 http://www.sanfoundry.com/automata-theory-cfg-eliminating-useless-symbols/
