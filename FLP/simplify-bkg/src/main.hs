@@ -15,8 +15,6 @@ import Parser.Parameters
 import Parser.CFG
 import Parser.ClearNT
 import ReachableState hiding (debug)
---import Models
---import ReachableState hiding(debug)
 
 main :: IO ()
 main = do
@@ -52,9 +50,6 @@ checkCFG (CFG n e p s)
     | (not $ isUpper s) = error "Incorrect start symbol"
     | ( length p ) < 1 = error "No rules specified"
     | otherwise = True
-
-
-debug = flip trace
 
 clearRules :: CFG -> CFG
 clearRules (CFG n e p s) = CFG n e (clearRules' n p []) s

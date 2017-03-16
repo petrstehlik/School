@@ -1,12 +1,9 @@
-module ReachableState where
+module ReachableState
+    where
 
 import Data.Char
 import Data.List
 import Type.CFG
-
-import Debug.Trace
-
-debug = flip trace
 
 -- Initialize the algorithm with starting symbol of the supplied grammar
 -- @Input CFG
@@ -25,10 +22,9 @@ findReachableStates (CFG n e p s) = CFG (frs p [s]) e p s
         frs rules symbols = do
             let newNT = frs' rules symbols
             nub $ until (\x -> null $ x \\ newNT) (frs' rules) newNT
-            -- The last elem is an empty string, remove it
-            --init cleared --`debug` (show cleared)
+
         frs' :: [Rule] -> [Symbol] -> [Symbol]
-        frs' ((Rule s b):rules) v = if null ([s] \\ v)
-            then frs' rules (v ++ (nub $ filter isUpper b))
-            else frs' rules v
+        frs' ((Rule s b):rules) v
+                         | null ([s] \\ v) = frs' rules (v ++ (nub $ filter isUpper b))
+                         | True = frs' rules v
         frs' [] v = v
