@@ -5,7 +5,7 @@ FILES=parsefile.hs params.hs models.hs reachable.hs
 SRC=src
 
 all:
-	cd $(SRC) && ghc --make $(FILES) -o ../simplify-bkg
+	cd $(SRC) && ghc --make Main.hs -o ../simplify-bkg -hidir tmp -odir tmp
 
 clean:
-	rm simplify-bkg && cd $(SRC) && rm params.{o,hi} models.{o,hi} parsefile.{hi,o} reachable.{hi,o}
+	rm -r simplify-bkg $(SRC)/tmp
