@@ -7,6 +7,9 @@ Write a program converting a CFG to a CFG with no useless and unreachable symbol
 ## Notes about the code
 I couldn't figure out how to properly handle deep nested errors so I used simple error function which seems to always work. In some cases I used Either, hopefully correctly.
 
+## Building the project
+Suprisingly `make`
+
 # simplify-bkg-tests
 Tests for FIT FLP project #1
 
