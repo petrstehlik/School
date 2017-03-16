@@ -84,4 +84,16 @@ checkCFG (CFG n e p s)
     | (not $ all isLower (e \\ ['#'])) = error "All terminals must be lower case"
     | (not $ isUpper s) || (not $ elem s n) = error "Incorrect start symbol"
     | ( length p ) < 1 = error "No rules specified"
-    | otherwise = True
+    | otherwise = checkRules p n e
+
+-- Check all rules if they are made of defined terminals and nonterminals
+-- @Input List of rules
+-- @Input List of nonterminals
+-- @Input List of terminals
+-- @Output True if all is valid
+checkRules :: [Rule] -> [Symbol] -> [Symbol] -> Bool
+checkRules ((Rule s b):rules) p t
+    | (not $ elem s p) = error "Symbol not in list of symbols"
+    | (not (null $ (((nub b) \\ p) \\ t))) = error "Rule is of undefined symbols"
+    | otherwise = checkRules rules p t
+checkRules [] _ _ = True
