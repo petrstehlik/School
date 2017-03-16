@@ -1,7 +1,3 @@
-NAME=simplify
-
-#all: main
-FILES=parsefile.hs params.hs models.hs reachable.hs
 SRC=src
 
 all:
