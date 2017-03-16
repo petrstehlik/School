@@ -14,7 +14,7 @@ import Type.CFG
 import Parser.Parameters
 import Parser.CFG
 import Parser.ClearNT
-import ReachableState hiding (debug)
+import Parser.ReachableState
 
 main :: IO ()
 main = do
