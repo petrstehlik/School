@@ -14,6 +14,7 @@ import Type.CFG
 import Parser.Parameters
 import Parser.CFG
 import Parser.ClearNT
+import ReachableState hiding (debug)
 --import Models
 --import ReachableState hiding(debug)
 
@@ -28,7 +29,7 @@ main = do
             case flag of
                 Print -> putStr . either show show $ cfg
                 ClearNonterminals -> clearNonTerminals cfg
-                ClearGrammar -> print "should clear grammar"
+                ClearGrammar -> clearGrammar cfg
         else undefined
 
 clearNonTerminals :: Either String CFG -> IO ()
