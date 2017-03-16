@@ -1,4 +1,4 @@
-module ReachableState
+module Parser.ReachableState
     where
 
 import Data.Char
