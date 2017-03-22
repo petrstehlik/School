@@ -56,8 +56,8 @@ convert flag cfg =
 -- @Output IO
 clearNonTerminals :: CFG -> IO ()
 clearNonTerminals cfg
-    | checkCFG cfg = putStr ( show $ ( clearTerminals
-                                     . clearRules
+    | checkCFG cfg = putStr ( show $ ( --clearTerminals -- In the original algoritm we shouldnt clear terminals
+                                     clearRules
                                      . findTermGenerators
                                      ) cfg )
     | otherwise = error "Incorrect grammar"
