@@ -10,9 +10,10 @@
 
 #define MASTER_CPU 0
 
-#define REG_X 0
-#define REG_Y 1
-#define REG_Z 2
+#define REG_X   0
+#define REG_Y   1
+#define REG_Z   2
+#define ORD     3
 
 #define REG_EMPTY (-1)
 
