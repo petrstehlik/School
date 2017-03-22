@@ -30,7 +30,9 @@ instance Show CFG where
 
 showSymbols :: [Symbol] -> String -> String
 showSymbols (n:nt) s = showSymbols nt (s ++ [n] ++ ",")
-showSymbols [] s = init s
+showSymbols [] s
+    | length s == 0 = ""
+    | otherwise = init s
 
 showRules :: [Rule] -> String -> String
 showRules (r:rs) s = showRules rs (s ++ [(symbol r)] ++ "->" ++ (body r) ++ "\n")

@@ -53,7 +53,7 @@ clearTerminals (CFG n e p s) = CFG n (nub $ clearTerminals' n p []) p s
         -- @Output Cleared list of terminals
         clearTerminals' :: [Symbol] -> [Rule] -> [Symbol] -> [Symbol]
         clearTerminals' nonTerms ((Rule s b):rules) terms = do
-            let clrBody = (nub b) \\ nonTerms
+            let clrBody = filter (/= '#') $ (nub b) \\ nonTerms
             if length clrBody > 0
                 then clearTerminals' nonTerms rules (terms ++ clrBody)
                 else clearTerminals' nonTerms rules terms

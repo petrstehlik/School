@@ -94,6 +94,6 @@ checkCFG (CFG n e p s)
 checkRules :: [Rule] -> [Symbol] -> [Symbol] -> Bool
 checkRules ((Rule s b):rules) p t
     | (not $ elem s p) = error "Symbol not in list of symbols"
-    | (not (null $ (((nub b) \\ p) \\ t))) = error "Rule is of undefined symbols"
+    | (not (null $ (((nub b) \\ p) \\ t))) && b /= "#" = error "Rule is of undefined symbols"
     | otherwise = checkRules rules p t
 checkRules [] _ _ = True
