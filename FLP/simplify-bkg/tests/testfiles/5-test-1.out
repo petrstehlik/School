@@ -1,5 +1,5 @@
 A,B,C
-a,b,#
+a,b
 A
 A->B
 B->b
