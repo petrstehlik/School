@@ -1,0 +1,49 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,24cm},top=3cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\graphicspath{ {img/} }
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Paralelní a distribuované algoritmy -- dokumentace k projektu 1}\\
+	\large{Vysoké učení technické v Brně}
+	\vspace{0.5cm}
+
+	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>
+
+	\vspace{0.2cm}
+
+	\today
+
+\end{center}
+
+\section{Zadání}
+
+Cílem projektu byla implementace algoritmu enumeration sort na lineárním poli procesorů, který byl prezentován během přednášek. Běh a kompilace programu je zprostředkován pomocí skriptu \texttt{test.sh}. Implementace využívá knihovny \textit{OpenMPI}.
+
+
+\section{Rozbor a analýza algoritmu}
+
+Enumeration sort je algoritmus pro seřazení všech prvků v poli pomocí nalezení konečné pozice všech prvků v poli. Toho algoritmus docílí pomoci porovnání všech prvků navzájem a určením kolik ostatních prvků je menších než daný prvek.
+
+Algoritmus byl modifikován tak, aby dokázal řadit i duplicitní prvky. Pořadí u duplicitních prvků algoritmus určí dle indexu porovnávaných identických prvků.
+
+
+\section{Implementace}
+
+\section{Experimentální ověření časové složitosti}
+
+\section{Komunikační protokol}
+
+
+\section{Závěr}
+
+
+\end{document}
+
