@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     Init(argc, argv);
 
     // Measure compute time
-    double start = Wtime();
+    //double start = Wtime();
 
 	// Get rank of current CPU
     cpu_id = COMM_WORLD.Get_rank();
@@ -124,10 +124,11 @@ int main(int argc, char **argv)
         }
     }
 
-    double end = MPI_Wtime();
+    /*double end = MPI_Wtime();
 
     if (cpu_id == MASTER_CPU)
         cout << end - start << endl;
+    */
 
     Finalize();
     return 0;
