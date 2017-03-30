@@ -24,4 +24,7 @@ typedef struct {
     int Z;
 } TReg;
 
-TReg initRegisters();
+TReg initRegisters()
+{
+	return (TReg) {1, REG_EMPTY, REG_EMPTY, REG_EMPTY};
+};

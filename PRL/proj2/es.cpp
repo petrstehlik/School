@@ -141,8 +141,3 @@ int main(int argc, char **argv)
     Finalize();
     return 0;
 }
-
-TReg initRegisters()
-{
-    return (TReg) {1, REG_EMPTY, REG_EMPTY, REG_EMPTY};
-}
