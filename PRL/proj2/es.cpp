@@ -76,12 +76,12 @@ int main(int argc, char **argv)
 
 				// Check duplicities
                 if (reg.X == reg.Y) {
-                    dup++;
+                    duplicate++;
 
 					// We will always have at least one duplicity
 					// when we compare the same numbers.
 					// Otherwise we will have a real duplicity
-                    if (dup > 1) {
+                    if (duplicate > 1) {
                         if (j < cpu_id)
                             reg.C++;
                     }
