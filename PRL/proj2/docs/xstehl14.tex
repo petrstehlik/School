@@ -31,7 +31,7 @@ Enumeration sort je algoritmus pro seřazení všech prvků $x_1...x_n$ pomocí 
 
 Enumeration sort na lineárním poli procesorů disponuje společnou sběrnicí pro všechny procesory. Tato sběrnice je schopna v každém kroku přenést jednu hodnotu a všechny procesory jsou doplněny lineárním spojením. Schéma zapojení procesorů je znázorněné na obrázku \ref{schema}.
 
-Každý procesor obsahuje celkem 4 registry: \textit{C} -- počet prvků menších než $x_i$, \textit{X} -- prvek $x_i$, \textit{Y} -- postupně prvky $x_1 ... x_n$, \textit{Z} -- seřazený prvek $Y_i$.
+Každý procesor obsahuje celkem 4 registry: \textit{C} -- počet prvků menších než $x_i$, \textit{X} -- prvek $x_i$, \textit{Y} -- postupně prvky $x_1 ... x_n$, \textit{Z} -- seřazený prvek $X_i$.
 
 \begin{figure}[h]
     \includegraphics[width=0.7\linewidth]{schema}
@@ -44,11 +44,11 @@ Algoritmus byl modifikován tak, aby dokázal řadit i duplicitní prvky. Pořad
 
 \subsection{Algoritmus}
 \begin{enumerate}
-    \item {Všechny registry C nastaví na hodnotu 1}
+    \item {Všechny registry C nastaví na hodnotu 1.}
     \item {Následující činnosti opakuj $2n$ krát, kde $1 \leq k \leq 2n$.}
         \begin{itemize}
             \item{Pokud není vstup vyčerpán, vstupní prvek $x_i$ se vloží přes sběrnici do registru $X_i$ a pomocí lineárního spojení do registru $Y_1$; obsah všech registrů $Y$ se posune doprava.}
-			\item{Každý procesor s neprázdnými registry $X$ a $Y$ je porovná, a je-li $X > Y$ inkrementuje svůj registr $C$. Pokud $X = Y$, porovná index procesoru s indexem prvku v registru $Y$ a pokud $i_{procesoru} < i_{Y}$ inkrementuj $C$.}
+			\item{Každý procesor s neprázdnými registry $X$ a $Y$ je porovná, a je-li $X > Y$ inkrementuje svůj registr $C$. Dále pokud $X = Y$, porovnej index procesoru s indexem prvku v registru $Y$ a pokud $i_{X}\footnote{Pod indexem čísla v registru $X$ rozumějme rank procesoru.} < i_{Y}$ inkrementuj $C$.}
 			\item{Je-li $k > n$ (po vyčerpání vstupu) procesor $P_{k-n}$ pošle sběrnicí obsah svého registru $X$ procesoru $P_{C_{k-n}}$, který jej uloží do svého registru $Z$.}
         \end{itemize}
 	\item{V následujících $n$ cyklech procesory posouvají obsah svých registrů $Z$ doprava a procesor $P_n$ produkuje seřazenou posloupnost.}
@@ -57,13 +57,13 @@ Algoritmus byl modifikován tak, aby dokázal řadit i duplicitní prvky. Pořad
 \subsection{Analýza algoritmu}
 Časová analýza jednotlivých kroků algoritmu: \textit{Krok 1} proběhne v konstatním čase, \textit{Krok 2} trvá $2n$ kroků, \textit{Krok 3} trvá n kroků.
 
-Z těchto poznatků plyne $t(n) = \mathcal{O}(n)$ a k výpočtu potřebujeme n procesorů ($p(n)$). Celková cena algoritmu je tedy $c(n) = \mathcal{O}(n^2)$, což značí, že algoritmus enumeration sort není optimální.
+Z těchto poznatků plyne $t(n) = \mathcal{O}(n)$ a k výpočtu potřebujeme $n$ procesorů ($p(n) = n$). Celková cena algoritmu je tedy $c(n) = \mathcal{O}(n^2)$, což značí, že algoritmus enumeration sort není optimální.
 
 \section{Implementace}
 
 Při inicializaci program vytvoří $n+1$ procesorů, kde procesor $P_0$ řídí vstup a výstup programu, rozesílá načtená čísla výpočetním procesorům a vypisuje je.
 
-Po načtení čísla $x_k$ velikosti 1 bajt ze souboru \texttt{numbers} procesorem $P_0$ je číslo vypsáno na standardní výstup oddělené mezerou. Dále je číslo sběrnicí posláno procesoru $P_k$, uloženo do registru $X$ a je také lineárním spojením posláno procesoru $P_1$ a uloženo do registru $Y$. Takto procesor $P_0$ zpracuje celý soubor.
+Po načtení čísla $x_k$ velikosti 1 bajt ze souboru \texttt{numbers} procesorem $P_0$ je číslo vypsáno na standardní výstup oddělené mezerou. Dále je číslo sběrnicí posláno procesoru $P_{k+1}$, uloženo do registru $X$ a je také lineárním spojením posláno procesoru $P_1$ a uloženo do registru $Y$. Takto procesor $P_0$ zpracuje celý soubor.
 
 Procesory $P_1 ... P_{n+1}$ jsou výpočetní procesory. Na sběrnici očekávají jedno číslo $x$ a pokud přijmou číslo $y$ přes lineární spojení, vyjmou ze svého registru Y číslo, odešlou jej svému sousedovi $P_{i+1}$ (vyjma procesoru $P_{n+1}$, ten číslo $y$ zahodí) a do registru $Y$ zapíšou nové číslo $y$. Sběrnice i lineární spojení je realizováno pomocí zasílání zpráv.
 
@@ -75,7 +75,7 @@ Následně jsou čísla z registru poslána svému sousedovi s nižším rankem.
 
 \section{Experimentální ověření časové složitosti}
 
-Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8 GB RAM a SSD. Výsledný čas je průměr z 10 měření každého testu. Čas výpočtu byl měřen pomocí Open MPI funkce \texttt{Wtime()}. Z naměřených výsledků je patrné, že do 65 procesorů (tj. 64 řazených prvků) je výpočet lineární. Při větších počtech procesorů se již projevuje režie procesoru.
+Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8 GB RAM a SSD. Výsledný čas je průměr z 10 měření každého testu. Čas výpočtu byl měřen pomocí Open MPI funkce \texttt{Wtime()}. Z naměřených výsledků je patrné, že do 70 procesorů je výpočet lineární. Při větších počtech procesorů se již projevuje režie fyzického procesoru.
 
 \begin{figure}[!ht]
     \centering
@@ -86,7 +86,7 @@ Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8
 \section{Komunikační protokol}
 \label{proto}
 
-Protokol je znázorněn na obrázku \ref{proto_schema}. Zasílání zpráv je realizováno výhradně funkcemi \texttt{Send}, \texttt{Isend}, \texttt{Recv} a \texttt{Irecv} z knihovny Open MPI.
+Protokol je znázorněn na obrázku \ref{proto_schema}. Zasílání zpráv je realizováno výhradně funkcemi \texttt{Send}, \texttt{Isend}, \texttt{Recv} a \texttt{Irecv} z knihovny Open MPI. Tag \texttt{ORD} je pro zasílání indexu čísla $Y$, ostatní tagy slouží k zasílání daných hodnot registrům $X/Y/Z$.
 
 \begin{figure}[!h]
     \includegraphics[width=0.8\linewidth]{protokol}
