@@ -1,4 +1,4 @@
--- Project #1 FLP
+-- | Project #1 FLP
 -- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
 -- Description: Parse string into CFG
 -- Mostly taken from: https://github.com/Tr1p0d/universal-turing-machine/blob/master/src/TM/Parser/TuringMachine.hs
@@ -9,7 +9,7 @@ module Parser.CFG
 import Text.ParserCombinators.ReadP
 import Type.CFG
 
--- Parse the string to CFG
+-- | Parse the string to CFG
 -- @Input CFG as string
 -- @Output CFG
 parseCFG :: String -> Either String CFG
@@ -17,7 +17,7 @@ parseCFG s = case readP_to_S cfgParser s of
     [(a,_)] -> Right a
     _ -> Left "Parser failed"
 
--- The parser
+-- | The parser
 cfgParser :: ReadP CFG
 cfgParser = do
     nonterminals <- parseSymbols
@@ -30,36 +30,36 @@ cfgParser = do
     eof
     return $ CFG nonterminals terminals rules startsymbol
 
--- Consume newline char
+-- | Consume newline char
 newLine :: ReadP Char
 newLine = char '\n'
 
--- Consume comma
+-- | Consume comma
 comma :: ReadP Char
 comma = char ','
 
--- Consume '>'
+-- | Consume '>'
 gt :: ReadP Char
 gt = char '>'
 
--- Consume '-'
+-- | Consume '-'
 -- Note: didn't have the nerve to solve it by one function (the "->")
 minus :: ReadP Char
 minus = char '-'
 
--- Fetch one symbol
+-- | Fetch one symbol
 parseSymbol :: ReadP Symbol
 parseSymbol = get
 
--- Fetch symbols
+-- | Fetch symbols
 parseSymbols :: ReadP [Symbol]
 parseSymbols = sepBy1 parseSymbol comma
 
--- Fetch one rule
+-- | Fetch one rule
 parseRuleBody :: ReadP Body
 parseRuleBody = many1 $ satisfy (/= '\n')
 
--- Parse all the rules
+-- | Parse all the rules
 parseRules :: ReadP [Rule]
 parseRules = many1 $ do
     r <- parseRule
