@@ -7,14 +7,14 @@ else
     numbers=$1;
 fi;
 
-#preklad cpp zdrojaku
+# preklad cpp zdrojaku
 mpic++ --prefix /usr/local/share/OpenMPI -o es es.cpp
 
-#vyrobeni souboru s random cisly
+# vyrobeni souboru s random cisly
 dd if=/dev/random bs=1 count=$numbers of=numbers > /dev/null 2>&1
 
-#spusteni
+# spusteni
 mpirun --prefix /usr/local/share/OpenMPI -np $((numbers+1)) es
 
-#uklid
-#rm -f
+# uklid
+rm -f es numbers
