@@ -1,10 +1,19 @@
 #!/bin/bash
 
+function printhelp {
+	echo -e "Enumeration sort algoritm implementation\nUsage: ./bash [n] where n is number > 1 (default 10)"
+}
+
 #pocet cisel bud zadam nebo 10 :)
 if [ $# -lt 1 ]; then
     numbers=10;
 else
     numbers=$1;
+
+    if [ $numbers -lt 1 ]; then
+		printhelp
+		exit 1
+	fi;
 fi;
 
 # preklad cpp zdrojaku
