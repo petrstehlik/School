@@ -5,6 +5,7 @@
  */
 
 #include "mm.h"
+#include <iomanip>
 
 using namespace std;
 
@@ -12,12 +13,18 @@ using namespace MPI;
 
 int main(int argc, char **argv)
 {
-	string inFile1 = "mat1";
-	string inFile2 = "mat2";
-	Status status;
+	pair<int, matrix> mat1;
+	pair<int, matrix> mat2;
+	CPU *cpu;
 
-	// Get size of matrice
-	int dim[2];
+	int row_num, col_num;
+	int sum = 0;
+
+    double start;
+
+	// Sizes of matrices
+	int dim1[2];
+	int dim2[2];
 
 	// MPI Initialization
     Init(argc, argv);
@@ -28,32 +35,97 @@ int main(int argc, char **argv)
     // Get total number of CPUs
     int cpu_num = COMM_WORLD.Get_size();
 
+    // The first processor will control IO
     if (rank == 0) {
 
-		pair<int, matrix> mat1 = loadMat("mat1");
-		pair<int, matrix> mat2 = loadMat("mat2");
+		mat1 = loadMat("mat1");
+		mat2 = loadMat("mat2");
 
-		// Fill the dim array (in order to be sendable via MPI)
-		dim[0] = mat1.first;
-		dim[1] = mat2.first;
+		// Fill the dim arrays (in order to be sendable via MPI)
+		dim1[0] = mat1.second[0].size();
+		dim1[1] = mat1.first;
+		dim2[0] = mat2.first;
+		dim2[1] = mat2.second.size();
 
-		cout << mat1.first << ":" << mat2.first << endl;
+		if (dim1[0] != dim2[1]) {
+		    cerr << "The sizes of matrices are not correct" << endl;
+            COMM_WORLD.Abort(1);
+		}
 
-		printMatrix(mat1.second);
+		COMM_WORLD.Bcast(&dim1, 2, MPI_INT, 0);
+		COMM_WORLD.Bcast(&dim2, 2, MPI_INT, 0);
 
-		COMM_WORLD.Bcast(&dim, 2, MPI_INT, 0);
+		cpu = new CPU(rank, dim1[1], dim2[0]);
 	} else {
-		COMM_WORLD.Bcast(&dim, 2, MPI_INT, 0);
+	    // Receive the final matrix size
+		COMM_WORLD.Bcast(&dim1, 2, MPI_INT, 0);
+		COMM_WORLD.Bcast(&dim2, 2, MPI_INT, 0);
 
-		CPU cpu = CPU(rank, dim[0], dim[1]);
-
-		for (int i = 1; i <= cpu_num; i++)
-			if (i == rank)
-				cout << rank << " : index -- " << cpu.posX() << ":" << cpu.posY() << endl;
+		cpu = new CPU(rank, dim1[1], dim2[0]);
 	}
 
-    // Measure compute time
-    //double start = Wtime();
+	COMM_WORLD.Barrier();
+
+	if (cpu->rank == 0) {
+	    // Send a column of first matrix
+	    for(int i = 0; i < dim1[1]; i++) {
+	        int mat1_w = dim1[0];
+	        for (int j = 0; j < dim1[0]; j++) {
+	            COMM_WORLD.Isend(&mat1.second[i][j], 1, MPI_INT, (i % dim1[1]) * dim2[0], ROW);
+            }
+	    }
+
+	    for (int i = 0; i < dim2[0]; i++) {
+	        for (int j = 0; j < dim2[1]; j++) {
+	            COMM_WORLD.Isend(&mat2.second[j][i], 1, MPI_INT, i, COL);
+            }
+	    }
+	}
+
+	COMM_WORLD.Barrier();
+
+    if (cpu->rank == 0)
+        start = Wtime();
+
+    // Receive from left
+	for (int i = 0; i < dim1[0]; i++) {
+        COMM_WORLD.Recv(&row_num, 1, MPI_INT, cpu->leftCPU(), ROW);
+        COMM_WORLD.Recv(&col_num, 1, MPI_INT, cpu->topCPU(), COL);
+
+        sum += row_num * col_num;
+
+        // Send the numbers to neighbours
+        if (cpu->rightCPU() >= 0)
+            COMM_WORLD.Isend(&row_num, 1, MPI_INT, cpu->rightCPU(), ROW);
+
+        if (cpu->bottomCPU() >= 0)
+            COMM_WORLD.Isend(&col_num, 1, MPI_INT, cpu->bottomCPU(), COL);
+    }
+
+    if (cpu->rank == 0) {
+        cout << setprecision(10) << fixed;
+        cout << MPI_Wtime() - start << endl;
+    }
+
+    COMM_WORLD.Send(&sum, 1, MPI_INT, 0, RES);
+
+    if (cpu->rank == 0) {
+        cout << dim1[1] << ":" << dim2[0] << endl;
+
+        for (int i = 0; i < cpu_num; i++) {
+            int res = 0;
+
+            COMM_WORLD.Recv(&res, 1, MPI_INT, i, RES);
+
+            if (i % dim2[0] == dim2[0] - 1 )
+                cout << res << endl;
+            else
+                cout << res << " ";
+        }
+    }
+
+    // Cleanup
+    delete cpu;
 
     Finalize();
 
