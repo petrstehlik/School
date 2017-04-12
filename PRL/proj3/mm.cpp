@@ -84,8 +84,7 @@ int main(int argc, char **argv)
 
 	COMM_WORLD.Barrier();
 
-    if (cpu->rank == 0)
-        start = Wtime();
+    start = Wtime();
 
     // Receive from left
 	for (int i = 0; i < dim1[0]; i++) {
@@ -102,15 +101,18 @@ int main(int argc, char **argv)
             COMM_WORLD.Isend(&col_num, 1, MPI_INT, cpu->bottomCPU(), COL);
     }
 
-    if (cpu->rank == 0) {
-        cout << setprecision(10) << fixed;
-        cout << MPI_Wtime() - start << endl;
-    }
+    //if (cpu->rank == 0) {
+    //    cout << setprecision(10) << fixed;
+    double time = MPI_Wtime() - start;
+    COMM_WORLD.Send(&time, 1, MPI_DOUBLE, 0, TIME);
+    //}
 
     COMM_WORLD.Send(&sum, 1, MPI_INT, 0, RES);
 
     if (cpu->rank == 0) {
         cout << dim1[1] << ":" << dim2[0] << endl;
+        double avg_time = 0.0;
+        double tmp_time = 0.0;
 
         for (int i = 0; i < cpu_num; i++) {
             int res = 0;
@@ -121,7 +123,13 @@ int main(int argc, char **argv)
                 cout << res << endl;
             else
                 cout << res << " ";
+
+            COMM_WORLD.Recv(&tmp_time, 1, MPI_DOUBLE, i, TIME);
+            avg_time += tmp_time;
         }
+
+        cout << setprecision(10) << fixed;
+        cout << avg_time/(double)cpu_num << endl;
     }
 
     // Cleanup

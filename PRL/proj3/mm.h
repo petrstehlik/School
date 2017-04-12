@@ -20,6 +20,7 @@ typedef struct {
 #define ROW 0
 #define COL 1
 #define RES 2
+#define TIME 3
 
 typedef std::vector<std::vector<int>> matrix;
 
