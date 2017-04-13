@@ -10,7 +10,8 @@
 #include <vector>
 #include <string>
 #include <sstream>
-
+#include <stdexcept>
+#include <iomanip>
 
 typedef struct {
 	int x;
@@ -23,6 +24,9 @@ typedef struct {
 #define TIME 3
 
 typedef std::vector<std::vector<int>> matrix;
+
+void printMatrix(matrix &m);
+bool checkMatrix(matrix &m, int *dim);
 
 class CPU
 {

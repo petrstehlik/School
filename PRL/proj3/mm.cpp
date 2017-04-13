@@ -5,7 +5,6 @@
  */
 
 #include "mm.h"
-#include <iomanip>
 
 using namespace std;
 
@@ -25,6 +24,7 @@ int main(int argc, char **argv)
 	// Sizes of matrices
 	int dim1[2];
 	int dim2[2];
+	int error = 0;
 
 	// MPI Initialization
     Init(argc, argv);
@@ -37,9 +37,16 @@ int main(int argc, char **argv)
 
     // The first processor will control IO
     if (rank == 0) {
-
-		mat1 = loadMat("mat1");
-		mat2 = loadMat("mat2");
+        try {
+            mat1 = loadMat("mat1");
+            mat2 = loadMat("mat2");
+        } catch (const runtime_error& e ) {
+            cerr << e.what() << endl;
+            error = 1;
+            COMM_WORLD.Bcast(&error, 1, MPI_INT, 0);
+            Finalize();
+            return 1;
+        }
 
 		// Fill the dim arrays (in order to be sendable via MPI)
 		dim1[0] = mat1.second[0].size();
@@ -47,21 +54,34 @@ int main(int argc, char **argv)
 		dim2[0] = mat2.first;
 		dim2[1] = mat2.second.size();
 
-		if (dim1[0] != dim2[1]) {
-		    cerr << "The sizes of matrices are not correct" << endl;
-            COMM_WORLD.Abort(1);
-		}
-
-		COMM_WORLD.Bcast(&dim1, 2, MPI_INT, 0);
-		COMM_WORLD.Bcast(&dim2, 2, MPI_INT, 0);
+        if (!checkMatrix(mat1.second, dim1)
+                || !checkMatrix(mat2.second, dim2)
+                || dim1[0] != dim2[1]) {
+            error = 1;
+            COMM_WORLD.Bcast(&error, 1, MPI_INT, 0);
+            cerr << "Sizes of matrices are not correct" << endl;
+	        Finalize();
+	        return 1;
+	    }
 
 		cpu = new CPU(rank, dim1[1], dim2[0]);
+
+        COMM_WORLD.Bcast(&error, 1, MPI_INT, 0);
+		COMM_WORLD.Bcast(&dim1, 2, MPI_INT, 0);
+		COMM_WORLD.Bcast(&dim2, 2, MPI_INT, 0);
 	} else {
+        COMM_WORLD.Bcast(&error, 1, MPI_INT, 0);
+
+        if (error != 0) {
+            Finalize();
+            return 1;
+	    }
+
 	    // Receive the final matrix size
 		COMM_WORLD.Bcast(&dim1, 2, MPI_INT, 0);
 		COMM_WORLD.Bcast(&dim2, 2, MPI_INT, 0);
 
-		cpu = new CPU(rank, dim1[1], dim2[0]);
+        cpu = new CPU(rank, dim1[1], dim2[0]);
 	}
 
 	COMM_WORLD.Barrier();
@@ -140,12 +160,32 @@ int main(int argc, char **argv)
     return 0;
 }
 
+bool checkMatrix(matrix &m, int *dim) {
+    if (dim[0] == 0 || dim[1] == 0)
+        return false;
+
+    // Check number of elements in each row
+    for (auto it : m) {
+        if (it.size() != dim[0])
+            return false;
+    }
+
+    if (m.size() != dim[1])
+        return false;
+
+    return true;
+}
+
 /**
   * Load matrix specified by path
   */
 pair<int, matrix> loadMat(string file)
 {
 	ifstream fin(file);
+
+	if (fin.fail())
+	    throw runtime_error("File '" + file + "' can't be opened");
+
 	matrix m;
 	int dim = 0;
 	int lineNum = 0;
@@ -163,13 +203,15 @@ pair<int, matrix> loadMat(string file)
 		else {
 			vector<int> l;
 			int tmp;
-			while (lineS >> tmp) {
+			while (lineS.good() && lineS >> tmp) {
 				l.push_back(tmp);
 			}
 			m.push_back(l);
 		}
 		lineNum++;
 	}
+
+	fin.close();
 
 	return make_pair(dim, m);
 }
