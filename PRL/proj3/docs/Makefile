@@ -14,13 +14,13 @@ $(CO).ps: $(CO).dvi
 
 $(CO).pdf: clean
 	pdflatex --shell-escape $(CO)
-	bibtex $(CO)
+#	bibtex $(CO)
 	pdflatex --shell-escape $(CO)
 	pdflatex --shell-escape $(CO)
 
 $(CO).dvi: $(CO).tex $(CO).bib
 	latex $(CO)
-	bibtex $(CO)
+#	bibtex $(CO)
 	latex $(CO)
 	latex $(CO)
 
