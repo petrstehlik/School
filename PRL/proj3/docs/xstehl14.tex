@@ -12,8 +12,8 @@
 \begin{document}
 
 \begin{center}
-	\large{Paralelní a distribuované algoritmy -- dokumentace k projektu 2}\\
-	{Vysoké učení technické v Brně}
+	\LARGE{Paralelní a distribuované algoritmy -- dokumentace k projektu 2}\\
+	\large{Vysoké učení technické v Brně}
 	\vspace{0.2cm}
 
 	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>     \today
@@ -31,7 +31,7 @@ Mesh multiplication je algoritmus pro součin dvou matic $A(m,n)$ a $B(n,k)$, kd
 Procesory jsou propojeny v dvourozměrné mřízce a lineárně spojeny se svými nejbližšími sousedy. Schéma zapojení procesorů je znázorněné na obrázku \ref{schema}. Na procesory v prvním sloupci a prvním řádku jsou přiváděny prvky matic A a B. Každý procesor obsahuje 3 registry: \textit{C} -- obsahuje výsledek a při inicializaci je nastaven na $0$, \textit{A} -- postupně prvky daného řádku z matice A, \textit{B} -- postupně prvky daného sloupce z matice B. Každý procesor následně posílá prvek z registru A svému pravému sousedovi a prvek z registru B svému spodnímu sousedovi.
 
 \begin{figure}[h]
-    \includegraphics[width=0.5\linewidth]{mesh}
+    \includegraphics[width=0.4\linewidth]{mesh}
     \centering
 	\caption{Schéma zapojení procesorů do mřížky.}
     \label{schema}
@@ -42,7 +42,7 @@ Nulování registru \textit{C} proběhne v konstatním čase. Poslání prvků $
 
 \section{Implementace}
 
-Při inicializaci program vytvoří $n*k$ procesorů, kde procesor $P_{00}$ řídí vstup a výstup programu, rozesílá načtené matice dalším procesorům a vypisuje vypočítanou matici. Při načítání matice proběhne kontrola, zda je matice v korektním formátů a rozměru. Načtené matice $A$ a $B$ jsou zkontrolovány, zda jsou v korektním formátu a mohou být vynásobeny a následně jsou jednotlivé řádky matice $A$ poslány na procesory v prvním sloupci a jednotlivé sloupce matice $B$ rozeslány na procesory v prvním řádku. Ty postupně odebírají prvky z fronty a po načtení jednoho prvku z obou matic jsou vynásobeny a přičteny k registru $C$.
+Při inicializaci program vytvoří $n*k$ procesorů, kde procesor $P_{11}$ řídí vstup a výstup programu, rozesílá načtené matice dalším procesorům a vypisuje vypočítanou matici. Při načítání matice proběhne kontrola, zda je matice v korektním formátů a rozměru. Načtené matice $A$ a $B$ jsou zkontrolovány, zda jsou v korektním formátu a mohou být vynásobeny a následně jsou jednotlivé řádky matice $A$ poslány na procesory v prvním sloupci a jednotlivé sloupce matice $B$ rozeslány na procesory v prvním řádku. Ty postupně odebírají prvky z fronty a po načtení jednoho prvku z obou matic jsou vynásobeny a přičteny k registru $C$.
 
 Všechny procesory jsou informovány o celkových rozměrech obou matic $A$ a $B$ pomocí \textit{broadcast} zpráv. Pokud při kontrole matic dojde k chybě, je tato chyba také distribuována pomocí \textit{broadcast} zprávy a procesory jsou ukončeny s nenulovým návratovým kódem.
 
@@ -52,31 +52,38 @@ Po dokončení výpočtu výsledné matice jsou výsledky umístěny v registru 
 
 \section{Experimentální ověření časové složitosti}
 
-Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8 GB RAM a SSD. Výsledný naměřený čas je průměr doby běhu každého z procesorů. Každá konfigurace bzla spuštěna desetkrát a z výsledných časů je vybráno maximum, minimum a spočítán aritmetický průměr. Čas výpočtu byl měřen pomocí Open MPI funkce \texttt{Wtime()}. Z naměřených výsledků je patrné, že do 70 procesorů je výpočet lineární. Při větších počtech procesorů se již projevuje režie fyzického procesoru.
+Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8 GB RAM a SSD. Průměrná doba běhu algoritmu je průměr doby běhu každého z procesorů. Každá konfigurace byla spuštěna desetkrát a z výsledných časů je vybráno maximum, minimum a spočítán aritmetický průměr. Čas výpočtu byl měřen pomocí Open MPI funkce \texttt{Wtime()}. Čtvercové matice pro výpočet byly náhodně generované (s rozsahem čísel od -127 do 128) pomocí knihovny NumPy pro jazyk Python. Z naměřených výsledků je patrné, že pro $n < 15$ je výpočet lineární s relativně malým vlivem režie procesoru a samotného násobení a sčítání. Při větších maticích se již znatelně projevuje režie fyzického procesoru.
 
 \begin{figure}[!ht]
     \centering
-		\includegraphics[width=0.6\textwidth]{results}
+		\includegraphics[width=1\textwidth]{results}
     \caption{Experimentálně naměřené výsledky}
 \end{figure}
 
 \section{Komunikační protokol}
 \label{proto}
 
-Protokol je znázorněn na obrázku \ref{proto_schema}. Zasílání zpráv je realizováno funkcemi \texttt{Send}, \texttt{Isend}, \texttt{Recv} a \texttt{Broadcast} z knihovny Open MPI. Tag \texttt{ORD} je pro zasílání indexu čísla $Y$, ostatní tagy slouží k zasílání daných hodnot registrům $X/Y/Z$.ke
+Protokol je znázorněn na obrázku \ref{proto_schema}. Zasílání zpráv je realizováno funkcemi \texttt{Send}, \texttt{Isend}, \texttt{Recv} a \texttt{Broadcast} z knihovny Open MPI. Tagy \texttt{ROW} a \texttt{COL} slouží pro zasílání čísel sousedským procesorům, tag \texttt{RES} je označení pro přenos výsledného prvku matice prvnímu procesoru. Dále jsou použity \texttt{Broadcast} zprávy pro zaslání velikosti matic a pro oznámení chyb v programu. Tag \texttt{TIME} je určen pro zasílání výpočetního času daného procesoru.
+
+Broadcast zprávy nejsou zahrnuty v diagramu kvůli přehlednosti. Jejich iniciátorem je vždy první procesor. Program obsahuje následující broadcast zprávy:
+
+\begin{itemize}
+    \item{error -- signalizace chyby vykonávání programu nenulovou hodnotou,}
+    \item{dim1 -- rozměry matice $A$,}
+    \item{dim2 -- rozměry matice $B$.}
+\end{itemize}
 
 \begin{figure}[!h]
-    \includegraphics[width=0.8\linewidth]{protokol}
+    \includegraphics[width=1\linewidth]{protokol}
     \centering
-    \caption{Sekvenční diagram komunikačního protokolu. Popisky obsahují následující informace: obsah registru, rank, tag.}
+    \caption{Diagram komunikačního protokolu. Popisky obsahují následující informace: zasílaná hodnota/rank/tag.}
     \label{proto_schema}
 \end{figure}
 
 
 \section{Závěr}
 
-Algoritmus se podařilo úspěšně implementovat a experimentálně otestovat. Algoritmus byl upraven tak, aby řadil i duplicitní hodnoty. Z naměřených výsledků lze usoudit, že algoritmus má lineární časovou složitost. Výsledky s více než 70 prvky těmto předpokládům neodpovídají kvůli zvýšené režii při přepínání procesů.
-
+Algoritmus \textit{mesh multiplication} se podařilo úspěšně implementovat a experimentálně otestovat. Byla odvozena jeho teoretická časová složitost a cena. Experimenty nad reálnými daty dokazují, že v praxi se algoritmus také blíží lineární časové složitosti. Experimenty s $n > 14$ těmto předpokládům neodpovídají kvůli zvýšené režii při přepínání procesů.
 
 %\bibliography{literature}
 
