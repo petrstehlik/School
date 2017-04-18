@@ -1,14 +1,14 @@
 set terminal svg enhanced font "arial,13" size 600,350
-set output 'res.svg'
+set output 'res_15.svg'
 set style textbox transparent margins  1.0,  1.0 border
-set xtics 0,10,110
+set xtics 7,1,16
 set xlabel "Počet prvků (n)"
 set ylabel "Čas výpočtu [s]"
-f(x) = 0.00003*x
+f(x) = 0.001*x
 stddev(x1,x2,avg) = ((x1-avg)*(x1-avg) + (x2-avg)*(x2-avg))/2
 set key top left
 #set logscale y
-plot [0:16][0.00001:]\
+plot [7.5:15.5][0.00001:]\
 		'results.dat' using 1:2 t "Odhad" smooth cspline, \
 		'results.dat' using 1:2 t "Naměřené výsledky" ,\
 		'results.dat' using 1:3 t "Min",\
