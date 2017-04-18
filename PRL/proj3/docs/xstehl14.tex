@@ -12,8 +12,8 @@
 \begin{document}
 
 \begin{center}
-	\LARGE{Paralelní a distribuované algoritmy -- dokumentace k projektu 2}\\
-	\large{Vysoké učení technické v Brně}
+	\large{Paralelní a distribuované algoritmy -- dokumentace k projektu 2}\\
+	{Vysoké učení technické v Brně}
 	\vspace{0.2cm}
 
 	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>     \today
@@ -42,21 +42,17 @@ Nulování registru \textit{C} proběhne v konstatním čase. Poslání prvků $
 
 \section{Implementace}
 
-Při inicializaci program vytvoří $n*k$ procesorů, kde procesor $P_{00}$ řídí vstup a výstup programu, rozesílá načtené matice dalším procesorům a vypisuje výpočítanou matici. Při načítání matice proběhne kontrola, zda je matice v korektním formátů a rozměru. Načtené matice $A$ a $B$ jsou zkontrolovány, zda mohou být vynásobeny a následně jsou jednotlivé řádky matice $A$ poslány na procesory v prvním sloupci a sloupce matice $B$ rozeslány na procesory v prvním řádku. Ty postupně odebírají prvky z fronty a po načtení prvků z obou matic jsou vynásobeny a přičteny k registru $C$.
+Při inicializaci program vytvoří $n*k$ procesorů, kde procesor $P_{00}$ řídí vstup a výstup programu, rozesílá načtené matice dalším procesorům a vypisuje vypočítanou matici. Při načítání matice proběhne kontrola, zda je matice v korektním formátů a rozměru. Načtené matice $A$ a $B$ jsou zkontrolovány, zda jsou v korektním formátu a mohou být vynásobeny a následně jsou jednotlivé řádky matice $A$ poslány na procesory v prvním sloupci a jednotlivé sloupce matice $B$ rozeslány na procesory v prvním řádku. Ty postupně odebírají prvky z fronty a po načtení jednoho prvku z obou matic jsou vynásobeny a přičteny k registru $C$.
 
-Všechny procesory jsou informovány o celkových rozměrech obou matic $A$ a $B$ pomocí \textit{broadcast} zpráv. Pokud při kontrole matic dojde k chybě, je tato chyba také distribuována pomocí \textit{broadcast} zprávy.
+Všechny procesory jsou informovány o celkových rozměrech obou matic $A$ a $B$ pomocí \textit{broadcast} zpráv. Pokud při kontrole matic dojde k chybě, je tato chyba také distribuována pomocí \textit{broadcast} zprávy a procesory jsou ukončeny s nenulovým návratovým kódem.
 
 Dále jsou prvky poslány svým pravým a spodním sousedům. Prvky A svým pravým sousedům a prvky B svým spodním sousedům. Procesory na pravém a spodním okraji po výpočtu prvky zahazují.
 
-Pokud má procesor neprázdné registry $X$ a $Y$, poté při každém přijetí nového čísla $y$ provede porovnání registru $X$ a $Y$ a adekvátně inkrementuje registr $C$. Následně zkontroluje rovnost těchto čísel. Pokud se rovnají, provede kontrolu interně vedeného čítače duplicit čísla $x$. Pokud je těchto duplicit $>1$, porovná index čísla $y$ a rank procesoru a upraví registr $C$ dle algoritmu. Index čísla $y$ je zasílán společně s číslem $y$.
-
-Po dokončení čtení a rozeslání všech čísel procesorem $P_0$ a po přenesení všech čísel skrze lineární spojení jsou asynchronně po sběrnici rozeslány čísla $x$ procesoru s rankem odpovídající hodnotě $c$. Procesory toto číslo uloží do registru $Z$.
-
-Následně jsou čísla z registru poslána svému sousedovi s nižším rankem. Procesor $P_0$ je tiskne na výstup, dokud není vytištěno $n$ čísel. Následuje finalizace programu a ukončení.
+Po dokončení výpočtu výsledné matice jsou výsledky umístěny v registru $C$. Všechny procesory odešlou prvek v registru $C$ prvnímu procesoru, který prvky ve správném pořadí a formátu vytiskne na standardní výstup. Následně jsou uvolněny všechny alokované zdroje, je provedena finalizace a program je ukončen.
 
 \section{Experimentální ověření časové složitosti}
 
-Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8 GB RAM a SSD. Výsledný čas je průměr z 10 měření každého testu. Čas výpočtu byl měřen pomocí Open MPI funkce \texttt{Wtime()}. Z naměřených výsledků je patrné, že do 70 procesorů je výpočet lineární. Při větších počtech procesorů se již projevuje režie fyzického procesoru.
+Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8 GB RAM a SSD. Výsledný naměřený čas je průměr doby běhu každého z procesorů. Každá konfigurace bzla spuštěna desetkrát a z výsledných časů je vybráno maximum, minimum a spočítán aritmetický průměr. Čas výpočtu byl měřen pomocí Open MPI funkce \texttt{Wtime()}. Z naměřených výsledků je patrné, že do 70 procesorů je výpočet lineární. Při větších počtech procesorů se již projevuje režie fyzického procesoru.
 
 \begin{figure}[!ht]
     \centering
@@ -67,7 +63,7 @@ Experimety probíhaly na stroji disponujícím Intel Core i7-2635QM @ 2.00GHz, 8
 \section{Komunikační protokol}
 \label{proto}
 
-Protokol je znázorněn na obrázku \ref{proto_schema}. Zasílání zpráv je realizováno výhradně funkcemi \texttt{Send}, \texttt{Isend}, \texttt{Recv} a \texttt{Irecv} z knihovny Open MPI. Tag \texttt{ORD} je pro zasílání indexu čísla $Y$, ostatní tagy slouží k zasílání daných hodnot registrům $X/Y/Z$.
+Protokol je znázorněn na obrázku \ref{proto_schema}. Zasílání zpráv je realizováno funkcemi \texttt{Send}, \texttt{Isend}, \texttt{Recv} a \texttt{Broadcast} z knihovny Open MPI. Tag \texttt{ORD} je pro zasílání indexu čísla $Y$, ostatní tagy slouží k zasílání daných hodnot registrům $X/Y/Z$.ke
 
 \begin{figure}[!h]
     \includegraphics[width=0.8\linewidth]{protokol}
