@@ -1,0 +1,161 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,24cm},top=3cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\graphicspath{ {img/} }
+
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+
+\newcommand\YAMLcolonstyle{\color{red}\mdseries}
+\newcommand\YAMLkeystyle{\color{black}\bfseries}
+\newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+
+\makeatletter
+
+% here is a macro expanding to the name of the language
+% (handy if you decide to change it further down the road)
+\newcommand\language@yaml{yaml}
+
+\expandafter\expandafter\expandafter\lstdefinelanguage
+\expandafter{\language@yaml}
+{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\YAMLkeystyle,                                 % assuming a key comes first
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\YAMLvaluestyle\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\YAMLcolonstyle{:}\YAMLvaluestyle]{:},   % switch to value style at :
+  morestring=[b]',
+  morestring=[b]",
+  literate =    {---}{{\ProcessThreeDashes}}3
+                {>}{{\textcolor{red}\textgreater}}1
+                {|}{{\textcolor{red}\textbar}}1
+                {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+% switch to key style at EOL
+\lst@AddToHook{EveryLine}{\ifx\lst@language\language@yaml\YAMLkeystyle\fi}
+\makeatother
+
+\newcommand\ProcessThreeDashes{\llap{\color{cyan}\mdseries-{-}-}}
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Data Communications, Computer Networks and Protocols -- Project}\\
+	\large{Brno University of Technology}
+	\vspace{0.5cm}
+
+	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>
+
+	\vspace{0.2cm}
+
+	\today
+
+\end{center}
+
+\section{Assignment}
+The task in hand was to create whitelisting of detected alerts for the NEMEA system with connection to the vizualization part. Whitelisting is only a partial feature which was needed. Because of this the NEMEA Alert Filtering 2.0 was created.
+
+This document describes the analysis and implementation of this system while defining the format for configuration which is the cornerstone of the whole system. The configuration should be central for every reporting module available.
+
+\section{Analysis}
+\subsection{System Architecture}
+
+\subsection{Configuration Design}
+The configuration is divided into several parts: rules, address groups, custom actions and actions. Each part will be described in detail. The example configuration can be seen at \ref{configfile}.
+
+\subsubsection{Rules}
+The list of rules is ordered by ID. The list is sorted by ID and evaluated by all reporters from the first rule to the last one. Each rule is composed of ID, condition, actions and elseactions which is an optional item.
+
+The unique ID is an integer value by which the rules are sorted and evaluated.
+
+Filtering condition consists of unary and binary operations, constants and JSON paths that are parsed by the Mentat filtering module created by the Mentat team\footnote{The lead creators are Jan Mach, Pavel Kácha and Andrea Kropáčová}. When an alert meets the condition, list of actions is performed in specified order. If list of elseactions is defined and the filtering condition is not met this list of actions is performed.
+
+Actions in rules are of two types: implicit and custom. Currently the only implicit action is to \texttt{drop} the alert which will imidiatelly stop processing the alert.
+
+
+\section{Implementation}
+
+
+
+\section{Conclusion}
+
+
+
+\newpage
+
+\section{Annexes}
+\subsection{Example Configuration File}
+\label{configfile}
+
+%\begin{lstlisting}[language=yaml]
+\begin{verbatim}
+custom_actions:
+- id: mongo1
+  type: mongo
+  host: localhost
+  db: nemeadb
+  collection: alerts
+- id: marktest
+  type: mark
+  mark:
+    path: Test
+    value: 'FooBar'
+- id: markwhitelisted
+  type: mark
+  mark:
+    path: _CESNET.Whitelisted
+    value: 'True'
+- id: savefile
+  type: file
+  dir: true
+  path: "/var/log/nemea/events"
+addressgroups:
+- id: main_whitelist
+  file: "/etc/nemea/reporters/whitelists/whitelist1"
+- id: whitelist2
+  list:
+  - 1.1.0.0/24
+  - 1.2.3.4
+rules:
+- id: 1
+  condition: Source.IP4 in main_whitelist or Target.IP4 in main_whitelist
+  actions:
+  - markwhitelisted
+  - mongo1
+  - drop
+  elseactions:
+  - marktest
+  - savefile
+  - mongo1
+- id: 2
+  condition: >
+	   Node.SW == 'detector1' and
+	   Category == 'Recon.Scanning' and
+	   Target.IP4 in whitelist2
+  actions:
+  - marktest
+- id: 3
+  condition: Source.IP4 == whitelist2
+  actions:
+  - drop
+- id: 4
+  condition: Node.SW in ['detector1', 'detector2']
+  actions:
+  - savefile
+  - drop
+\end{verbatim}
+%\end{lstlisting}
+
+\end{document}
