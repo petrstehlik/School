@@ -148,8 +148,8 @@ int main(int argc, char **argv)
             avg_time += tmp_time;
         }
 
-        cout << setprecision(10) << fixed;
-        cout << avg_time/(double)cpu_num << endl;
+        //cout << setprecision(10) << fixed;
+        //cout << avg_time/(double)cpu_num << endl;
     }
 
     // Cleanup
