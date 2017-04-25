@@ -6,8 +6,13 @@ void pidlist_init(pidlist_t *p) {
 }
 
 void pidlist_insert(pidlist_t *p, int pid) {
-	piditem_t *i;
+	piditem_t *i = NULL;
 	i = malloc(sizeof(piditem_t));
+
+	if (i == NULL) {
+	    perror("failed to allocate");
+	    exit(EXIT_FAILURE);
+	}
 	i->pid = pid;
 	i->next = NULL;
 
