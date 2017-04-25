@@ -20,10 +20,14 @@ void parse(cmd_t *cmd, char* buf, int size) {
             while(buf[i] == ' ' || buf[i] == '\t')
                 i++;
 
-            start = i;
+            start = i++;
 
             /** Advance to the end of argument */
-            while(!is_cchar(buf[++i]));
+            while(!is_cchar(buf[i]))
+			{
+				if (i < size)
+					i++;
+			}
 
             strncpy(cmd->input, &buf[start], i - start);
             cmd->input_flag = 1;
@@ -33,20 +37,27 @@ void parse(cmd_t *cmd, char* buf, int size) {
             while(buf[i] == ' ' || buf[i] == '\t')
                 i++;
 
-            start = i;
+            start = i++;
 
             /** Advance to the end of argument */
-            while(!is_cchar(buf[++i]));
-
+			while(!is_cchar(buf[i]))
+			{
+				if (i < size)
+					i++;
+			}
             strncpy(cmd->output, &buf[start], i - start);
             cmd->output_flag = 1;
         } else if (buf[i] == '&') {
             cmd->bg = 1;
-        } else {
-            start = i;
-
             i++;
-            while(!is_cchar(buf[++i]));
+        } else {
+            start = i++;
+
+			while(!is_cchar(buf[i]))
+			{
+				if (i < size)
+					i++;
+			}
 
             if (args == 0) {
                 strncpy(cmd->cmd, &buf[start], i - start);
@@ -58,12 +69,13 @@ void parse(cmd_t *cmd, char* buf, int size) {
         }
     }
 
-    cmd->args_count = args - 1;
+    cmd->args_count = args-1;
+    /*
 
     if (cmd->bg)
         cmd->args_count--;
 
-    /*if (cmd->input_flag)
+    if (cmd->input_flag)
         cmd->args_count--;
 
     if (cmd->output_flag)
