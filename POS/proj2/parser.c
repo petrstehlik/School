@@ -99,7 +99,7 @@ void cmd_init(cmd_t *cmd) {
 
     memset(cmd->cmd, 0, sizeof(cmd->cmd));
     memset(cmd->input, 0, sizeof(cmd->input));
-    memset(cmd->input, 0, sizeof(cmd->output));
+    memset(cmd->output, 0, sizeof(cmd->output));
 
     cmd->bg = 0;
     cmd->input_flag = 0;
