@@ -26,6 +26,7 @@
 char buffer[BUFFER_SIZE];
 int exit_g;
 int read_chars;
+
 pidlist_t *pidlist;
 
 void prompt();

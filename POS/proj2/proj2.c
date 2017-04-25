@@ -10,7 +10,7 @@ int main(void) {
 
     if (signal(SIGCHLD, signal_handler) == SIG_ERR)
     {
-        perror("Can't catch SIGNCHLD signal");
+        perror("[signal] Can't catch SIGNCHLD signal");
         return EXIT_FAILURE;
     }
 
@@ -20,7 +20,7 @@ int main(void) {
     if (pthread_mutex_init(&main_mutex, NULL) ||
         pthread_cond_init(&main_cond, NULL))
     {
-        perror("Failed to initialize mutexes and conditions");
+        perror("[posix] Failed to initialize mutexes and conditions");
         return EXIT_FAILURE;
     }
     /** create two threads
@@ -29,14 +29,13 @@ int main(void) {
       */
     if (pthread_create(&thr_exec, NULL, exec_func, NULL))
     {
-        perror("Failed to create threads");
+        perror("[pthread] Failed to create threads");
         cleanup();
         return EXIT_FAILURE;
     }
 
     pthread_mutex_lock(&main_mutex);
     while (!exit_g) {
-        pidlist_print(pidlist);
         prompt();
         memset(buffer, 0, sizeof(buffer));
 		read_chars = read(0, buffer, BUFFER_SIZE);
@@ -46,7 +45,7 @@ int main(void) {
 		}
 
 		if (read_chars >= BUFFER_SIZE && buffer[BUFFER_SIZE-1] != '\n') {
-		    fprintf(stderr, "Input too long");
+		    fprintf(stderr, "Input too long\n");
 		    consume_input();
 		    exit_g = 1;
         }
@@ -60,14 +59,8 @@ int main(void) {
 	}
     pthread_mutex_unlock(&main_mutex);
 
-    printf("\n\nsize: %d\n\n", pidlist->size);
-    fflush(stdout);
-
     if (pidlist->size) {
         piditem_t *i;
-        printf("should kill something\n");
-        i = malloc(sizeof(piditem_t));
-
         i = pidlist->head;
 
         while (i != NULL) {
@@ -75,7 +68,7 @@ int main(void) {
             i = i->next;
         }
 
-        free(i);
+        waitpid(-1, NULL, 0);
     }
 
     /** wait for exec thread */
@@ -111,7 +104,7 @@ void * exec_func(void)
 
             cmd_args[cmd.args_count+1] = NULL;
 
-            vf = fork();
+            vf = vfork();
 
             if (vf == 0) {
                 if (cmd.input_flag) {
@@ -119,12 +112,12 @@ void * exec_func(void)
                     fd = open(cmd.input, O_RDONLY);
 
                     if (fd < 0) {
-                        perror("error opening file");
+                        perror("[open] error opening file");
                         exit(EXIT_FAILURE);
                     }
 
                     if (dup2(fd, STDIN_FILENO) < 0) {
-                        perror("dup2 failed for input file");
+                        perror("[dup2] failed for input file");
                         exit(EXIT_FAILURE);
                     }
 
@@ -136,12 +129,12 @@ void * exec_func(void)
                     fd = open(cmd.output, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
                     if (fd < 0) {
-                        perror("error opening file");
+                        perror("[open] error opening file");
                         exit(EXIT_FAILURE);
                     }
 
                     if (dup2(fd, STDOUT_FILENO) < 0) {
-                        perror("dup2 failed for output file");
+                        perror("[dup2] failed for output file");
                         exit(EXIT_FAILURE);
                     }
 
@@ -150,9 +143,7 @@ void * exec_func(void)
 
                 if (cmd.bg) {
                     pidlist_insert(pidlist, getpid());
-                    pidlist_print(pidlist);
-
-                    fprintf(stderr, "** process %d will be running in background\n", getpid());
+                    fprintf(stderr, "\r** process %d will be running in background\n", getpid());
                 } else {
                     unblock_sigint();
                 }
@@ -161,15 +152,10 @@ void * exec_func(void)
                 res = execvp(cmd_args[0], cmd_args);
 
                 if (res < 0) {
-                    for (i = 0; i < cmd.args_count + 1; i++) {
-                        printf("arg: %d\n", (int)cmd_args[i][0]);
-                    }
-
-                    perror("error occured");
-                    exit_g = 1;
+                    perror("[execvp] error");
+                    /*exit_g = 1;*/
                     exit(EXIT_FAILURE);
                 }
-
             } else if (vf < 0) { /** fork failed */
             	perror("vfork");
             } else {
@@ -179,10 +165,12 @@ void * exec_func(void)
 
                     block_sigint();
                 }
-            }
-            free(cmd_args);
 
-        } /** if '\n' */
+                free(cmd_args);
+            }
+
+        } /** end of if '\n' */
+
         pthread_cond_signal(&main_cond);
 
         if (!exit_g)
@@ -199,19 +187,22 @@ void signal_handler(int signum)
 
     pid_t child_pid = waitpid(-1, NULL, WNOHANG);
 
-    fprintf(stderr, "\r\nCaught SIGCHILD (%d)\n", child_pid);
+    /*fprintf(stderr, "\r\nCaught SIGCHILD (%d)\n", child_pid);*/
 
-    if (child_pid > 0 && signum == SIGCHLD) {
+    if (child_pid > 0 &&
+            signum == SIGCHLD &&
+            pidlist_find(pidlist, child_pid))
+    {
         fprintf(stderr, "\r** background process (%d) finished **\n", child_pid);
-        pidlist_print(pidlist);
         pidlist_remove(pidlist, child_pid);
-        prompt();
+        if (!exit_g)
+            prompt();
     }
 }
 
-/**
+/*******************************************************************************
   * HELPER functions
-  */
+  *****************************************************************************/
 /**
   * Consume all remaining characters on STDIN
   * This is used when a command is longer >512 in order
