@@ -53,32 +53,27 @@ int pidlist_find(pidlist_t *p, int pid) {
 
 int pidlist_remove(pidlist_t *p, int pid) {
 	piditem_t *i;
-	i = malloc(sizeof(piditem_t));
+	piditem_t *prev;
 
 	i = p->head;
+	prev = NULL;
 
-	if (i == NULL)
-	    return 0;
+	while (i != NULL) {
+		if (i->pid == pid) {
+			/** first item */
+			if (prev == NULL)
+				p->head = i->next;
+			else
+				prev->next = i->next;
 
-	if (i->pid == pid) {
-		p->head = i->next;
-		free(i);
-		p->size--;
-		return 1;
-	}
-
-	while(i != NULL) {
-		if (i->next != NULL) {
-    		if (i->next->pid == pid) {
-    		    i->next = i->next->next;
-                free(i);
-                p->size--;
-			    return 1;
-            }
+            free(i);
+            p->size--;
+			return 1;
 		}
+		prev = i;
+		i = i->next;
 	}
 
-    free(i);
 	return 0;
 }
 
