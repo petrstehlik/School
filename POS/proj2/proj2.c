@@ -1,15 +1,6 @@
 #include "proj2.h"
 #include "parser.h"
 
-void prompt() {
-	write(1, "$ ", 2);
-}
-
-void cleanup() {
-    pthread_mutex_destroy(&main_mutex);
-    pthread_cond_destroy(&main_cond);
-}
-
 int main(void) {
 	arg[0] = "ls";
 	arg[1] = "-l";
@@ -17,11 +8,17 @@ int main(void) {
 
 	exit_g = 0;
 
-	/*if (signal(SIGINT, signal_handler) == SIG_ERR)
+	if (signal(SIGINT, signal_handler) == SIG_ERR)
     {
         perror("Can't catch SIGNINT signal");
         return EXIT_FAILURE;
-    }*/
+    }
+
+    if (signal(SIGCHLD, signal_handler) == SIG_ERR)
+    {
+        perror("Can't catch SIGNCHLD signal");
+        return EXIT_FAILURE;
+    }
 
     /**
       * Initialize mutexes and conditions
@@ -43,13 +40,10 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    printf("hello from reading\n");
     read_chars = BUFFER_SIZE;
 
     pthread_mutex_lock(&main_mutex);
     while (!exit_g) {
-        //pthread_mutex_lock(&main_mutex);
-
         prompt();
         memset(buffer, 0, sizeof(buffer));
 		read_chars = read(0, buffer, BUFFER_SIZE);
@@ -67,29 +61,15 @@ int main(void) {
         }
 
 		buffer[BUFFER_SIZE-1] = '\0';
-        //pthread_mutex_unlock(&main_mutex);
 
         pthread_cond_signal(&main_cond);
 
         if (!exit_g)
             pthread_cond_wait(&main_cond, &main_mutex);
-
-		//printf("buffer: %s\n", buffer);
-		//int fd = open("t.txt", O_CREAT | O_TRUNC | O_RDWR, 0644);
-		//dup2(fd, STDOUT_FILENO);
-		//int vf = vfork();
-
-		//if (vf == 0) {
-			//int res = execvp(arg[0],arg);
-			//close(fd);
-		//} else if (vf < 0) {
-		//	perror("vfork");
-		//}
-		//prompt();
 	}
     pthread_mutex_unlock(&main_mutex);
 
-
+	// wait for exec thread
     pthread_join(thr_exec, NULL);
 
 	cleanup();
@@ -99,22 +79,16 @@ int main(void) {
 
 void * exec_func(void)
 {
-    //pthread_mutex_lock(&main_mutex);
     char **cmd_args = NULL;
     pthread_cond_wait(&main_cond, &main_mutex);
     int res;
     while(!exit_g)
     {
-        //printf("buffer: %s\n", buffer);
-        //fflush(stdout);
-
-        /** Only enter was pressed */
+        /** Enter -> skip all processing */
         if (buffer[0] != '\n') {
             cmd_t cmd;
 
             parse(&cmd, buffer, read_chars);
-
-            printf("command to run: %s\n", cmd.cmd);
 
             if (cmd.bg)
                 printf("should run in bg\n");
@@ -125,10 +99,6 @@ void * exec_func(void)
             for (int i = 0; i < cmd.args_count; i++) {
                 cmd_args[i+1] = cmd.args[i];
             }
-
-            /*for (int i =0; i < cmd.args_count + 1; i++) {
-                printf("arg %d: %s\n", i, cmd_args[i]);
-            }*/
 
             cmd_args[cmd.args_count+1] = (char *) 0;
 
@@ -173,7 +143,7 @@ void * exec_func(void)
                     close(fd);
                 }
 
-
+				/** Execute the command */
                 res = execvp(cmd_args[0], cmd_args);
 
                 if (res < 0) {
@@ -181,44 +151,58 @@ void * exec_func(void)
                     exit_g = 1;
                     exit(EXIT_FAILURE);
                 }
-                //close(fd);
-            } else if (vf < 0) {
+            } else if (vf < 0) { /** fork failed */
             	perror("vfork");
-            } else if (!cmd.bg){
+            } else if (!cmd.bg){ /** parent should wait if not background task */
                 waitpid(res, NULL, 0);
             }
 
             free(cmd_args);
 
-        } // if '\n'
+        } /** if '\n' */
 
         pthread_cond_signal(&main_cond);
 
         if (!exit_g)
             pthread_cond_wait(&main_cond, &main_mutex);
 
-    } // while
+    } /** while */
     pthread_mutex_unlock(&main_mutex);
-
-    printf("bb\n");
 
     pthread_exit(NULL);
 }
 
-void * reading_func(void)
-{
-
-    return NULL;
-}
-
 void signal_handler(int signum)
 {
-    printf("Caught signal %d\n", signum);
-    cleanup();
+
+    pid_t child_pid = waitpid(-1, NULL, WNOHANG);
+
+    printf("Caught signal %d from %d\n", signum, child_pid);
+    //cleanup();
 }
 
+/**
+  * HELPER functions
+  */
+/**
+  * Consume all remaining characters on STDIN
+  * This is used when a command is longer >512 in order
+  * to not print anything after exiting.
+  */
 void consume_input()
 {
     char c;
     while((c = getchar()) != '\n');
+}
+
+/**
+  * Output prompt sign
+  */
+void prompt() {
+	write(1, "$ ", 2);
+}
+
+void cleanup() {
+    pthread_mutex_destroy(&main_mutex);
+    pthread_cond_destroy(&main_cond);
 }
