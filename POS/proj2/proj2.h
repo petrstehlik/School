@@ -24,11 +24,9 @@
 #define PROMPT "$ "
 
 char buffer[BUFFER_SIZE];
-char* arg[99];
 int exit_g;
 int read_chars;
-pidlist_t pidlist;
-int active_pid;
+pidlist_t *pidlist;
 
 void prompt();
 void cleanup();
@@ -36,16 +34,13 @@ void consume_input();
 void block_sigint();
 void unblock_sigint();
 
+pthread_t thr_exec;
 void * exec_func();
-void * reading_func();
 
 void signal_handler(int signum);
 
 pthread_mutex_t main_mutex;
 pthread_cond_t main_cond;
-
-pthread_t thr_reading;
-pthread_t thr_exec;
 
 #endif
 

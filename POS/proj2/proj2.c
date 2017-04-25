@@ -2,21 +2,11 @@
 #include "parser.h"
 
 int main(void) {
-	arg[0] = "ls";
-	arg[1] = "-l";
-	arg[2] = NULL;
-
 	exit_g = 0;
-	pidlist_init(&pidlist);
-	active_pid = -1;
+	pidlist = malloc(sizeof(pidlist_t));
+	pidlist_init(pidlist);
 
 	block_sigint();
-
-	/*if (signal(SIGINT, signal_handler) == SIG_ERR)
-    {
-        perror("Can't catch SIGINT signal");
-        return EXIT_FAILURE;
-    }*/
 
     if (signal(SIGCHLD, signal_handler) == SIG_ERR)
     {
@@ -44,10 +34,9 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    read_chars = BUFFER_SIZE;
-
     pthread_mutex_lock(&main_mutex);
     while (!exit_g) {
+        pidlist_print(pidlist);
         prompt();
         memset(buffer, 0, sizeof(buffer));
 		read_chars = read(0, buffer, BUFFER_SIZE);
@@ -71,15 +60,15 @@ int main(void) {
 	}
     pthread_mutex_unlock(&main_mutex);
 
-	/** wait for exec thread */
-    pthread_join(thr_exec, NULL);
-    unblock_sigint();
+    printf("\n\nsize: %d\n\n", pidlist->size);
+    fflush(stdout);
 
-    if (pidlist.size) {
+    if (pidlist->size) {
         piditem_t *i;
+        printf("should kill something\n");
         i = malloc(sizeof(piditem_t));
 
-        i = pidlist.head;
+        i = pidlist->head;
 
         while (i != NULL) {
             kill(i->pid, SIGTERM);
@@ -88,6 +77,10 @@ int main(void) {
 
         free(i);
     }
+
+    /** wait for exec thread */
+    pthread_join(thr_exec, NULL);
+    unblock_sigint();
 
 	cleanup();
 
@@ -98,6 +91,7 @@ void * exec_func(void)
 {
     char **cmd_args = NULL;
     int res, i, vf;
+    /*pthread_mutex_lock(&main_mutex);*/
     pthread_cond_wait(&main_cond, &main_mutex);
 
     while(!exit_g)
@@ -108,25 +102,20 @@ void * exec_func(void)
 
             parse(&cmd, buffer, read_chars);
 
-            if (cmd.bg)
-                printf("should run in bg\n");
-
-            cmd_args = (char **) malloc((cmd.args_count + 1) * sizeof(char *));
+            cmd_args = (char **) malloc((cmd.args_count + 2) * sizeof(char *));
             cmd_args[0] = cmd.cmd;
 
             for (i = 0; i < cmd.args_count; i++) {
                 cmd_args[i+1] = cmd.args[i];
             }
 
-            cmd_args[cmd.args_count+1] = (char *) 0;
+            cmd_args[cmd.args_count+1] = NULL;
 
-            vf = vfork();
+            vf = fork();
 
             if (vf == 0) {
                 if (cmd.input_flag) {
                     int fd;
-                    printf("should have input: %s\n", cmd.input);
-
                     fd = open(cmd.input, O_RDONLY);
 
                     if (fd < 0) {
@@ -144,8 +133,6 @@ void * exec_func(void)
 
                 if (cmd.output_flag) {
                     int fd;
-                    printf("should have output: %s\n", cmd.output);
-
                     fd = open(cmd.output, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
                     if (fd < 0) {
@@ -162,12 +149,11 @@ void * exec_func(void)
                 }
 
                 if (cmd.bg) {
-                    printf("inserting, size: %d\n", pidlist.size);
-                    pidlist_insert(&pidlist, getpid());
-                    pidlist_print(&pidlist);
-                    printf("inserted\n");
+                    pidlist_insert(pidlist, getpid());
+                    pidlist_print(pidlist);
+
+                    fprintf(stderr, "** process %d will be running in background\n", getpid());
                 } else {
-                    active_pid = getpid();
                     unblock_sigint();
                 }
 
@@ -175,6 +161,10 @@ void * exec_func(void)
                 res = execvp(cmd_args[0], cmd_args);
 
                 if (res < 0) {
+                    for (i = 0; i < cmd.args_count + 1; i++) {
+                        printf("arg: %d\n", (int)cmd_args[i][0]);
+                    }
+
                     perror("error occured");
                     exit_g = 1;
                     exit(EXIT_FAILURE);
@@ -185,15 +175,14 @@ void * exec_func(void)
             } else {
                 /** parent should wait if not a background task */
                 if (!cmd.bg) {
-                    waitpid(res, NULL, 0);
+                    waitpid(vf, NULL, 0);
+
                     block_sigint();
                 }
             }
-
             free(cmd_args);
 
         } /** if '\n' */
-
         pthread_cond_signal(&main_cond);
 
         if (!exit_g)
@@ -210,18 +199,13 @@ void signal_handler(int signum)
 
     pid_t child_pid = waitpid(-1, NULL, WNOHANG);
 
-    write(2, "\n\nCaught SIGCHILD\n", 18);
+    fprintf(stderr, "\r\nCaught SIGCHILD (%d)\n", child_pid);
 
     if (child_pid > 0 && signum == SIGCHLD) {
-        if (active_pid == child_pid) {
-            printf("process in foreground ended: %d\n", active_pid);
-            active_pid = -1;
-        } else {
-            pidlist_print(&pidlist);
-            pidlist_remove(&pidlist, child_pid);
-        }
-    } else if (signum == SIGINT && active_pid > 0) {
-        printf("should end running process %d\n", active_pid);
+        fprintf(stderr, "\r** background process (%d) finished **\n", child_pid);
+        pidlist_print(pidlist);
+        pidlist_remove(pidlist, child_pid);
+        prompt();
     }
 }
 
