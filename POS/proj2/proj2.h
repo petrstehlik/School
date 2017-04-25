@@ -18,6 +18,8 @@
 #include <errno.h>
 #include <signal.h>
 
+#include "pidlist.h"
+
 #define BUFFER_SIZE 513
 #define PROMPT "$ "
 
@@ -25,10 +27,14 @@ char buffer[BUFFER_SIZE];
 char* arg[99];
 int exit_g;
 int read_chars;
+pidlist_t pidlist;
+int active_pid;
 
 void prompt();
 void cleanup();
 void consume_input();
+void block_sigint();
+void unblock_sigint();
 
 void * exec_func();
 void * reading_func();

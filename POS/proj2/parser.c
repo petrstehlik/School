@@ -3,11 +3,11 @@
 #include <stdlib.h>
 
 void parse(cmd_t *cmd, char* buf, int size) {
-    cmd_init(cmd);
-
     int i;
     int args = 0;
     int start;
+
+    cmd_init(cmd);
 
     for (i = 0; i < size; i++) {
         /** Ignore whitespaces */
@@ -15,9 +15,6 @@ void parse(cmd_t *cmd, char* buf, int size) {
             i++;
 
         if (buf[i] == '<') {
-            printf("found <\n");
-            //strncpy(cmd->args[args-1], &buf[i], 1);
-            //args++;
             i++;
 
             while(buf[i] == ' ' || buf[i] == '\t')
@@ -29,13 +26,8 @@ void parse(cmd_t *cmd, char* buf, int size) {
             while(!is_cchar(buf[++i]));
 
             strncpy(cmd->input, &buf[start], i - start);
-            //strncpy(cmd->args[args-1], &buf[start], i - start);
-            //args++;
             cmd->input_flag = 1;
         } else if (buf[i] == '>') {
-            printf("found >\n");
-            //strncpy(cmd->args[args-1], &buf[i], 1);
-            //args++;
             i++;
 
             while(buf[i] == ' ' || buf[i] == '\t')
@@ -47,13 +39,9 @@ void parse(cmd_t *cmd, char* buf, int size) {
             while(!is_cchar(buf[++i]));
 
             strncpy(cmd->output, &buf[start], i - start);
-            //strncpy(cmd->args[args-1], &buf[start], i - start);
-            //args++;
             cmd->output_flag = 1;
         } else if (buf[i] == '&') {
             cmd->bg = 1;
-            printf("found &\n");
-            continue;
         } else {
             start = i;
 
@@ -82,7 +70,7 @@ void parse(cmd_t *cmd, char* buf, int size) {
         cmd->args_count--;
 */
 
-    //cmd->args[cmd->args_count] = NULL;
+    /*cmd->args[cmd->args_count] = NULL;*/
 
 }
 
