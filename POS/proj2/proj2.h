@@ -1,23 +1,6 @@
 #ifndef PROJ2_H
 #define PROJ2_H
 
-#define _POSIX_C_SOURCE 200809L
-#define _XOPEN_SOURCE
-#define _XOPEN_SOURCE_EXTENDED 1
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <pthread.h>
-
-#include <sys/types.h>
-#include <time.h>
-#include <errno.h>
-#include <signal.h>
-
 #include "pidlist.h"
 
 #define BUFFER_SIZE 513
@@ -42,6 +25,9 @@ void signal_handler(int signum);
 
 pthread_mutex_t main_mutex;
 pthread_cond_t main_cond;
+
+pthread_mutex_t read_mutex;
+pthread_cond_t read_cond;
 
 #endif
 

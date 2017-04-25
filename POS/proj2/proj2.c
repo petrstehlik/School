@@ -1,14 +1,35 @@
+#define _XOPEN_SOURCE 501
+#include <stdio.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <fcntl.h>
+#include <pthread.h>
+
+#include <errno.h>
+
 #include "proj2.h"
 #include "parser.h"
 
+
 int main(void) {
+	struct sigaction new_action;
 	exit_g = 0;
 	pidlist = malloc(sizeof(pidlist_t));
 	pidlist_init(pidlist);
 
+	new_action.sa_handler = signal_handler;
+	sigemptyset (&new_action.sa_mask);
+	new_action.sa_flags = 0;
+
 	block_sigint();
 
-    if (signal(SIGCHLD, signal_handler) == SIG_ERR)
+    if (sigaction (SIGCHLD, &new_action, NULL) < 0)
     {
         perror("[signal] Can't catch SIGNCHLD signal");
         return EXIT_FAILURE;
@@ -18,7 +39,9 @@ int main(void) {
       * Initialize mutexes and conditions
       */
     if (pthread_mutex_init(&main_mutex, NULL) ||
-        pthread_cond_init(&main_cond, NULL))
+        pthread_cond_init(&main_cond, NULL) ||
+        pthread_mutex_init(&read_mutex, NULL) ||
+        pthread_cond_init(&read_cond, NULL))
     {
         perror("[posix] Failed to initialize mutexes and conditions");
         return EXIT_FAILURE;
@@ -34,7 +57,7 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    pthread_mutex_lock(&main_mutex);
+    pthread_mutex_lock(&read_mutex);
     while (!exit_g) {
         prompt();
         memset(buffer, 0, sizeof(buffer));
@@ -55,9 +78,9 @@ int main(void) {
         pthread_cond_signal(&main_cond);
 
         if (!exit_g)
-            pthread_cond_wait(&main_cond, &main_mutex);
+            pthread_cond_wait(&read_cond, &read_mutex);
 	}
-    pthread_mutex_unlock(&main_mutex);
+    pthread_mutex_unlock(&read_mutex);
 
     if (pidlist->size) {
         piditem_t *i;
@@ -84,7 +107,7 @@ void * exec_func(void)
 {
     char **cmd_args = NULL;
     int res, i, vf;
-    /*pthread_mutex_lock(&main_mutex);*/
+    pthread_mutex_lock(&main_mutex);
     pthread_cond_wait(&main_cond, &main_mutex);
 
     while(!exit_g)
@@ -143,18 +166,18 @@ void * exec_func(void)
 
                 if (cmd.bg) {
                     pidlist_insert(pidlist, getpid());
-                    fprintf(stderr, "\r** process %d will be running in background\n", getpid());
-                } else {
-                    unblock_sigint();
+
+                   fprintf(stderr, "\r** process %d will be running in background\n", getpid());
                 }
+
+                unblock_sigint();
 
 				/** Execute the command */
                 res = execvp(cmd_args[0], cmd_args);
 
                 if (res < 0) {
                     perror("[execvp] error");
-                    /*exit_g = 1;*/
-                    exit(EXIT_FAILURE);
+                    _exit(EXIT_FAILURE);
                 }
             } else if (vf < 0) { /** fork failed */
             	perror("vfork");
@@ -171,7 +194,7 @@ void * exec_func(void)
 
         } /** end of if '\n' */
 
-        pthread_cond_signal(&main_cond);
+        pthread_cond_signal(&read_cond);
 
         if (!exit_g)
             pthread_cond_wait(&main_cond, &main_mutex);
