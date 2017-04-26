@@ -200,9 +200,9 @@ void * exec_func(void)
                 if (cmd.bg) {
                     pidlist_insert(pidlist, getpid());
 					fprintf(stderr, "\r** process %d will be running in background\n", getpid());
-                } else {
+					block_sigint();
+                } else
 					unblock_sigint();
-				}
 
 				/** Execute the command */
                 res = execvp(cmd_args[0], cmd_args);
