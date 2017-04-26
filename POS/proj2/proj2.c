@@ -1,21 +1,30 @@
+/**
+ * POS project #2: Simple shell implementation in POSIX C using two threads
+ *
+ * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+ * Date: 2017/04/26
+ *
+ * File: proj2.c
+ */
+
 #define _XOPEN_SOURCE 501
 #include <stdio.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <fcntl.h>
 #include <pthread.h>
-
 #include <errno.h>
 
 #include "proj2.h"
 #include "parser.h"
-
+/**
+ * pidlist included in header file
+ */
 
 int main(void) {
 	struct sigaction new_action;
@@ -23,13 +32,17 @@ int main(void) {
 	pidlist = malloc(sizeof(pidlist_t));
 	pidlist_init(pidlist);
 
-	new_action.sa_handler = signal_handler;
-	sigemptyset (&new_action.sa_mask);
-	new_action.sa_flags = 0;
-
+	/* Block the SIGINT */
 	block_sigint();
 
-    if (sigaction (SIGCHLD, &new_action, NULL) < 0)
+	/**
+	 * Handle SIGCHLD with our own function
+	 */
+	new_action.sa_handler = signal_handler;
+	sigemptyset(&new_action.sa_mask);
+	new_action.sa_flags = 0;
+
+    if (sigaction(SIGCHLD, &new_action, NULL) < 0)
     {
         perror("[signal] Can't catch SIGNCHLD signal");
         return EXIT_FAILURE;
@@ -46,9 +59,7 @@ int main(void) {
         perror("[posix] Failed to initialize mutexes and conditions");
         return EXIT_FAILURE;
     }
-    /** create two threads
-      * - one for reading
-      * - one for execution
+    /** create just one threads for execution. The parent handles reading
       */
     if (pthread_create(&thr_exec, NULL, exec_func, NULL))
     {
@@ -57,16 +68,23 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
+	/**
+	 * reading part of the main thread
+	 */
     pthread_mutex_lock(&read_mutex);
     while (!exit_g) {
         prompt();
         memset(buffer, 0, sizeof(buffer));
 		read_chars = read(0, buffer, BUFFER_SIZE);
 
+		/** finish on ^D and "exit" */
 		if (read_chars == 0 || strncmp(buffer, "exit", 4) == 0) {
 			exit_g = 1;
 		}
 
+		/**
+		 * Handle too long input
+		 */
 		if (read_chars >= BUFFER_SIZE && buffer[BUFFER_SIZE-1] != '\n') {
 		    fprintf(stderr, "Input too long\n");
 		    consume_input();
@@ -82,27 +100,27 @@ int main(void) {
 	}
     pthread_mutex_unlock(&read_mutex);
 
+	/**
+	 * If there are background processes kill them all
+	 */
     if (pidlist->size) {
-        piditem_t *i;
-        i = pidlist->head;
-
-        while (i != NULL) {
-            kill(i->pid, SIGTERM);
-            i = i->next;
-        }
-
-        waitpid(-1, NULL, 0);
+		pidlist_killall(pidlist);
     }
 
     /** wait for exec thread */
     pthread_join(thr_exec, NULL);
-    unblock_sigint();
 
+	/** clean everything */
 	cleanup();
 
 	return exit_g;
 }
 
+/**
+ * Execution thread function
+ *
+ * Handles command line parsing, forking and IO handling
+ */
 void * exec_func(void)
 {
     char **cmd_args = NULL;
@@ -116,8 +134,15 @@ void * exec_func(void)
         if (buffer[0] != '\n') {
             cmd_t cmd;
 
+			/**
+			 * Parse what we got from command line
+			 */
             parse(&cmd, buffer, read_chars);
 
+			/**
+			 * Initialize the command arguments for execvp which takes an array
+			 * of string. Our internal representation doesn't exactly fit...
+			 */
             cmd_args = (char **) malloc((cmd.args_count + 2) * sizeof(char *));
             cmd_args[0] = cmd.cmd;
 
@@ -130,6 +155,11 @@ void * exec_func(void)
             vf = vfork();
 
             if (vf == 0) {
+				/**
+				 * Handle IO files if present
+				 *
+				 * Duplicate pipes for the execvp
+				 */
                 if (cmd.input_flag) {
                     int fd;
                     fd = open(cmd.input, O_RDONLY);
@@ -164,22 +194,26 @@ void * exec_func(void)
                     close(fd);
                 }
 
+				/**
+				 * Handle background process initialization
+				 */
                 if (cmd.bg) {
                     pidlist_insert(pidlist, getpid());
-
-                   fprintf(stderr, "\r** process %d will be running in background\n", getpid());
-                }
-
-                unblock_sigint();
+					fprintf(stderr, "\r** process %d will be running in background\n", getpid());
+                } else {
+					unblock_sigint();
+				}
 
 				/** Execute the command */
                 res = execvp(cmd_args[0], cmd_args);
 
                 if (res < 0) {
                     perror("[execvp] error");
+                    /** the _exit function should really be used only in case of error */
                     _exit(EXIT_FAILURE);
                 }
-            } else if (vf < 0) { /** fork failed */
+            } else if (vf < 0) {
+				/** fork failed but we can still continue working*/
             	perror("vfork");
             } else {
                 /** parent should wait if not a background task */
@@ -202,51 +236,57 @@ void * exec_func(void)
     } /** while */
     pthread_mutex_unlock(&main_mutex);
 
-    pthread_exit(NULL);
+    return NULL;
 }
 
+/**
+ * Handle SIGCHLD
+ *
+ * If the process PID is present in pidlist of background task, remove it
+ * from the list and inform the user about it
+ *
+ * Just for assurance we flush stderr.
+ */
 void signal_handler(int signum)
 {
-
     pid_t child_pid = waitpid(-1, NULL, WNOHANG);
 
-    /*fprintf(stderr, "\r\nCaught SIGCHILD (%d)\n", child_pid);*/
+    /*fprintf(stderr, "Caught SIGCHILD (%d)\n", child_pid);*/
 
-    if (child_pid > 0 &&
-            signum == SIGCHLD &&
-            pidlist_find(pidlist, child_pid))
+    if (signum == SIGCHLD &&
+            pidlist_remove(pidlist, child_pid))
     {
-        fprintf(stderr, "\r** background process (%d) finished **\n", child_pid);
-        pidlist_remove(pidlist, child_pid);
+		fprintf(stderr, "\r** background process (%d) finished **\n", child_pid);
+
         if (!exit_g)
             prompt();
     }
+
+    fflush(stderr);
 }
 
 /*******************************************************************************
   * HELPER functions
   *****************************************************************************/
-/**
-  * Consume all remaining characters on STDIN
-  * This is used when a command is longer >512 in order
-  * to not print anything after exiting.
-  */
 void consume_input()
 {
     char c;
     while((c = getchar()) != '\n');
 }
 
-/**
-  * Output prompt sign
-  */
 void prompt() {
 	write(1, "$ ", 2);
 }
 
 void cleanup() {
     pthread_mutex_destroy(&main_mutex);
+    pthread_mutex_destroy(&read_mutex);
+
     pthread_cond_destroy(&main_cond);
+    pthread_cond_destroy(&read_cond);
+
+    free(pidlist);
+    unblock_sigint();
 }
 
 void block_sigint() {
