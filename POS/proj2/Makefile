@@ -19,7 +19,7 @@ pidlist: pidlist.c
 	gcc -c pidlist.c $(CXXFLAGS)
 
 clean:
-	rm -f proj2 proj2.o parser.o
+	rm -f proj2 proj2.o parser.o pidlist.o
 
 .PHONY: clean
 
