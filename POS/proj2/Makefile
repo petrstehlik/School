@@ -1,4 +1,4 @@
-CXXFLAGS=-O0 -g -pedantic -Wall -Wextra -pthread -std=c99
+CXXFLAGS=-O2 -g -pedantic -Wall -Wextra -pthread -std=c99
 CFLAGS=-Wall -Wextra -pedantic -pthread -std=c99
 
 SRC=proj2.c parser.c
