@@ -1,6 +1,19 @@
-#include "parser.h"
-
+/**
+ * POS project #2: Simple shell implementation in POSIX C using two threads
+ *
+ * \note: Command line parser which reacts to &,<,>
+ *
+ * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+ * Date: 2017/04/26
+ *
+ * File: parser.c
+ */
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+
+#include "parser.h"
 
 void parse(cmd_t *cmd, char* buf, int size) {
     int i;
@@ -70,20 +83,6 @@ void parse(cmd_t *cmd, char* buf, int size) {
     }
 
     cmd->args_count = args-1;
-    /*
-
-    if (cmd->bg)
-        cmd->args_count--;
-
-    if (cmd->input_flag)
-        cmd->args_count--;
-
-    if (cmd->output_flag)
-        cmd->args_count--;
-*/
-
-    /*cmd->args[cmd->args_count] = NULL;*/
-
 }
 
 /**
