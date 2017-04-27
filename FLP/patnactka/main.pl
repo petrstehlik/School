@@ -1,5 +1,7 @@
 :- use_module(library(lists)).
 
+max_depth(1000).
+
 % Reads line from stdin, terminates on LF or EOF.
 read_line(L,C) :-
 	get_char(C),
@@ -56,8 +58,6 @@ convert_lines([H|S], [NumList|NL]) :-
 
 print_lines([]).
 print_lines([H|T]) :-
-	%write("lajna: "),
-	%writeln(H),
 	print_line(H),
 	write('\n'),
 	print_lines(T).
@@ -79,9 +79,12 @@ print_num(X) :- (X == 0, write('*')); write(X).
   * Print the flattened layout
   */
 flat_print(L, X, Y) :- flat_print(L, X, Y, 0, 0), !.
-flat_print([H|[]], _, _, _, _) :- write("last"),print_num(H), write("\n").
+flat_print([H|[]], _, _, _, _) :- write("last"), print_num(H), nl.
+/**
+  * X, Y - dimensions
+  */
 flat_print([H|T], X, Y, AX, AY) :-
-	writeln(H),
+	format("number: ~w ~n", [H]),
 	(X > AX ->
 		(print_num(H), write(" "));
 		(write("\n"), print_num(H))),
@@ -98,20 +101,60 @@ parse_input(Lines) :-
 get_X_dim([H|_], Y_dim) :-	length(H, Y_dim).
 get_Y_dim(Y, Y_dim) :- length(Y, Y_dim).
 
-move_left(L, X, NL) :- move_left(L, X, 1, NL).
-move_left([0|_],_, _, _) :- false,!.
-move_left([A,B|T], X, AX, NL) :-
-	writeln("moving left"),
-	B \= 0 ->
-		(AX is AX + 1,
-		move_left([B|T], X, AX, [A|NL]));
-		(AX == X + 1 ->
-			false, !;
-			append(NL, [B,A|T], NL)
-		)
-	.
+%%  coord(+P, +X, -Row, -Col)
+%
+%   from linear index to row, col
+%   based on X (length of row)
+%
+coord(P, X, Row, Col) :-
+    Row is P // X,
+    Col is P mod X.
+
+/**
+  * get_move(+Board, +ZeroPos, +X, +Y, -Q) is semidet
+  *
+  * Board - the board where we are working
+  * ZeroPos - current 0's position
+  * X, Y - dimensions
+  * Q - new 0's position
+  *
+  * based only on coordinations, get next empty cell index
+  */
+get_move(Board, ZeroPos, X, Y, Q) :-
+	% get index of zero
+	nth0(ZeroPos, Board, 0),
+	format("Zero is at: ~w ~n", [ZeroPos]),
+	coord(ZeroPos, X, Row, Col),
+	(
+		% shift down
+		Row < Y - 1, Q is ZeroPos + X
+		% shift up
+	;	Row > 0, Q is ZeroPos - X
+		% shift right
+	;	Col < X - 1, Q is ZeroPos + 1
+		% shift left
+	;	Col > 0, Q is ZeroPos - 1
+	).
+
+%%  apply_move(+Current, +P, +M, -Update)
+%
+%   swap elements at position P and M
+%
+swap(Current, P, M, Update) :-
+    assertion(nth0(P, Current, 0)), % constrain to this application usage
+    ( P > M -> (F,S) = (M,P) ; (F,S) = (P,M) ),
+    nth0(S, Current, Sv, A),
+    nth0(F, A, Fv, B),
+    nth0(F, C, Sv, B),
+    nth0(S, Update, Fv, C).
 
 
+/**
+  * Get a solution for given length
+  */
+solution(Len, Seq) :-
+	numlist(1, Len, X),
+	append(X, [0], Seq).
 
 main :-
 	parse_input(NL),
@@ -123,7 +166,10 @@ main :-
 	writeln("flattening"),
 	flatten(NL, FL),
 	writeln(FL),
-	move_left(FL, X_dim, NFL),
-	write(NFL),
+	bagof(FL, (get_move(FL, P, X_dim, Y_dim, Q), swap(FL, P, Q, NQ)), Moves),
+	%get_move(FL, P, X_dim, Y_dim, Q),
+	format("Q: ~w ~n", [LLL]),
+	%move_left(FL, X_dim, NFL),
+	writeln(P),
 	halt.
 
