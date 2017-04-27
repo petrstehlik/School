@@ -32,9 +32,9 @@ coord(P, X, Row, Col) :-
   * based only on coordinations, get next empty cell index
   */
 get_move(Board, ZeroPos, X, Y, Q) :-
-	% get index of zero
+	% Get index of zero
 	nth0(ZeroPos, Board, 0),
-	format("Zero is at: ~w ~n", [ZeroPos]),
+    % Get X,Y coordinations of zero
 	coord(ZeroPos, X, Row, Col),
 	(
 		% shift down
@@ -59,28 +59,91 @@ swap(Current, P, M, Update) :-
     nth0(F, C, Sv, B),
     nth0(S, Update, Fv, C).
 
-
 /**
   * Get a solution for given length
   */
 solution(Len, Seq) :-
 	numlist(1, Len, X),
-	append(X, [0], Seq).
+    append(X, [0], Seq).
+
+initialize(Target, Start, Moves, X, Y) :-
+    empty_nb_set(E),
+    writeln("E set emptied"),
+    solve(E, Target, Start, Moves, X, Y).
+
+solve(_, Target, Target, [], _, _) :- !.
+solve(S, Target, Current, [Move|Ms], X, Y) :-
+    trace,
+    add_to_seen(S, Current),
+    setof(Dist-M-Update,
+        (
+            trace,
+            get_move(Current, P, X, Y, M),
+            swap(Current, P, M, Update),
+            distance(Target, Update, Dist, X)
+            %writeln(Dist-M-Update)
+        ), Moves),
+    trace,
+    member(_-Move-U, Moves),
+    solve(S, Target, U, Ms, X, Y).
+
+%%  distance(+Current, +Target, -Dist)
+%
+%   compute Manatthan distance between equals values
+%
+distance(Current, Target, Dist, X) :-
+    aggregate_all(sum(D),
+    (
+        nth0(P, Current, N),
+        coord(P, X, Rp, Cp),
+        nth0(Q, Target, N),
+        coord(Q, X, Rq, Cq),
+        D is abs(Rp - Rq) + abs(Cp - Cq)
+    ), Dist).
+
+
+%%  add_to_seen(+S, +Current)
+%
+%   fail if already in, else store
+%
+add_to_seen(S, L) :-
+    %term_to_atom(L, A),
+    format("Add to seen: ~w ~n", [L]),
+    findall(C, (nth0(I, L, D), C is D*10^I), Cs),
+    sum_list(Cs, A),
+    add_nb_set(A, S, true).
+
+test_input([1,2,3,4,5,6,7,8,9,10,11,12,13,0,14,15]).
 
 main :-
-	parse_input(NL),
-	get_X_dim(NL, X_dim),
-	get_Y_dim(NL, Y_dim),
-	format("X: ~w, Y: ~w ~n", [X_dim, Y_dim]),
-	print_lines(NL),
-	writeln(NL),
-	writeln("flattening"),
-	flatten(NL, FL),
-	writeln(FL),
-	bagof(FL, (get_move(FL, P, X_dim, Y_dim, Q), swap(FL, P, Q, NQ)), Moves),
-	%get_move(FL, P, X_dim, Y_dim, Q),
-	format("Q: ~w ~n", [LLL]),
-	%move_left(FL, X_dim, NFL),
-	writeln(P),
-	halt.
+    %parse_input(NL),
+
+    % Get X, Y dimensions
+    %get_X_dim(NL, X_dim),
+    %get_Y_dim(NL, Y_dim),
+    X_dim is 4,
+    Y_dim is 4,
+    format("X: ~w, Y: ~w ~n", [X_dim, Y_dim]),
+
+    % Flatten the structure to one list
+    %flatten(NL, FL),
+    test_input(FL),
+
+    % Print input puzzle
+    %print_moves([FL], X_dim, Y_dim),
+
+    % Prepare solution
+    Len is X_dim * Y_dim - 1,
+	solution(Len, Solution),
+    print_moves([Solution], X_dim, Y_dim),
+
+    % Find all available moves
+    %findall(NQ, (get_move(FL, P, X_dim, Y_dim, Q), swap(FL, P, Q, NQ)), Moves),
+    %print_moves(Moves, X_dim, Y_dim),
+
+    initialize(Solution, FL, Moves, X_dim, Y_dim),
+    print_moves(Moves, X_dim, Y_dim)
+
+    % bye bye
+	.
 
