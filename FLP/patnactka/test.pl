@@ -39,6 +39,7 @@ solve(S, Target, Current, [Move|Ms]) :-
 %
 get_move(Board, P, Q) :-
     nth0(P, Board, 0),
+    format("Board: ~w, P: ~w, Q: ~w ~n", [Board, P, Q]),
     coord(P, R, C),
     (   R < 3, Q is P + 4
     ;   R > 0, Q is P - 4
@@ -88,11 +89,10 @@ add_to_seen(S, L) :-
     sum_list(Cs, A),
     add_nb_set(A, S, true).
 
-:- begin_tests(fifteen_puzzle).
-
 show_square(R) :-
     findall(Row, (between(1,4,_), length(Row, 4)), Rows),
     append(Rows, R),
+    writeln(Rows),
     nl, maplist(show_row, Rows).
 show_row(R) :-
     format('~t~d~3+~t~d~3+~t~d~3+~t~d~3+~n', R).
@@ -104,6 +104,10 @@ show_solution(P, [M|Ms]) :-
     nth0(C, P, 0),
     apply_move(P, C, M, U),
     show_solution(U, Ms).
+
+
+/*:- begin_tests(fifteen_puzzle).
+
 
 target(  [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]).
 
@@ -120,4 +124,18 @@ runtest(N) :-
     format('solution of ~d: ~w~n', [N, R]),
     show_solution(S, R).
 
-:- end_tests(fifteen_puzzle).
+:- end_tests(fifteen_puzzle).*/
+
+target([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]).
+rand([1,2,3,4,5,6,7,8,9,10,11,12,13,0,14,15]).
+
+main2 :-
+	target(T),
+	rand(S),
+	fifteen_puzzle(T, S, R),
+	format('solution: ~w~n', [R]),
+	writeln(T),
+	writeln(S),
+	writeln(R),
+	show_solution(S, R).
+
