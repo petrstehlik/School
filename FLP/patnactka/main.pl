@@ -8,15 +8,16 @@
 
 %max_depth(1000).
 
+cycle_limit(1000).
 
 get_X_dim([H|_], Y_dim) :-	length(H, Y_dim).
 get_Y_dim(Y, Y_dim) :- length(Y, Y_dim).
 
-%%  coord(+P, +X, -Row, -Col)
-%
-%   from linear index to row, col
-%   based on X (length of row)
-%
+/**
+  * coord(+P, +X, -Row, -Col)
+  *
+  * from linear index to row, col based on X (length of row)
+  */
 coord(P, X, Row, Col) :-
     Row is P // X,
     Col is P mod X.
@@ -47,10 +48,11 @@ get_move(Board, ZeroPos, X, Y, Q) :-
 	;	Col > 0, Q is ZeroPos - 1
 	).
 
-%%  apply_move(+Current, +P, +M, -Update)
-%
-%   swap elements at position P and M
-%
+/**
+  * swap(+Current, +P, +M, -Update)
+  *
+  * swap elements at position P and M
+  */
 swap(Current, P, M, Update) :-
     assertion(nth0(P, Current, 0)), % constrain to this application usage
     ( P > M -> (F,S) = (M,P) ; (F,S) = (P,M) ),
@@ -66,54 +68,46 @@ solution(Len, Seq) :-
 	numlist(1, Len, X),
     append(X, [0], Seq).
 
-initialize(Target, Start, Moves, X, Y) :-
-    empty_nb_set(E),
-    writeln("E set emptied"),
-    solve(E, Target, Start, Moves, X, Y).
+/** isSolution(+List)
+  * Check if given list is a puzzle solution
+  */
+isSolution([]) .
+isSolution([_]) .
+isSolution([X,Y|Z]) :- (X =< Y; Y =:= 0), X \= 0, isSolution( [Y|Z] ) .
 
-solve(_, Target, Target, [], _, _) :- !.
-solve(S, Target, Current, [Move|Ms], X, Y) :-
-    trace,
-    add_to_seen(S, Current),
-    setof(Dist-M-Update,
-        (
-            trace,
-            get_move(Current, P, X, Y, M),
-            swap(Current, P, M, Update),
-            distance(Target, Update, Dist, X)
-            %writeln(Dist-M-Update)
-        ), Moves),
-    trace,
-    member(_-Move-U, Moves),
-    solve(S, Target, U, Ms, X, Y).
+/**
+  * dfs(+S, +X, +Y, -Moves)
+  *
+  * Search with DFS algoritm for solution
+  * Works only for small problems (2x2)
+  */
+  %dfs(S, X, Y, []) :- trace, dfs(S, X, Y, [S]).
+dfs(S, X, Y, Moves):- isSolution(S), print_moves(Moves, X, Y).
+dfs(Current, X, Y, Moves) :-
+        get_move(Current, P, X, Y, M),
+        swap(Current, P, M, Update),
+        \+member(Update, Moves),
+        % We want the sequence in correct order
+        append(Moves, [Update], MM),
+        dfs(Update, X, Y, MM).
 
-%%  distance(+Current, +Target, -Dist)
-%
-%   compute Manatthan distance between equals values
-%
-distance(Current, Target, Dist, X) :-
-    aggregate_all(sum(D),
-    (
-        nth0(P, Current, N),
-        coord(P, X, Rp, Cp),
-        nth0(Q, Target, N),
-        coord(Q, X, Rq, Cq),
-        D is abs(Rp - Rq) + abs(Cp - Cq)
-    ), Dist).
+dls(S, X, Y, _, Moves):- isSolution(S), print_moves(Moves, X, Y).
+dls(Current, X, Y, D, Moves) :-
+        D > 0,
+        get_move(Current, P, X, Y, M),
+        swap(Current, P, M, Update),
+        \+member(Update, Moves),
+        % We want the sequence in correct order
+        append(Moves, [Update], MM),
+        D1 is D - 1,
+        dls(Update, X, Y, D1, MM).
 
-
-%%  add_to_seen(+S, +Current)
-%
-%   fail if already in, else store
-%
-add_to_seen(S, L) :-
-    %term_to_atom(L, A),
-    format("Add to seen: ~w ~n", [L]),
-    findall(C, (nth0(I, L, D), C is D*10^I), Cs),
-    sum_list(Cs, A),
-    add_nb_set(A, S, true).
-
-test_input([1,2,3,4,5,6,7,8,9,10,11,12,13,0,14,15]).
+start(F, X, Y, M) :- writeln("begin"), start(F, X, Y, M, 1).
+start(F, X, Y, M, N) :-
+    NN is N+1,
+    writeln(NN),
+    \+dls(F, X, Y, NN, M) -> start(F, X, Y, M, NN); !.
+    %dls(F, X, Y, NN, M).
 
 main :-
     parse_input(NL),
