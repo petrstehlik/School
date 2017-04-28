@@ -116,34 +116,40 @@ add_to_seen(S, L) :-
 test_input([1,2,3,4,5,6,7,8,9,10,11,12,13,0,14,15]).
 
 main :-
-    %parse_input(NL),
+    parse_input(NL),
 
     % Get X, Y dimensions
-    %get_X_dim(NL, X_dim),
-    %get_Y_dim(NL, Y_dim),
-    X_dim is 4,
-    Y_dim is 4,
+    get_X_dim(NL, X_dim),
+    get_Y_dim(NL, Y_dim),
+    %X_dim is 2,
+    %Y_dim is 2,
     format("X: ~w, Y: ~w ~n", [X_dim, Y_dim]),
 
     % Flatten the structure to one list
-    %flatten(NL, FL),
-    test_input(FL),
+    flatten(NL, FL),
+    %test_input(FL),
 
     % Print input puzzle
     %print_moves([FL], X_dim, Y_dim),
-
-    % Prepare solution
-    Len is X_dim * Y_dim - 1,
-	solution(Len, Solution),
-    print_moves([Solution], X_dim, Y_dim),
-
-    % Find all available moves
-    %findall(NQ, (get_move(FL, P, X_dim, Y_dim, Q), swap(FL, P, Q, NQ)), Moves),
-    %print_moves(Moves, X_dim, Y_dim),
-
-    initialize(Solution, FL, Moves, X_dim, Y_dim),
-    print_moves(Moves, X_dim, Y_dim)
+    %dfs(FL, X_dim, Y_dim, [FL]),
+    start(FL, X_dim, Y_dim, [FL]),
+    %writeln(Moves),
 
     % bye bye
-	.
+    halt.
+
+test_input2([1,2,3,4,5,6,7,0,8]). %,9,10,11,12,13,14,15]).
+test_input([1,2,0,3]).
+
+main_test :-
+    X_dim is 2,
+    Y_dim is 2,
+
+    test_input(FL),
+
+    %dls(FL, X_dim, Y_dim,25, [FL]),
+    start(FL, X_dim, Y_dim, [FL]),
+
+    % bye bye
+    halt.
 
