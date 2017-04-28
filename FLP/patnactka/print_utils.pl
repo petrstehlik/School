@@ -23,12 +23,13 @@ part(L, N, [DL|DLTail]) :-
 
 print_matrix(M, X) :-
     part(M, X, NM),
-    maplist(print_line, NM),
-    nl.
+    maplist(print_line, NM).
 
-print_moves([M|[]], X, _) :- writeln(M), print_matrix(M, X).
+print_moves([], _, _):-!.
+print_moves([M|[]], X, _) :- print_matrix(M, X).
 print_moves([M|Moves], X, Y) :-
-    writeln(M),
+    %writeln(M),
     print_matrix(M, X),
+    nl,
     print_moves(Moves, X, Y).
 
