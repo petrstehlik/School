@@ -15,6 +15,9 @@ print_line([H|L]) :-
     maplist(print_num_space, L),
     nl.
 
+/**
+  * Divide a list into a list of lists of given length
+  */
 part([], _, []).
 part(L, N, [DL|DLTail]) :-
    length(DL, N),
@@ -25,11 +28,9 @@ print_matrix(M, X) :-
     part(M, X, NM),
     maplist(print_line, NM).
 
-print_moves([], _, _):-!.
 print_moves([M|[]], X, _) :- print_matrix(M, X).
 print_moves([M|Moves], X, Y) :-
-    %writeln(M),
     print_matrix(M, X),
-    nl,
+	nl,
     print_moves(Moves, X, Y).
 
