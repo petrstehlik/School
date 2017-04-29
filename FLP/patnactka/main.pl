@@ -82,13 +82,14 @@ isSolution([X,Y|Z]) :- (X =< Y; Y =:= 0), X \= 0, isSolution( [Y|Z] ) .
   * Works only for small problems (2x2)
   */
   %dfs(S, X, Y, []) :- trace, dfs(S, X, Y, [S]).
-dfs(S, X, Y, Moves):- isSolution(S), print_moves(Moves, X, Y).
+  %dfs(S, X, Y, Moves):- isSolution(S), print_moves(Moves, X, Y).
 dfs(Current, X, Y, Moves) :-
         get_move(Current, P, X, Y, M),
         swap(Current, P, M, Update),
         \+member(Update, Moves),
         % We want the sequence in correct order
         append(Moves, [Update], MM),
+        \+isSolution(Update),
         dfs(Update, X, Y, MM).
 
 dls(S, X, Y, _, Moves):- isSolution(S), print_moves(Moves, X, Y).
@@ -102,46 +103,88 @@ dls(Current, X, Y, D, Moves) :-
         D1 is D - 1,
         dls(Update, X, Y, D1, MM).
 
-start(F, X, Y, M) :- writeln("begin"), start(F, X, Y, M, 1).
+start(F, X, Y, M) :- start(F, X, Y, M, 0).
 start(F, X, Y, M, N) :-
     NN is N+1,
-    writeln(NN),
     \+dls(F, X, Y, NN, M) -> start(F, X, Y, M, NN); !.
-    %dls(F, X, Y, NN, M).
+
+remove_duplicates([],[]).
+
+remove_duplicates([H | T], List) :-    
+     member(H, T),
+     remove_duplicates( T, List).
+
+remove_duplicates([H | T], [H|T1]) :- 
+      \+member(H, T),
+      remove_duplicates( T, T1).
+
+remove_duplicates2([],[]).
+
+remove_duplicates2([H],[H]).
+
+remove_duplicates2([H ,H| T], List) :-remove_duplicates( [H|T], List).
+
+remove_duplicates2([H,Y | T], [H|T1]):- Y \= H,remove_duplicates( [Y|T], T1).
+
+parse_input2(_) :- false.
 
 main :-
+	% Parse the input as list of lists
     parse_input(NL),
+	% We must make a cut here because of parse_input
+    !,
 
     % Get X, Y dimensions
     get_X_dim(NL, X_dim),
     get_Y_dim(NL, Y_dim),
-    %X_dim is 2,
-    %Y_dim is 2,
-    format("X: ~w, Y: ~w ~n", [X_dim, Y_dim]),
 
     % Flatten the structure to one list
     flatten(NL, FL),
-    %test_input(FL),
 
-    % Print input puzzle
-    %print_moves([FL], X_dim, Y_dim),
-    %dfs(FL, X_dim, Y_dim, [FL]),
-    start(FL, X_dim, Y_dim, [FL]),
-    %writeln(Moves),
+	length(FL, FlatLenght),
+	remove_duplicates2(FL, NFL),
+	length(NFL, FlatLenght2),
+
+	(FlatLenght =:= FlatLenght2) ->
+
+	% Start solving the puzzle and print the solution if found
+	% You can choose from DFS, DLS and IDS
+	%dfs(FL, X_dim, Y_dim, [FL]),
+	%dls(FL, X_dim, Y_dim, 15, [FL]),
+	start(FL, X_dim, Y_dim, [FL]);
+	(
+		writeln("Error, incorrect puzzle"),
+		false
+	)
 
     % bye bye
-    halt.
+    .
 
-test_input2([1,2,3,4,5,6,7,0,8]). %,9,10,11,12,13,14,15]).
-test_input([1,2,0,3]).
+test_input3([1,  2,	 3,  4,
+			 5,	 6,	 7,  8,
+			 9,	10,	 11, 12,
+			 13, 14, 0,  15]).
 
+test_input2([5,	 1,	 2,  4,
+			 9,	 0,	 3,  7,
+			 13, 6,	 12, 11,
+			 14, 10, 15, 8]). %,9,10,11,12,13,14,15]).
+
+test_input([1,2,
+			0,3]).
+
+% This puzzle will be solved in 18 steps which takes around a minute
 main_test :-
-    X_dim is 2,
-    Y_dim is 2,
+    X_dim is 4,
+    Y_dim is 4,
 
-    test_input(FL),
+    test_input3(FL),
 
-    %dls(FL, X_dim, Y_dim,25, [FL]),
+    length(FL, FlatLenght),
+	remove_duplicates2(FL, NFL),
+    length(NFL, FlatLenght2),
+
+	FlatLenght =:= FlatLenght2,
     start(FL, X_dim, Y_dim, [FL]),
 
     % bye bye
