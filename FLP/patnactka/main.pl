@@ -77,7 +77,6 @@ solution(Len, Seq) :-
 
 /** isSolution(+List)
   * Check if given list is a puzzle solution
-  * Author: Marek Beno (with small modification)
   */
 isSolution([]).
 isSolution([_]).
