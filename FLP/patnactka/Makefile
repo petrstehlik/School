@@ -1,5 +1,5 @@
 all:
-	swipl -q -g puzzle:main -o main -c main.pl print_utils.pl parser.pl
+	swipl -q -g puzzle:main -o flp-log -c main.pl print_utils.pl parser.pl
 
 test:
 	swipl -q -g puzzle:main_test -o main -c main.pl print_utils.pl parser.pl
