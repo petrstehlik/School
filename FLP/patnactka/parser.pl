@@ -1,18 +1,32 @@
+/**
+  * \brief Parser for n-puzzle matrices where * is represented with 0
+  *
+  * \author Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * \date 2017/04/30
+  */
+
 :- module(parser,
       [
-          parse_input/1
+          parse_input/1,
+          remove_duplicates/2
       ]).
+
+/** FLP 2015
+Toto je ukazkovy soubor zpracovani vstupu v prologu.
+Tento soubor muzete v projektu libovolne pouzit.
+
+autor: Martin Hyrs, ihyrs@fit.vutbr.cz
+
+
+preklad: swipl -q -g start -o flp16-log -c input2.pl
+*/
 
 % Reads line from stdin, terminates on LF or EOF.
 read_line(L,C) :-
 	get_char(C),
 	(isEOFEOL(C), L = [], !;
 		read_line(LL,_),
-		% atom_codes(C,[Cd]),
-		L = [C|LL]
-		%(atom_number(C,X), L = [X|LL];
-		%L = [0|LL])
-	).
+		[C|LL] = L).
 
 % Tests if character is EOF or LF.
 isEOFEOL(C) :-
@@ -24,8 +38,6 @@ read_lines(Ls) :-
 	( C == end_of_file, Ls = [] ;
 	  read_lines(LLs), Ls = [L|LLs]
 	).
-
-
 
 % rozdeli radek na podseznamy
 split_line([],[[]]) :- !.
@@ -62,4 +74,28 @@ parse_input(Lines) :-
 	split_lines(LL,S),
 	convert_lines(S, NL),
 	Lines = NL.
+
+
+/**
+  * Original source: https://stackoverflow.com/questions/39435709/
+  *
+  * Remove duplicates from a list
+  */
+remove_duplicates([],[]).
+remove_duplicates([H], [H]).
+remove_duplicates([H | T], List) :-
+	member(H, T),
+	remove_duplicates(T, List).
+
+remove_duplicates([H|T], [H|T1]) :-
+	\+member(H, T),
+	remove_duplicates(T, T1).
+
+remove_duplicates([H, H|T], List) :-
+	remove_duplicates([H|T], List).
+
+remove_duplicates([H, Y|T], [H|T1]) :-
+	Y \= H,
+	remove_duplicates([Y|T], T1).
+
 
