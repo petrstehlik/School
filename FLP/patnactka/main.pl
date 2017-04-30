@@ -17,7 +17,6 @@
 :- use_module(print_utils).
 :- use_module(parser).
 
-
 get_X_dim([H|_], Y_dim) :-	length(H, Y_dim).
 get_Y_dim(Y, Y_dim) :- length(Y, Y_dim).
 

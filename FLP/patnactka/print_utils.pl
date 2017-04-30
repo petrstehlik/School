@@ -14,8 +14,8 @@
           print_moves/3
       ]).
 
-print_num(X) :- (X == 0, write("*")); write(X).
-print_num_space(X) :- write(" "), print_num(X).
+print_num(X) :- (X == 0, write('*')); write(X).
+print_num_space(X) :- write(' '), print_num(X).
 
 print_line([H|L]) :-
     print_num(H),
