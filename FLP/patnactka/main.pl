@@ -1,4 +1,5 @@
 /**
+  * assignment: patnactka
   * \brief Solver for n-puzzle matrices where * is represented with 0
   *
   * Solver expects the matrix on stdin, you can choose from DFS,

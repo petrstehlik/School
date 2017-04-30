@@ -1,4 +1,5 @@
 /**
+  * assignment: patnactka
   * \brief Printing utilities for matrices
   *
   * \author Petr Stehlik <xstehl14@stud.fit.vutbr.cz>

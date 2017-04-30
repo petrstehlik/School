@@ -1,4 +1,5 @@
 /**
+  * assignment: patnactka
   * \brief Parser for n-puzzle matrices where * is represented with 0
   *
   * \author Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
