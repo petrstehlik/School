@@ -77,10 +77,14 @@ solution(Len, Seq) :-
 
 /** isSolution(+List)
   * Check if given list is a puzzle solution
+  * Author: Marek Beno (with small modification)
   */
-isSolution([]) .
-isSolution([_]) .
-isSolution([X,Y|Z]) :- (X =< Y; Y =:= 0), X \= 0, isSolution( [Y|Z] ) .
+isSolution([]).
+isSolution([_]).
+isSolution([X,Y|Z]) :-
+	(X =< Y; Y =:= 0),
+	X \= 0,
+	isSolution([Y|Z]).
 
 /**
   * dfs(+S, +X, +Y, -Moves)
