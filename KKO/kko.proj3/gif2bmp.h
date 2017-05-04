@@ -9,6 +9,14 @@
 #include <sys/types.h>
 #include <vector>
 
+
+#define IMAGE_DESCRIPTOR	0x2C
+#define TRAILER				0x3B
+#define GRAPHIC_CONTROL		0xF9
+#define APPLICATION_EXT		0xFF
+#define COMMENT_EXT			0xFE
+#define PLAINTEXT_EXT		0x01
+
 typedef struct {
 	int64_t bmpSize;
 	int64_t gifSize;
@@ -67,6 +75,13 @@ typedef struct {
 
 #pragma pack(pop)
 
+typedef struct {
+	uint8_t byte;
+	int32_t prev;
+	int len;
+} dictionary_entry_t;
+
+
 struct GIFError : public std::exception
 {
    std::string s;
@@ -89,3 +104,13 @@ void readHeader(FILE *f, gifHeader *h);
 void readDescriptor (FILE *f, descriptor *d);
 void parsePackedField(descriptor *d, packedField *p);
 void parseImgDescPack(imgDescPack *i, char c);
+
+
+/** Parse color table
+  *
+  * The color table can be global or local, it doesn't matter
+  *
+  * @param FILE * inFile input file
+  */
+//void parseColorTable(FILE *inFile, colorTable_t *table);
+
