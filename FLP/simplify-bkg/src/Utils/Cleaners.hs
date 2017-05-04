@@ -1,4 +1,4 @@
--- Project #1 FLP
+-- | Project #1 FLP
 -- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
 -- Description: Utilities for both algorithms
 
@@ -13,18 +13,15 @@ import Data.Char
 
 import Type.CFG
 
--- Clear useless rules from the grammar
+-- | Clear useless rules from the grammar
 -- @Input grammar to clear
 -- @Output cleared grammar
 clearRules :: CFG -> CFG
 clearRules (CFG n e p s)
-    --case (clearRules' n p []) of
-    --  Left e -> Left e
-    --  Right np ->
     | null n || null p = error "Incorrect grammar"
     | otherwise = CFG n e (clearRules' n p []) s
     where
-        -- Clear rules of useless rules
+        -- | Clear rules of useless rules
         -- @Input List of acceptable non-terminals
         -- @input List of all rules
         -- @Input List of cleared rules
@@ -40,20 +37,20 @@ clearRules (CFG n e p s)
             else clearRules' nonTerms rules clr
         clearRules' nonTerms [] clr = clr
 
--- Clear useless terminals from the grammar
+-- | Clear useless terminals from the grammar
 -- @Input grammar to clear
 -- @Output cleared grammar
 clearTerminals :: CFG -> CFG
 clearTerminals (CFG n e p s) = CFG n (nub $ clearTerminals' n p []) p s
     where
-        -- Clear terminals of useless rules
+        -- | Clear terminals of useless rules
         -- @Input List of acceptable non-terminals
         -- @Input List of rules
         -- @Input List of cleared terminals
         -- @Output Cleared list of terminals
         clearTerminals' :: [Symbol] -> [Rule] -> [Symbol] -> [Symbol]
         clearTerminals' nonTerms ((Rule s b):rules) terms = do
-            let clrBody = (nub b) \\ nonTerms
+            let clrBody = filter (/= '#') $ (nub b) \\ nonTerms
             if length clrBody > 0
                 then clearTerminals' nonTerms rules (terms ++ clrBody)
                 else clearTerminals' nonTerms rules terms

@@ -1,4 +1,4 @@
--- Module to find all generating nonterminals according to algorithm 4.1 (course TIN)
+-- | Module to find all generating nonterminals according to algorithm 4.1 (course TIN)
 -- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
 -- Description: Find all nonterminals generating terminals
 module Parser.ClearNT
@@ -10,9 +10,9 @@ import Data.Char
 import Type.CFG
 import Debug.Trace
 
-debug = flip trace
+-- debug = flip trace
 
--- Find all term generators according to algorithm 4.1
+-- | Find all term generators according to algorithm 4.1
 -- @Input Grammar to clear
 -- @Output Cleared grammar
 findTermGenerators :: CFG -> CFG
@@ -20,7 +20,7 @@ findTermGenerators (CFG n e p s) = case (termGenerators p []) of
     Left e -> error $ show e
     Right nt -> CFG nt e p s
     where
-        -- Find term generators
+        -- | Find term generators
         -- @Input List of rules
         -- @Input List of symbols generatings terms
         -- @Output Error message
@@ -37,7 +37,7 @@ findTermGenerators (CFG n e p s) = case (termGenerators p []) of
                 then Right newNonTerms
                 else termGenerators rules newNonTerms
 
--- Helper to determine list of all available term generators
+-- | Helper to determine list of all available term generators
 -- Is called in the until loop until the result is stable (same as before)
 -- @Input List of rules
 -- @Input List of term generators
@@ -48,7 +48,7 @@ termGenerators'' (rule:rules) nonTerms
     | otherwise = termGenerators'' rules nonTerms
 termGenerators'' [] nonTerms = nub nonTerms
 
--- Determine if a rule is a term generator
+-- | Determine if a rule is a term generator
 -- @Input Rule
 -- @Input List of term generators
 -- @Output Bool

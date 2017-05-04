@@ -1,6 +1,11 @@
--- Project #1 FLP
--- Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
--- Description: Convert CFG accoring to algorithm 4.3 (course TIN)
+{-|
+Module      : Fun Project #1 FLP
+Description : Convert CFG accoring to algorithm 4.3 (course TIN)
+Copyright   : (c) Petr Stehlik
+License     : MIT
+Maintainer  : <xstehl14@stud.fit.vutbr.cz>
+Stability   : experimental
+-}
 module Main
         (main)
     where
@@ -20,10 +25,9 @@ import Parser.ReachableState
 
 import Utils.Cleaners
 
--- Workflow is as follows:
---  1) parse argument
---  2) parse input file
-
+-- | Workflow is as follows:
+--  1. parse argument
+--  2. parse input file
 main :: IO ()
 main = do
     (flag,file) <- parseArgs <$> getArgs
@@ -36,12 +40,12 @@ main = do
             cfg <- parseCFG <$> getContents
             convert flag cfg
 
--- We can begin with the magic
+-- | We can begin with the magic
 --              .
 --          \^/|
 --         _/ \|_
 --
---      I SHALL PASS
+-- I SHALL PASS WITH MAX POINTS
 convert :: Parameter -> Either String CFG -> IO ()
 convert flag cfg =
             case cfg of
@@ -51,18 +55,18 @@ convert flag cfg =
                     ClearGrammar -> clearGrammar c
                 Left e -> putStrLn $ "Error!\nReason: " ++ (e)
 
--- Initial function for Algorithm #4.1
+-- | Initial function for Algorithm #4.1
 -- @Input Grammar to clear
 -- @Output IO
 clearNonTerminals :: CFG -> IO ()
 clearNonTerminals cfg
-    | checkCFG cfg = putStr ( show $ ( clearTerminals
-                                     . clearRules
+    | checkCFG cfg = putStr ( show $ ( --clearTerminals -- In the original algoritm we shouldnt clear terminals
+                                     clearRules
                                      . findTermGenerators
                                      ) cfg )
     | otherwise = error "Incorrect grammar"
 
--- Initial function for Algorithm #4.3 (#4.2 included for free!)
+-- | Initial function for Algorithm #4.3 (#4.2 included for free!)
 -- @Input Grammar to clear
 -- @Output IO
 clearGrammar :: CFG -> IO ()
@@ -75,7 +79,7 @@ clearGrammar cfg
                                      ) cfg )
     | otherwise = error "Incorrect grammar"
 
--- Sanity check of a grammar
+-- | Sanity check of a grammar
 -- @Input Grammar to check
 -- @Output Validity of the given grammar
 checkCFG :: CFG -> Bool
@@ -86,7 +90,7 @@ checkCFG (CFG n e p s)
     | ( length p ) < 1 = error "No rules specified"
     | otherwise = checkRules p n e
 
--- Check all rules if they are made of defined terminals and nonterminals
+-- | Check all rules if they are made of defined terminals and nonterminals
 -- @Input List of rules
 -- @Input List of nonterminals
 -- @Input List of terminals
@@ -94,6 +98,6 @@ checkCFG (CFG n e p s)
 checkRules :: [Rule] -> [Symbol] -> [Symbol] -> Bool
 checkRules ((Rule s b):rules) p t
     | (not $ elem s p) = error "Symbol not in list of symbols"
-    | (not (null $ (((nub b) \\ p) \\ t))) = error "Rule is of undefined symbols"
+    | (not (null $ (((nub b) \\ p) \\ t))) && b /= "#" = error "Rule is of undefined symbols"
     | otherwise = checkRules rules p t
 checkRules [] _ _ = True

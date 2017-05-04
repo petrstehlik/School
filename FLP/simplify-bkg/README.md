@@ -10,10 +10,17 @@ I couldn't figure out how to properly handle deep nested errors so I used simple
 ## Building the project
 Suprisingly `make`
 
+## Documentation
+`make docs` will generate haddock documentation
+
 # simplify-bkg-tests
 Tests for FIT FLP project #1
 
 ## Running the tests
+### Option 1
+`make test` which will run the `./testrunner.sh 2`.
+
+### Option 2
 You must be located in the tests/ folder. *Please mind that the script uses flags without a dash!*
 ```Bash
 bash testrunner.sh [1|2|i] (optional)
