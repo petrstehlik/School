@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "gif2bmp.h"
+#include "bmp.h"
 //#include "file.h"
 
 using namespace std;
@@ -29,14 +30,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (inputPath.empty()) {
-		inputPath = "stdio";
-	}
-
-	if (outputPath.empty()) {
-		outputPath = "stdout";
-	}
-
 	if (logPath.empty()) {
 		logPath = "no loggin";
 	}
@@ -48,8 +41,9 @@ int main(int argc, char **argv) {
 	tGIF2BMP sizeInfo;
 
 	FILE *fp = fopen(inputPath.c_str(), "r+");
+	FILE *output = fopen(outputPath.c_str(), "wb+");
 
-	gif2bmp(&sizeInfo, fp, NULL);
+	gif2bmp(&sizeInfo, fp, output);
 
 	fclose(fp);
 }

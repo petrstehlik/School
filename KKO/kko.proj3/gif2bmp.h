@@ -16,6 +16,7 @@
 #define APPLICATION_EXT		0xFF
 #define COMMENT_EXT			0xFE
 #define PLAINTEXT_EXT		0x01
+#define MAX_CODE_LENGTH		12
 
 typedef struct {
 	int64_t bmpSize;
@@ -113,4 +114,10 @@ void parseImgDescPack(imgDescPack *i, char c);
   * @param FILE * inFile input file
   */
 //void parseColorTable(FILE *inFile, colorTable_t *table);
+
+
+void uncompress( int code_length,
+                const unsigned char *input,
+                int input_length,
+                unsigned char *out );
 
