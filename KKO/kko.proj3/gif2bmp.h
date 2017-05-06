@@ -105,6 +105,13 @@ void readHeader(FILE *f, gifHeader *h);
 void readDescriptor (FILE *f, descriptor *d);
 void parsePackedField(descriptor *d, packedField *p);
 void parseImgDescPack(imgDescPack *i, char c);
+int POW(int x);
+
+/**
+  * @str String to to write to stderr
+  * @return error code -1
+  */
+int error(const char *str);
 
 
 /** Parse color table

@@ -20,9 +20,14 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	packedField packedF;
 	int GCT_length = 0;
 	color *GCT = NULL;
+	color *LCT = NULL;
 	int clearCode, stopCode, code_length;
 
-	readHeader(inputFile, &hdr);
+	try {
+		readHeader(inputFile, &hdr);
+	} catch ( GIFError &e ) {
+		return error(e.what());
+	}
 
 	fread(&desc, 1, 7, inputFile);
 
@@ -32,22 +37,24 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	  * If present, parse global color table
 	  */
 	if (packedF.GCT_flag) {
-		GCT_length = pow(2, (int)packedF.GCT_size + 1);
+		GCT_length = POW(packedF.GCT_size + 1);
 		code_length = packedF.GCT_size + 1;
-		clearCode = GCT_length;
-		stopCode = GCT_length+1;
 
 		GCT = (color *)malloc(sizeof(color) * GCT_length);
 
 		for (int var = 0; var < GCT_length; ++var) {
 			fread(&(GCT[var]), sizeof(color), 1, inputFile);
-			//printf("Color %d: %d %d %d\n",var, GCT[var].r, GCT[var].g, GCT[var].b);
 		}
 
 		cout << "GCT len: " << GCT_length << endl;
 		cout << "Global Color Table: OK" << endl;
-		for (int i = 0; i < GCT_length; i++) {
-			cout << i << " (" << (int)GCT[i].r << ", " << (int)GCT[i].g << ", " << (int)GCT[i].b << ")" << endl;
+		if (DEBUG) {
+			for (int i = 0; i < GCT_length; i++) {
+				cout << i << " (" <<
+					(int)GCT[i].r << ", " <<
+					(int)GCT[i].g << ", " <<
+					(int)GCT[i].b << ")" << endl;
+			}
 		}
 	} else {
 		cout << "No GCT found" << endl;
@@ -64,6 +71,8 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 
 		uint8_t control_label = fgetc(inputFile);
 
+		printf("control label: %x\n", control_label);
+
 		if (control_label == 0xF9) {
 			printf("Control label found!\n");
 
@@ -75,9 +84,12 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 
 			if (ext.terminator != 0x00)
 				throw GIFError("Graphic Control Extension not terminated correctly");
+		} else {
+			printf("\n\nDifferent control label:  %x\n\n", control_label);
 		}
 
 		extension_flag = fgetc(inputFile);
+		printf("extension flag: %x\n", extension_flag);
 	}
 
 	imgDescriptor iDesc;
@@ -102,19 +114,26 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 		if ((bool)iDesc.p.LCT_flag) {
 			cout << "LCT is present" << endl;
 			cout << "LCT size: " << (int)iDesc.p.LCT_size << endl;
+			code_length = (int)iDesc.p.LCT_size + 1;
 
-			uint16_t LCT_length = pow(2, (int)iDesc.p.LCT_size + 1);
+			uint16_t LCT_length = POW((int)iDesc.p.LCT_size + 1);
 			cout << "LCT length: " << (int)LCT_length << endl;
 
-			color *LCT = (color *)malloc(sizeof(color) * LCT_length);
+			LCT = (color *)malloc(sizeof(color) * LCT_length);
 
 			for (int var = 0; var < LCT_length; ++var) {
 				fread(&(LCT[var]), sizeof(color), 1, inputFile);
-				//printf("Color %d: %d %d %d\n",var, GCT[var].r, GCT[var].g, GCT[var].b);
 			}
 
-			free(LCT);
-
+			if (DEBUG) {
+				cout << "--------------LCT TABLE-----------" << endl;
+				for (int i = 0; i < LCT_length; i++) {
+					cout << i << " (" <<
+						(int)LCT[i].r << ", " <<
+						(int)LCT[i].g << ", " <<
+						(int)LCT[i].b << ")" << endl;
+				}
+			}
 		}
 	}
 
@@ -143,9 +162,7 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 		// Print the loaded data
 		if (DEBUG) {
 			for (auto it : tmp_data) {
-				//cout << std::dec << endl;
-				//cout << "color index: " << (int)it << "\t" << std::hex << (int)it << endl;
-				cout << std::hex << (int)it << " " << endl;
+				//cout << std::hex << (int)it << " " << endl;
 				//printf("Color %d: (%d, %d, %d)\n", (int)it, GCT[(int)it].r, GCT[(int)it].g, GCT[(int)it].b);
 			}
 
@@ -173,61 +190,42 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 		cout << "data size: " << data.size() << endl;
 
 	// TODO: Decompress acquired data
-
-	// Dictionary to hold decompressed data
-	int dict_i = 0;
-	dictionary_entry_t *dictionary;
-	// Create a dictionary large enough to hold "GCT_length" entries.
-	// Once the dictionary overflows, GCT_length increases
-	dictionary = (dictionary_entry_t *)
-		malloc(sizeof(dictionary_entry_t) * ( 1 << ( code_length + 1 ) ));
-
-	for (dict_i = 0; dict_i < (1 << code_length); dict_i++ )
-	{
-		dictionary[dict_i].byte = dict_i;
-		// XXX this only works because prev is a 32-bit int (> 12 bits)
-		dictionary[dict_i].prev = -1;
-		dictionary[dict_i].len = 1;
-	}
-
-	//int32_t code;
-	//uint32_t bit;
-	//uint32_t mask = 0x01;
-	//uint8_t *input = (uint8_t *)&(data[0]);
-	//int input_len = data.size();
-	//int reset_code_length = code_length;
-	//int prev = -1;
-	//uint8_t *output;
-	//int match_len;
-
-	//output = (uint8_t *) malloc(iDesc.width * iDesc.height);
-
-	clearCode = (1 << (code_length));
-
-	//for (int i = 0; i < input_len; i++) {
-	//	printf("input: %x\n", input[i]);
-	//}
+	clearCode = POW(code_length);
 
 	uint8_t * out2;
 	out2 = (uint8_t *)malloc (sizeof(uint8_t) * iDesc.width * iDesc.height);
 
-	uncompress(code_length, (uint8_t *)&(data[0]), data.size(), out2);
+	try {
+		uncompress(code_length, (uint8_t *)&(data[0]), data.size(), out2);
+	} catch (GIFError &e) {
+		return error(e.what());
+	}
 
 	// Get colours of each pixel
 	vector<color> out_color(iDesc.width * iDesc.height);
 
-	for (int i = 0; i < iDesc.width * iDesc.height; i++) {
-			//printf("%x (%d) ", out2[i], out2[i]);
-			out_color[i] = GCT[(int)out2[i]];
+	if (iDesc.p.LCT_flag) {
+		for (int i = 0; i < iDesc.width * iDesc.height; i++) {
+				//printf("%x (%d) ", out2[i], out2[i]);
+				out_color[i] = LCT[(int)out2[i]];
+		}
+	} else {
+		for (int i = 0; i < iDesc.width * iDesc.height; i++) {
+				//printf("%x (%d) ", out2[i], out2[i]);
+				out_color[i] = GCT[(int)out2[i]];
+		}
 	}
 
+	// Store the decoded GIF to BMP file
+	BMP::BMP bmp(iDesc.width, iDesc.height);
 
-	// TODO: Create BMP file
+	bmp.Store(outputFile, &out_color);
 
-	writeFile(outputFile, iDesc.width, iDesc.height, &out_color);
+	gif2bmp->bmpSize = bmp.StoredSize();
 
+	// Cleanup
 	free(GCT);
-	free(dictionary);
+	free(LCT);
 
 	return 0;
 }
@@ -242,9 +240,12 @@ void readHeader(FILE *f, gifHeader *h)
 	else
 		throw GIFError("Bad signature");
 
-	if (strncmp((const char *)h->version, "87a", 3) == 0 ||
-			strncmp((const char *)h->version, "89a", 3) == 0)
+	if (strncmp((const char *)h->version, "87a", 3) == 0)
+		throw GIFError("Version 87a is not supported");
+
+	else if (strncmp((const char *)h->version, "89a", 3) == 0)
 		cout << "Version: OK" << endl;
+
 	else
 		throw GIFError("Unknown version");
 
@@ -273,194 +274,148 @@ void parseImgDescPack(imgDescPack *i, char c)
 	i->LCT_size = (c & 0x07);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-void uncompress( int code_length,
-                const unsigned char *input,
-                int input_length,
-                unsigned char *out )
-{
-  //int maxbits;
-  int i, bit;
-  int code, prev = -1;
-  dictionary_entry_t *dictionary;
-  int dictionary_ind;
-  unsigned int mask = 0x01;
-  int reset_code_length;
-  int clear_code; // This varies depending on code_length
-  int stop_code;  // one more than clear code
-  int match_len;
-
-  clear_code = 1 << ( code_length );
-
-  printf("CC: %d, CL: %d\n", clear_code, 1 << ( code_length + 1 ));
-  stop_code = clear_code + 1;
-  // To handle clear codes
-  reset_code_length = code_length;
-
-  // Create a dictionary large enough to hold "code_length" entries.
-  // Once the dictionary overflows, code_length increases
-  dictionary = ( dictionary_entry_t * ) 
-    malloc( sizeof( dictionary_entry_t ) * ( 1 << ( code_length + 1 ) ) );
-
-  // Initialize the first 2^code_len entries of the dictionary with their
-  // indices.  The rest of the entries will be built up dynamically.
-
-  // Technically, it shouldn't be necessary to initialize the
-  // dictionary.  The spec says that the encoder "should output a
-  // clear code as the first code in the image data stream".  It doesn't
-  // say must, though...
-  for ( dictionary_ind = 0; 
-        dictionary_ind < ( 1 << code_length ); 
-        dictionary_ind++ )
-  {
-    dictionary[ dictionary_ind ].byte = dictionary_ind;
-    // XXX this only works because prev is a 32-bit int (> 12 bits)
-    dictionary[ dictionary_ind ].prev = -1;
-    dictionary[ dictionary_ind ].len = 1;
-  }
-
-  // 2^code_len + 1 is the special "end" code; don't give it an entry here
-  dictionary_ind++;
-  dictionary_ind++;
-
-
-  for (int i = 0; i < input_length; i++) {
-	printf("input: %x\n", input[i]);
-  }
-  
-  // TODO verify that the very last byte is clear_code + 1
-  while ( input_length )
-  {
-    code = 0x0;
-    // Always read one more bit than the code length
-    for ( i = 0; i < ( code_length + 1 ); i++ )
-    {
-      // This is different than in the file read example; that 
-      // was a call to "next_bit"
-      bit = ( *input & mask ) ? 1 : 0;
-      mask <<= 1;
-
-      if ( mask == 0x100 )
-      {
-        mask = 0x01;
-        input++;
-        input_length--;
-      }
-
-      code = code | ( bit << i );
-    }
-    //printf("code: %x\n", code);
-
-
-    if ( code == clear_code )
-    {
-      code_length = reset_code_length;
-      dictionary = ( dictionary_entry_t * ) realloc( dictionary,
-        sizeof( dictionary_entry_t ) * ( 1 << ( code_length + 1 ) ) );
-
-      for ( dictionary_ind = 0; 
-            dictionary_ind < ( 1 << code_length ); 
-            dictionary_ind++ )
-      {
-        dictionary[ dictionary_ind ].byte = dictionary_ind;
-        // XXX this only works because prev is a 32-bit int (> 12 bits)
-        dictionary[ dictionary_ind ].prev = -1;
-        dictionary[ dictionary_ind ].len = 1;
-      }
-      dictionary_ind++;
-      dictionary_ind++;
-      prev = -1;
-      continue;
-    }
-    else if ( code == stop_code )
-    {
-      if ( input_length > 1 )
-      {
-        fprintf( stderr, "Malformed GIF (early stop code)\n" );
-        exit( 0 );
-      }
-      break;
-    }
-
-    // Update the dictionary with this character plus the _entry_
-    // (character or string) that came before it
-    if ( ( prev > -1 ) && ( code_length < 12 ) )
-    {
-      if ( code > dictionary_ind )
-      {
-        fprintf( stderr, "code = %.02x, but dictionary_ind = %.02x\n",
-          code, dictionary_ind );
-        exit( 0 );
-      }
-
-      // Special handling for KwKwK
-      if ( code == dictionary_ind )
-      {
-        int ptr = prev;
-
-        while ( dictionary[ ptr ].prev != -1 )
-        {
-          ptr = dictionary[ ptr ].prev;
-        }
-        dictionary[ dictionary_ind ].byte = dictionary[ ptr ].byte;
-      }
-      else
-      {
-        int ptr = code;
-        while ( dictionary[ ptr ].prev != -1 )
-        {
-          ptr = dictionary[ ptr ].prev;
-        }
-        dictionary[ dictionary_ind ].byte = dictionary[ ptr ].byte;
-      }
-
-      dictionary[ dictionary_ind ].prev = prev;
-
-      dictionary[ dictionary_ind ].len = dictionary[ prev ].len + 1;
-
-      dictionary_ind++;
-
-      // GIF89a mandates that this stops at 12 bits
-      if ( ( dictionary_ind == ( 1 << ( code_length + 1 ) ) ) &&
-           ( code_length < 11 ) )
-      {
-        code_length++;
-
-        dictionary = ( dictionary_entry_t * ) realloc( dictionary,
-          sizeof( dictionary_entry_t ) * ( 1 << ( code_length + 1 ) ) );
-      }
-    }
-
-    prev = code;
-
-    // Now copy the dictionary entry backwards into "out"
-    match_len = dictionary[ code ].len;
-    while ( code != -1 )
-    {
-      out[ dictionary[ code ].len - 1 ] = dictionary[ code ].byte;
-
-      //printf("byte: %d\n", dictionary[ code ].byte);
-      if ( dictionary[ code ].prev == code )
-      {
-        fprintf( stderr, "Internal error; self-reference." );
-        exit( 0 );
-      }
-      code = dictionary[ code ].prev;
-    }
-
-    out += match_len;
-  }
+int error(const char * str) {
+	fprintf(stderr, "%s\n", str);
+	return -1;
 }
 
+int POW(int x) {
+	return(1 << x);
+}
+
+
+void getCode(){}
+
+/**
+  * Initialize dictionary to accomodate all of the codes
+  * The size is dependent on code_length parameter
+  * In case of overflow the dictionary is enlarged.
+  */
+int initializeDictionary(dictionary_entry_t *d, int code_length) {
+	int i;
+	for (i = 0; i < POW(code_length); i++) {
+		d[i].byte = i;
+		// XXX this only works because prev is a 32-bit int (> 12 bits)
+		d[i].prev = -1;
+		d[i].len = 1;
+	}
+	return(i+2);
+}
+
+void uncompress(int code_length,
+                const unsigned char *input,
+                int input_length,
+                unsigned char *out) {
+	int i, bit;
+	int code, prev = -1;
+	dictionary_entry_t *dictionary = nullptr;
+	int dictionary_ind = 0;
+	unsigned int mask = 0x01;
+	int reset_code_length = code_length;
+	int clear_code = POW(code_length); // This varies depending on code_length
+	int stop_code = clear_code + 1;  // one more than clear code
+	int match_len;
+
+	// Create a dictionary large enough to hold "code_length" entries.
+	// Once the dictionary overflows, code_length increases
+	dictionary = (dictionary_entry_t *)
+	malloc(sizeof( dictionary_entry_t ) * POW(code_length + 1));
+
+	// Initialize the first 2^code_len entries of the dictionary with their
+	// indices.  The rest of the entries will be built up dynamically.
+
+	// Technically, it shouldn't be necessary to initialize the
+	// dictionary.  The spec says that the encoder "should output a
+	// clear code as the first code in the image data stream".  It doesn't
+	// say must, though...
+	dictionary_ind = initializeDictionary(dictionary, code_length);
+
+	// TODO verify that the very last byte is clear_code + 1
+	while (input_length) {
+		code = 0x0;
+
+		// Always read one more bit than the code length
+		for (i = 0; i < (code_length + 1); i++ ) {
+			bit = (*input & mask) ? 1 : 0;
+			mask <<= 1;
+
+			if (mask == 0x100) {
+				mask = 0x01;
+				input++;
+				input_length--;
+			}
+			code = code | (bit << i);
+		}
+
+
+		if (code == clear_code) {
+			code_length = reset_code_length;
+			dictionary = (dictionary_entry_t *) realloc(dictionary,
+				sizeof(dictionary_entry_t) * POW(code_length + 1));
+
+			dictionary_ind = initializeDictionary(dictionary, code_length);
+
+			prev = -1;
+			continue;
+		} else if ( code == stop_code ) {
+			if (input_length > 1)
+				throw("Early stop code");
+			break;
+		}
+
+		// Update the dictionary with this CODE and CODE-1
+		if (prev > -1 && code_length < MAX_CODE_LENGTH) {
+			// Check if within dictionary
+			if (code > dictionary_ind) {
+				throw GIFError("CODE overflow in dictionary");
+			}
+
+			// Special handling for KwKwK
+			if (code == dictionary_ind) {
+				int ptr = prev;
+
+				while (dictionary[ ptr ].prev != -1) {
+					ptr = dictionary[ ptr ].prev;
+				}
+				dictionary[ dictionary_ind ].byte = dictionary[ ptr ].byte;
+			} else {
+				int ptr = code;
+
+				while ( dictionary[ ptr ].prev != -1 ) {
+					ptr = dictionary[ ptr ].prev;
+				}
+				dictionary[ dictionary_ind ].byte = dictionary[ ptr ].byte;
+			}
+
+			dictionary[ dictionary_ind ].prev = prev;
+
+			dictionary[ dictionary_ind ].len = dictionary[ prev ].len + 1;
+
+			dictionary_ind++;
+
+			// GIF89a mandates that this stops at 12 bits
+			if (dictionary_ind == POW(code_length + 1) && code_length < 11) {
+				code_length++;
+
+				dictionary = (dictionary_entry_t *) realloc(dictionary,
+					sizeof(dictionary_entry_t) * POW(code_length + 1));
+			}
+		}
+
+		prev = code;
+
+		// Now copy the dictionary entry backwards into "out"
+		match_len = dictionary[code].len;
+
+		while ( code != -1 ) {
+			out[ dictionary[ code ].len - 1 ] = dictionary[ code ].byte;
+
+			if ( dictionary[ code ].prev == code )
+				throw GIFError("Self-reference, that's really bad error");
+
+			code = dictionary[ code ].prev;
+		}
+
+		out += match_len;
+	}
+}
