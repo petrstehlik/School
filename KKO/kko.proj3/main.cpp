@@ -42,14 +42,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (logPath.empty()) {
-		logPath = "no loggin";
-	}
-
-	cerr << "input: " << inputPath << endl;
-	cerr << "output: " << outputPath << endl;
-	cerr << "log: " << logPath << endl;
-
 	tGIF2BMP sizeInfo;
 
 	FILE *input = inputPath.empty() ? stdin : fopen(inputPath.c_str(), "r+");
@@ -68,9 +60,19 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Error occured while converting\n");
 	}
 
-	cerr << "login = xstehl14" << endl;
-	cerr << "uncodedSize = " << sizeInfo.gifSize << endl;
-	cerr << "codedSize = " << sizeInfo.bmpSize << endl;
+	// Print the conversion info
+	if (!logPath.empty()) {
+
+		FILE *l = fopen(logPath.c_str(), "w+");
+
+		if (l == NULL) {
+			cerr << "failed to open log file" << endl;
+			return EXIT_FAILURE;
+		}
+		fprintf(l, "login = xstehl14\n"
+			"uncodedSize = %lld\n"
+			"codedSize = %lld\n", sizeInfo.gifSize, sizeInfo.bmpSize);
+	}
 
 	fclose(input);
 	fclose(output);

@@ -23,6 +23,9 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	color *LCT = NULL;
 	int code_length;
 	int gSize = 0;
+	GCE ext;
+	imgDescPack p;
+	vector<byte> data;
 
 	try {
 		readHeader(inputFile, &hdr);
@@ -48,9 +51,9 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 			gSize += fread(&(GCT[var]), sizeof(color), 1, inputFile);
 		}
 
-		cerr << "GCT len: " << GCT_length << endl;
-		cerr << "Global Color Table: OK" << endl;
+		// Print the GCT in debug
 		if (DEBUG) {
+			cerr << "Global Color Table: " << GCT_length << " (OK)" << endl;
 			for (int i = 0; i < GCT_length; i++) {
 				cerr << i << " (" <<
 					(int)GCT[i].r << ", " <<
@@ -58,7 +61,7 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 					(int)GCT[i].b << ")" << endl;
 			}
 		}
-	} else {
+	} else if (DEBUG){
 		cerr << "No GCT found" << endl;
 	}
 
@@ -66,36 +69,36 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	  * EXTENSION FLAG parsing
 	  */
 	uint8_t extension_flag = fgetc(inputFile);
-	gSize++;
 
 	while (extension_flag == 0x21) {
-
-		cerr << "Extension flag found!" << endl;
+		if (DEBUG)
+			cerr << "Extension flag found!" << endl;
 
 		uint8_t control_label = fgetc(inputFile);
-		gSize++;
 
-		cerr << "control label: " << control_label << endl;
+		if (DEBUG)
+			cerr << "control label: " << control_label << endl;
 
 		if (control_label == 0xF9) {
-			cerr << "Control label found!" << endl;;
+			if (DEBUG)
+				cerr << "Control label found!" << endl;;
 
-			GCE ext;
+			fread(&ext, sizeof(GCE), 1, inputFile);
 
-			gSize += fread(&ext, sizeof(GCE), 1, inputFile);
-
-			cerr << "size of extension: " << ext.size << endl;
+			if (DEBUG)
+				cerr << "size of extension: " << ext.size << endl;
 
 			if (ext.terminator != 0x00)
 				return error("Graphic Control Extension not terminated correctly");
-		} else {
+		} else if (DEBUG){
 			cerr << std::hex << "Different control label: " << control_label << endl;;
 			cerr << std::dec;
 		}
 
 		extension_flag = fgetc(inputFile);
-		gSize++;
-		cerr << "extension flag: " << extension_flag << endl;;
+
+		if (DEBUG)
+			cerr << "extension flag: " << extension_flag << endl;;
 	}
 
 	imgDescriptor iDesc;
@@ -104,40 +107,42 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	  * Check for extension flags
 	  */
 	if (extension_flag == IMAGE_DESCRIPTOR) {
-		cerr << "Image descriptor found" << endl;
+		if (DEBUG)
+			cerr << "Image descriptor found" << endl;
 
-		imgDescPack p;
 
 		gSize += fread(&iDesc, sizeof(uint16_t), 4, inputFile);
 
-		cerr << "width: " << iDesc.width << endl;
-		cerr << "height: " << iDesc.height << endl;
+		if (DEBUG)
+			cerr << "Size: " << iDesc.width << " x " << iDesc.height << endl;
 
 		parseImgDescPack(&p, fgetc(inputFile));
-		gSize++;
 
 		iDesc.p = p;
 
-		if ((bool)iDesc.p.interlace_flag) {
+		if (DEBUG && (bool)iDesc.p.interlace_flag) {
 			cerr << "HAS INTERLACE FLAG";
 		}
 
 
 		if ((bool)iDesc.p.LCT_flag) {
-			cerr << "LCT is present" << endl;
-			cerr << "LCT size: " << (int)iDesc.p.LCT_size << endl;
+			if (DEBUG) {
+				cerr << "-- LCT is present" << endl;
+				cerr << "Size: " << (int)iDesc.p.LCT_size << endl;
+			}
+
 			code_length = (int)iDesc.p.LCT_size + 1;
 
 			uint16_t LCT_length = POW((int)iDesc.p.LCT_size + 1);
-			cerr << "LCT length: " << (int)LCT_length << endl;
 
 			LCT = (color *)malloc(sizeof(color) * LCT_length);
 
 			for (int var = 0; var < LCT_length; ++var) {
-				gSize += fread(&(LCT[var]), sizeof(color), 1, inputFile);
+				fread(&(LCT[var]), sizeof(color), 1, inputFile);
 			}
 
 			if (DEBUG) {
+				cerr << "LCT length: " << (int)LCT_length << endl;
 				cerr << "--------------LCT TABLE-----------" << endl;
 				for (int i = 0; i < LCT_length; i++) {
 					cerr << i << " (" <<
@@ -154,13 +159,12 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	  */
 	// Now we are going to parse data
 	uint8_t minCodeSize = fgetc(inputFile);
-	gSize++;
 
-	cerr << "Min code size: " << (int)minCodeSize << endl;
+	if (DEBUG)
+		cerr << "Min code size: " << (int)minCodeSize << endl;
+
 	uint8_t subBlockSize = fgetc(inputFile);
-	gSize++;
 
-	vector<byte> data;
 
 	while (true) {
 		if (DEBUG)
@@ -205,8 +209,6 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	if ((byte)fgetc(inputFile) != TRAILER) {
 		return error("Trailer byte not found!");
 	}
-
-	gSize++;
 
 	if (DEBUG)
 		cerr << "data size: " << data.size() << endl;
@@ -364,7 +366,6 @@ void uncompress(int code_length,
 			}
 			code = code | (bit << i);
 		}
-
 
 		if (code == clear_code) {
 			code_length = reset_code_length;
