@@ -259,10 +259,11 @@ void readHeader(FILE *f, gifHeader *h)
 	else
 		throw GIFError("Bad signature");
 
-	if (strncmp((const char *)h->version, "87a", 3) == 0)
-		throw GIFError("Version 87a is not supported");
+	//if (strncmp((const char *)h->version, "87a", 3) == 0)
+	//	throw GIFError("Version 87a is not supported");
 
-	else if (strncmp((const char *)h->version, "89a", 3) == 0)
+	if (strncmp((const char *)h->version, "89a", 3) == 0 ||
+			strncmp((const char *)h->version, "87a", 3) == 0)
 		cerr << "Version: OK" << endl;
 
 	else
