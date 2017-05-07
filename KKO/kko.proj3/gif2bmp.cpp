@@ -118,6 +118,11 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 
 		iDesc.p = p;
 
+		if ((bool)iDesc.p.interlace_flag) {
+			cerr << "HAS INTERLACE FLAG";
+		}
+
+
 		if ((bool)iDesc.p.LCT_flag) {
 			cerr << "LCT is present" << endl;
 			cerr << "LCT size: " << (int)iDesc.p.LCT_size << endl;
