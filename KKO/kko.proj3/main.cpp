@@ -7,6 +7,16 @@
 
 using namespace std;
 
+void printHelp() {
+	cout << "GIF to BMP converter (KKO project version 2)" << endl
+		<< "Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz> (c)2017" << endl
+		<< "Usage:" << endl
+		<< "\t-i Path to input file [default: stdin]" << endl
+		<< "\t-o Path to output file [default: stdout]" << endl
+		<< "\t-l Path to log file [default: stderr]" << endl
+		<< "\t-h Print this help" << endl;
+}
+
 int main(int argc, char **argv) {
 	string inputPath, outputPath, logPath;
 	char c;
@@ -23,9 +33,11 @@ int main(int argc, char **argv) {
 				logPath = optarg;
 				break;
 			case 'h':
-				cout << "Should print help" << endl;
-				break;
+				printHelp();
+				return EXIT_SUCCESS;
 			default:
+				cerr << "Unsupported argument"<< endl;
+				printHelp();
 				return EXIT_FAILURE;
 		}
 	}
@@ -51,11 +63,8 @@ int main(int argc, char **argv) {
 	cerr << "uncodedSize = " << sizeInfo.gifSize << endl;
 	cerr << "codedSize = " << sizeInfo.bmpSize << endl;
 
-	if (!inputPath.empty())
-		fclose(input);
+	fclose(input);
+	fclose(output);
 
-	if (!outputPath.empty())
-		fclose(output);
-
-	return 0;
+	return EXIT_SUCCESS;
 }
