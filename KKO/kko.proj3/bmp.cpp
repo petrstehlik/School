@@ -1,15 +1,4 @@
-#include <sys/types.h>
-#include <iostream>
-#include <stdio.h>
-#include <cstring>
-#include <cmath>
-#include <vector>
-
-#include <unistd.h>
-
-
 #include "bmp.h"
-#include "gif2bmp.h"
 
 using namespace std;
 
@@ -35,10 +24,6 @@ void BMP::initInfoHeader() {
 	infoHeader.importantcolours = 0;
 }
 
-int BMP::StoredSize() {
-	return(this->size);
-}
-
 BMP::BMP(int width, int height) {
 	this->x = width;
 	this->y = height;
@@ -50,8 +35,10 @@ BMP::BMP(int width, int height) {
 void BMP::Store(FILE *fp, vector<color> *data) {
 	vector<uint8_t> pad_data;
 
+	// Compute padding
 	int padding = 4 - ((this->x * 3) % 4);
 
+	// "decompress" and pad data
 	for (unsigned int i = 0; i < data->size(); i++) {
 		pad_data.push_back(data->at(i).b);
 		pad_data.push_back(data->at(i).g);
@@ -63,15 +50,16 @@ void BMP::Store(FILE *fp, vector<color> *data) {
 		}
 	}
 
+	// Set the header size
 	this->header.size = 54 + pad_data.size();
 
-	this->size += fwrite(&header, 1, sizeof(bmpHeader_t), fp);
-	this->size += fwrite(&infoHeader, 1, sizeof(bmpInfoHeader_t), fp);
-
+	// Write the headers
+	fwrite(&header, 1, sizeof(bmpHeader_t), fp);
+	fwrite(&infoHeader, 1, sizeof(bmpInfoHeader_t), fp);
 
 	// Swap lines for output
 	int lineWidth = this->x*3 + padding;
 	for (int line = pad_data.size()/lineWidth - 1; line >= 0; line--) {
-		this->size += fwrite(&pad_data[line * lineWidth], lineWidth, 1, fp);
+		fwrite(&pad_data[line * lineWidth], lineWidth, 1, fp);
 	}
 }
