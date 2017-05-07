@@ -244,6 +244,7 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	// Cleanup
 	free(GCT);
 	free(LCT);
+	free(out2);
 
 	return 0;
 }
@@ -431,4 +432,6 @@ void uncompress(int code_length,
 
 		out += match_len;
 	}
+
+	free(dictionary);
 }
