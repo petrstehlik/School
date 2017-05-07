@@ -31,15 +31,24 @@ Knihovna je implementována pro konverzi statického GIF89a na BMP bez komprese.
 \section{Implementace}
 Knihovna je implementována v jazyku C++ s použitím standardních knihoven pro C/C++ ve standardu C++11. Knihovna zpřístupňuje jedinou funkci \texttt{gif2bmp} sloužící pro daný převod. Implementace daného rozhraní využívá třídy \texttt{GIF} a \texttt{BMP}, které implementují práci se soubory v grafickém formátu GIF a BMP.
 
-\subsection{gif2bmp aplikace}
+\subsection{\texttt{gif2bmp} aplikace}
+
+Konzolová aplikace zpracováva celkem 4 parametry:
+
+\begin{itemize}
+	\item{-i <input file> cesta ke vstupnímu souboru, pokud parametr není zadán, je vstupním souborem stadardní vstup,}
+	\item{-o <output file> cesta k výtupnímu souboru, pokud parametr není zadán, je výtupním souborem stadardní výstup,}
+	\item{-l <log file> cesta k souboru s výstupní zprávou, pokud parametr není zadán, je výpis zprávy ignorován,}
+	\item{-h vypíše nápovědu a program se ukončí.}
+\end{itemize}
 
 parsovani argumentu, spusteni gif2bmp a výpis info o prevodu
 
-\subsection{Třída GIF}
+\subsection{Třída \texttt{GIF}}
 
-\subsection{Třída BMP}
+\subsection{Třída \texttt{BMP}}
 
-Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP.
+Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP. Třída vnitřně definuje hlavičkové struktury formátu BMP, které jsou používány při vytvoření jednotlivých souborů. Konstruktor třídy přijímá dva parametry -- šířku a výšku tvořeného obrázku. První věřejně dostupnou metodou je metoda \texttt{Store}, která přijímá file pointer na soubor, kam zapíše data z druhého parametru. Druhý parametr je typu \texttt{vector<color>}, kde \texttt{color} je struktura definovaná v třídě \texttt{GIF}.
 
 
 
