@@ -1,5 +1,7 @@
 #include <iostream>
 #include <unistd.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #include "gif2bmp.h"
 #include "bmp.h"
@@ -70,8 +72,8 @@ int main(int argc, char **argv) {
 			return EXIT_FAILURE;
 		}
 		fprintf(l, "login = xstehl14\n"
-			"uncodedSize = %lld\n"
-			"codedSize = %lld\n", sizeInfo.gifSize, sizeInfo.bmpSize);
+			"uncodedSize = %" PRId64 "\n"
+			"codedSize = %" PRId64 "\n", sizeInfo.gifSize, sizeInfo.bmpSize);
 	}
 
 	fclose(input);
