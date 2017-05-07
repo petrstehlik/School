@@ -46,11 +46,15 @@ Na tyto argumenty aplikace adekvátně reaguje a pokud není požadována nápov
 
 \subsection{Třída \texttt{GIF}}
 
+Pro účely knihovní funkce \texttt{gif2bmp} byla vytvořena třída \texttt{GIF}, která implementuje kompletní práci s grafickým formátem GIF89a. Při instanciaci je předán ukazatel na soubor, který je následně konvertován do interní struktury pomocí metodz \texttt{Convert}. Veškerá data jsou zpřístupněna přes gettery, kterými lze získat informace o velikosti obrázku, zda dispojinou lokální tabulkou barev a také samotná data získaná ze souboru a dekomprimována metodou LZW.
+
+Metoda LZW je implementována pomocí slovníku, který je realizován jako zpětně vázaný jednosměrný seznam položek a využívá běžné metody LZW k dekomprimaci. Dekomprimací je získán seznam indexů barev z tabulky dat a samotné informace o barvě jsou následně získány dle přítomnosti lokální nebo globální tabulky barev.
+
 \subsection{Třída \texttt{BMP}}
 
 Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP. Třída vnitřně definuje hlavičkové struktury formátu BMP, které jsou používány při vytvoření jednotlivých souborů. Konstruktor třídy přijímá dva parametry -- šířku a výšku tvořeného obrázku. Jedinou věřejně dostupnou metodou je metoda \texttt{Store}, která přijímá file pointer na soubor, kam zapíše data z druhého parametru. Druhý parametr je typu \texttt{vector<color>}, kde \texttt{color} je struktura definovaná v třídě \texttt{GIF}.
 
-Použití je velmi jednoduché. Stačí instanciovat třídu a zavolat metodu \texttt{Store} s příslušnými parametry.
+Použití je velmi jednoduché. Stačí instanciovat třídu a zavolat metodu \texttt{Store} s příslušnými parametry. Ta vytvoří, případně přepíše, zadaný soubor s novými daty.
 
 
 \section{Závěr}
