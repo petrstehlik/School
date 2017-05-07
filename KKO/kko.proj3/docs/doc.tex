@@ -42,15 +42,18 @@ Konzolová aplikace zpracováva celkem 4 parametry:
 	\item{-h vypíše nápovědu a program se ukončí.}
 \end{itemize}
 
-parsovani argumentu, spusteni gif2bmp a výpis info o prevodu
+Na tyto argumenty aplikace adekvátně reaguje a pokud není požadována nápověda, pokusí se otevřít soubory a následně zavolá konverzní funkci \texttt{gif2bmp}.
 
 \subsection{Třída \texttt{GIF}}
 
 \subsection{Třída \texttt{BMP}}
 
-Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP. Třída vnitřně definuje hlavičkové struktury formátu BMP, které jsou používány při vytvoření jednotlivých souborů. Konstruktor třídy přijímá dva parametry -- šířku a výšku tvořeného obrázku. První věřejně dostupnou metodou je metoda \texttt{Store}, která přijímá file pointer na soubor, kam zapíše data z druhého parametru. Druhý parametr je typu \texttt{vector<color>}, kde \texttt{color} je struktura definovaná v třídě \texttt{GIF}.
+Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP. Třída vnitřně definuje hlavičkové struktury formátu BMP, které jsou používány při vytvoření jednotlivých souborů. Konstruktor třídy přijímá dva parametry -- šířku a výšku tvořeného obrázku. Jedinou věřejně dostupnou metodou je metoda \texttt{Store}, která přijímá file pointer na soubor, kam zapíše data z druhého parametru. Druhý parametr je typu \texttt{vector<color>}, kde \texttt{color} je struktura definovaná v třídě \texttt{GIF}.
+
+Použití je velmi jednoduché. Stačí instanciovat třídu a zavolat metodu \texttt{Store} s příslušnými parametry.
 
 
+\section{Závěr}
 
-
+Úspěšně se podařilo implementovat převod souboru grafického formátu GIF na soubor grafického formátu BMP. Knihovna byla otestována na přiložených souborech, kde všechny obrázky s verzí GIF89a konvertovala úspěšně. Vytvořené BMP soubory jsou zobrazitelné dostupnými editory (např. Adobe Photoshop CC) a prohlížeči (např. IrfanView).
 \end{document}
