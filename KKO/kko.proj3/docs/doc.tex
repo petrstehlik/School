@@ -1,0 +1,47 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,25cm},top=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\graphicspath{ {img/} }
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Kódování a komprese dat -- projekt 3 GIF2BMP}\\
+	\large{Vysoké učení technické v Brně}
+	\vspace{0.5cm}
+
+	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>
+
+	\vspace{0.5cm}
+
+	\today
+
+\end{center}
+
+\section{Zadání}
+Cílem projektu bylo vytvořit knihovnu pro převod souboru grafického formátu GIF na soubor grafického formátu BMP (Microsoft Windows Bitmap). S pomocí této knihovny byl dále implementovaný konzolový program gif2bmp, který převod souborů provede.
+
+Knihovna je implementována pro konverzi statického GIF89a na BMP bez komprese.
+
+\section{Implementace}
+Knihovna je implementována v jazyku C++ s použitím standardních knihoven pro C/C++ ve standardu C++11. Knihovna zpřístupňuje jedinou funkci \texttt{gif2bmp} sloužící pro daný převod. Implementace daného rozhraní využívá třídy \texttt{GIF} a \texttt{BMP}, které implementují práci se soubory v grafickém formátu GIF a BMP.
+
+\subsection{gif2bmp aplikace}
+
+parsovani argumentu, spusteni gif2bmp a výpis info o prevodu
+
+\subsection{Třída GIF}
+
+\subsection{Třída BMP}
+
+Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP.
+
+
+
+
+\end{document}
