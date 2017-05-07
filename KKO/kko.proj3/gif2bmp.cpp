@@ -259,20 +259,23 @@ void readHeader(FILE *f, gifHeader *h)
 {
 	fread(h, 3, 2, f);
 
-	if (strncmp((const char *)h->signature, "GIF", 3) == 0)
-		cerr << "Signature: OK" << endl;
-	else
+	if (strncmp((const char *)h->signature, "GIF", 3) == 0) {
+		if (DEBUG)
+			cerr << "Signature: OK" << endl;
+	} else {
 		throw GIFError("Bad signature");
+	}
 
 	//if (strncmp((const char *)h->version, "87a", 3) == 0)
 	//	throw GIFError("Version 87a is not supported");
 
 	if (strncmp((const char *)h->version, "89a", 3) == 0 ||
-			strncmp((const char *)h->version, "87a", 3) == 0)
-		cerr << "Version: OK" << endl;
-
-	else
+			strncmp((const char *)h->version, "87a", 3) == 0) {
+		if (DEBUG)
+			cerr << "Version: OK" << endl;
+	} else {
 		throw GIFError("Unknown version");
+	}
 
 	return;
 }
