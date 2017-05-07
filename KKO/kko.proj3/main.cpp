@@ -34,16 +34,28 @@ int main(int argc, char **argv) {
 		logPath = "no loggin";
 	}
 
-	cout << "input: " << inputPath << endl;
-	cout << "output: " << outputPath << endl;
-	cout << "log: " << logPath << endl;
+	cerr << "input: " << inputPath << endl;
+	cerr << "output: " << outputPath << endl;
+	cerr << "log: " << logPath << endl;
 
 	tGIF2BMP sizeInfo;
 
-	FILE *fp = fopen(inputPath.c_str(), "r+");
-	FILE *output = fopen(outputPath.c_str(), "wb+");
+	FILE *input = inputPath.empty() ? stdin : fopen(inputPath.c_str(), "r+");
+	FILE *output = outputPath.empty() ? stdout : fopen(outputPath.c_str(), "wb+");
 
-	gif2bmp(&sizeInfo, fp, output);
+	if (gif2bmp(&sizeInfo, input, output) != 0) {
+		fprintf(stderr, "Error occured while converting\n");
+	}
 
-	fclose(fp);
+	cerr << "login = xstehl14" << endl;
+	cerr << "uncodedSize = " << sizeInfo.gifSize << endl;
+	cerr << "codedSize = " << sizeInfo.bmpSize << endl;
+
+	if (!inputPath.empty())
+		fclose(input);
+
+	if (!outputPath.empty())
+		fclose(output);
+
+	return 0;
 }

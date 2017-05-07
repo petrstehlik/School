@@ -21,15 +21,17 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	int GCT_length = 0;
 	color *GCT = NULL;
 	color *LCT = NULL;
-	int clearCode, stopCode, code_length;
+	int code_length;
+	int gSize = 0;
 
 	try {
 		readHeader(inputFile, &hdr);
+		gSize += 6;
 	} catch ( GIFError &e ) {
 		return error(e.what());
 	}
 
-	fread(&desc, 1, 7, inputFile);
+	gSize += fread(&desc, 1, 7, inputFile);
 
 	parsePackedField(&desc, &packedF);
 
@@ -43,53 +45,57 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 		GCT = (color *)malloc(sizeof(color) * GCT_length);
 
 		for (int var = 0; var < GCT_length; ++var) {
-			fread(&(GCT[var]), sizeof(color), 1, inputFile);
+			gSize += fread(&(GCT[var]), sizeof(color), 1, inputFile);
 		}
 
-		cout << "GCT len: " << GCT_length << endl;
-		cout << "Global Color Table: OK" << endl;
+		cerr << "GCT len: " << GCT_length << endl;
+		cerr << "Global Color Table: OK" << endl;
 		if (DEBUG) {
 			for (int i = 0; i < GCT_length; i++) {
-				cout << i << " (" <<
+				cerr << i << " (" <<
 					(int)GCT[i].r << ", " <<
 					(int)GCT[i].g << ", " <<
 					(int)GCT[i].b << ")" << endl;
 			}
 		}
 	} else {
-		cout << "No GCT found" << endl;
+		cerr << "No GCT found" << endl;
 	}
 
 	/**
 	  * EXTENSION FLAG parsing
 	  */
 	uint8_t extension_flag = fgetc(inputFile);
+	gSize++;
 
 	while (extension_flag == 0x21) {
 
-		printf("Extension flag found!\n");
+		cerr << "Extension flag found!" << endl;
 
 		uint8_t control_label = fgetc(inputFile);
+		gSize++;
 
-		printf("control label: %x\n", control_label);
+		cerr << "control label: " << control_label << endl;
 
 		if (control_label == 0xF9) {
-			printf("Control label found!\n");
+			cerr << "Control label found!" << endl;;
 
 			GCE ext;
 
-			fread(&ext, sizeof(GCE), 1, inputFile);
+			gSize += fread(&ext, sizeof(GCE), 1, inputFile);
 
-			printf("size of extension: %d\n", ext.size);
+			cerr << "size of extension: " << ext.size << endl;
 
 			if (ext.terminator != 0x00)
-				throw GIFError("Graphic Control Extension not terminated correctly");
+				return error("Graphic Control Extension not terminated correctly");
 		} else {
-			printf("\n\nDifferent control label:  %x\n\n", control_label);
+			cerr << std::hex << "Different control label: " << control_label << endl;;
+			cerr << std::dec;
 		}
 
 		extension_flag = fgetc(inputFile);
-		printf("extension flag: %x\n", extension_flag);
+		gSize++;
+		cerr << "extension flag: " << extension_flag << endl;;
 	}
 
 	imgDescriptor iDesc;
@@ -98,37 +104,38 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	  * Check for extension flags
 	  */
 	if (extension_flag == IMAGE_DESCRIPTOR) {
-		cout << "Image descriptor found" << endl;
+		cerr << "Image descriptor found" << endl;
 
 		imgDescPack p;
 
-		fread(&iDesc, sizeof(uint16_t), 4, inputFile);
+		gSize += fread(&iDesc, sizeof(uint16_t), 4, inputFile);
 
-		printf("width: %d\n", iDesc.width);
-		printf("height: %d\n", iDesc.height);
+		cerr << "width: " << iDesc.width << endl;
+		cerr << "height: " << iDesc.height << endl;
 
 		parseImgDescPack(&p, fgetc(inputFile));
+		gSize++;
 
 		iDesc.p = p;
 
 		if ((bool)iDesc.p.LCT_flag) {
-			cout << "LCT is present" << endl;
-			cout << "LCT size: " << (int)iDesc.p.LCT_size << endl;
+			cerr << "LCT is present" << endl;
+			cerr << "LCT size: " << (int)iDesc.p.LCT_size << endl;
 			code_length = (int)iDesc.p.LCT_size + 1;
 
 			uint16_t LCT_length = POW((int)iDesc.p.LCT_size + 1);
-			cout << "LCT length: " << (int)LCT_length << endl;
+			cerr << "LCT length: " << (int)LCT_length << endl;
 
 			LCT = (color *)malloc(sizeof(color) * LCT_length);
 
 			for (int var = 0; var < LCT_length; ++var) {
-				fread(&(LCT[var]), sizeof(color), 1, inputFile);
+				gSize += fread(&(LCT[var]), sizeof(color), 1, inputFile);
 			}
 
 			if (DEBUG) {
-				cout << "--------------LCT TABLE-----------" << endl;
+				cerr << "--------------LCT TABLE-----------" << endl;
 				for (int i = 0; i < LCT_length; i++) {
-					cout << i << " (" <<
+					cerr << i << " (" <<
 						(int)LCT[i].r << ", " <<
 						(int)LCT[i].g << ", " <<
 						(int)LCT[i].b << ")" << endl;
@@ -142,19 +149,23 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	  */
 	// Now we are going to parse data
 	uint8_t minCodeSize = fgetc(inputFile);
+	gSize++;
 
-	cout << "Min code size: " << (int)minCodeSize << endl;
+	cerr << "Min code size: " << (int)minCodeSize << endl;
 	uint8_t subBlockSize = fgetc(inputFile);
+	gSize++;
+
 	vector<byte> data;
 
 	while (true) {
 		if (DEBUG)
-			cout << "Sub block size: " << (int)subBlockSize << endl;
+			cerr << "Sub block size: " << (int)subBlockSize << endl;
 
 		vector<byte> tmp_data((int)subBlockSize);
 
 		for (int i = 0; i < (int)subBlockSize; ++i) {
 			tmp_data[i] = fgetc(inputFile);
+			gSize++;
 		}
 
 		data.insert(data.end(), tmp_data.begin(), tmp_data.end());
@@ -162,36 +173,40 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 		// Print the loaded data
 		if (DEBUG) {
 			for (auto it : tmp_data) {
-				//cout << std::hex << (int)it << " " << endl;
-				//printf("Color %d: (%d, %d, %d)\n", (int)it, GCT[(int)it].r, GCT[(int)it].g, GCT[(int)it].b);
+				//cerr << std::hex << (int)it << " " << endl;
+				cerr << "Color " << (int)it << ": (" <<
+					GCT[(int)it].r << ", " <<
+					GCT[(int)it].g << ", " <<
+					GCT[(int)it].b << ")" << endl;
 			}
 
-			// Reset cout to use decimal again
-			cout << std::dec << endl;
+			// Reset cerr to use decimal again
+			cerr << std::dec << endl;
 		}
 
 		// Get next block size
 		subBlockSize = fgetc(inputFile);
+		gSize++;
 
 		// End of data
 		if (subBlockSize == 0x00) {
 			if (DEBUG)
-				cout << "End of data" << endl;
+				cerr << "End of data" << endl;
 			break;
 		}
 	}
 
 	// Check the trailer byte
 	if ((byte)fgetc(inputFile) != TRAILER) {
-		throw GIFError("Trailer byte not found!");
+		return error("Trailer byte not found!");
 	}
 
+	gSize++;
+
 	if (DEBUG)
-		cout << "data size: " << data.size() << endl;
+		cerr << "data size: " << data.size() << endl;
 
 	// TODO: Decompress acquired data
-	clearCode = POW(code_length);
-
 	uint8_t * out2;
 	out2 = (uint8_t *)malloc (sizeof(uint8_t) * iDesc.width * iDesc.height);
 
@@ -217,11 +232,14 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 	}
 
 	// Store the decoded GIF to BMP file
-	BMP::BMP bmp(iDesc.width, iDesc.height);
+	BMP bmp(iDesc.width, iDesc.height);
 
 	bmp.Store(outputFile, &out_color);
 
-	gif2bmp->bmpSize = bmp.StoredSize();
+	cerr << "stored size: " << bmp.StoredSize() << endl;
+
+	gif2bmp->bmpSize = ftell(outputFile);
+	gif2bmp->gifSize = ftell(inputFile);
 
 	// Cleanup
 	free(GCT);
@@ -236,7 +254,7 @@ void readHeader(FILE *f, gifHeader *h)
 	fread(h, 3, 2, f);
 
 	if (strncmp((const char *)h->signature, "GIF", 3) == 0)
-		cout << "Signature: OK" << endl;
+		cerr << "Signature: OK" << endl;
 	else
 		throw GIFError("Bad signature");
 
@@ -244,17 +262,12 @@ void readHeader(FILE *f, gifHeader *h)
 		throw GIFError("Version 87a is not supported");
 
 	else if (strncmp((const char *)h->version, "89a", 3) == 0)
-		cout << "Version: OK" << endl;
+		cerr << "Version: OK" << endl;
 
 	else
 		throw GIFError("Unknown version");
 
 	return;
-}
-
-void readDescriptor (FILE *f, descriptor *d)
-{
-	fread(d, 1, 7, f);
 }
 
 void parsePackedField (descriptor *d, packedField *p)

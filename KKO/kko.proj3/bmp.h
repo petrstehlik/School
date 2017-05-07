@@ -39,7 +39,7 @@ private:
 	} bmpInfoHeader_t;
 	#pragma pack(pop)
 
-	int size;
+	int size = 0;
 	int x;
 	int y;
 
