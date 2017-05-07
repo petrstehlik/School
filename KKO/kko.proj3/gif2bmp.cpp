@@ -241,8 +241,6 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile)
 
 	bmp.Store(outputFile, &out_color);
 
-	cerr << "stored size: " << bmp.StoredSize() << endl;
-
 	gif2bmp->bmpSize = ftell(outputFile);
 	gif2bmp->gifSize = ftell(inputFile);
 

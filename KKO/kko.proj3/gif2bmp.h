@@ -8,7 +8,7 @@
 
 #include <sys/types.h>
 #include <vector>
-
+#include <string>
 
 #define IMAGE_DESCRIPTOR	0x2C
 #define TRAILER				0x3B
