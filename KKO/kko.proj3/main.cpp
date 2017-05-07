@@ -55,6 +55,15 @@ int main(int argc, char **argv) {
 	FILE *input = inputPath.empty() ? stdin : fopen(inputPath.c_str(), "r+");
 	FILE *output = outputPath.empty() ? stdout : fopen(outputPath.c_str(), "wb+");
 
+	if (output == NULL) {
+		cerr << "Failed to open output file" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if (input == NULL) {
+		cerr << "Failed to open input file" << endl;
+		return EXIT_FAILURE;
+	}
 	if (gif2bmp(&sizeInfo, input, output) != 0) {
 		fprintf(stderr, "Error occured while converting\n");
 	}
