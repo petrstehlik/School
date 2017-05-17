@@ -1,0 +1,63 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,25cm},top=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\graphicspath{ {img/} }
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Kódování a komprese dat -- projekt 3 GIF2BMP}\\
+	\large{Vysoké učení technické v Brně}
+	\vspace{0.5cm}
+
+	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>
+
+	\vspace{0.5cm}
+
+	\today
+
+\end{center}
+
+\section{Zadání}
+Cílem projektu bylo vytvořit knihovnu pro převod souboru grafického formátu GIF na soubor grafického formátu BMP (Microsoft Windows Bitmap). S pomocí této knihovny byl dále implementovaný konzolový program gif2bmp, který převod souborů provede.
+
+Knihovna je implementována pro konverzi statického GIF89a na BMP bez komprese.
+
+\section{Implementace}
+Knihovna je implementována v jazyku C++ s použitím standardních knihoven pro C/C++ ve standardu C++11. Knihovna zpřístupňuje jedinou funkci \texttt{gif2bmp} sloužící pro daný převod. Implementace daného rozhraní využívá třídy \texttt{GIF} a \texttt{BMP}, které implementují práci se soubory v grafickém formátu GIF a BMP.
+
+\subsection{\texttt{gif2bmp} aplikace}
+
+Konzolová aplikace zpracováva celkem 4 parametry:
+
+\begin{itemize}
+	\item{-i <input file> cesta ke vstupnímu souboru, pokud parametr není zadán, je vstupním souborem standardní vstup,}
+	\item{-o <output file> cesta k výstupnímu souboru, pokud parametr není zadán, je výstupním souborem stadardní výstup,}
+	\item{-l <lnog file> cesta k souboru s výstupní zprávou, pokud parametr není zadán, je výpis zprávy ignorován,}
+	\item{-h vypíše nápovědu a program se ukončí.}
+\end{itemize}
+
+Na tyto argumenty aplikace adekvátně reaguje a pokud není požadována nápověda, pokusí se otevřít soubory a následně zavolá konverzní funkci \texttt{gif2bmp}.
+
+\subsection{Třída \texttt{GIF}}
+
+Pro účely knihovní funkce \texttt{gif2bmp} byla vytvořena třída \texttt{GIF}, která implementuje kompletní práci s grafickým formátem GIF89a. Při instanciaci je předán ukazatel na soubor, který je následně konvertován do interní struktury pomocí metody \texttt{Convert}. Veškerá data jsou zpřístupněna přes gettery, kterými lze získat informace o velikosti obrázku, zda obrázek disponuje lokální tabulkou barev a také samotná data získaná ze souboru a dekomprimována metodou LZW.
+
+Metoda LZW je implementována pomocí slovníku, který je realizován jako zpětně vázaný jednosměrný seznam položek. Dekomprimací je získán seznam indexů barev z tabulky dat a samotné informace o barvě jsou následně získány dle přítomnosti lokální nebo globální tabulky barev.
+
+\subsection{Třída \texttt{BMP}}
+
+Třída \texttt{BMP} implementuje operace nutné pro vytvoření a uložení grafického formátu BMP. Třída vnitřně definuje hlavičkové struktury formátu BMP, které jsou používány při vytvoření jednotlivých souborů. Konstruktor třídy přijímá dva parametry -- šířku a výšku tvořeného obrázku. Jedinou věřejně dostupnou metodou je metoda \texttt{Store}, která přijímá file pointer na soubor kam zapíše data z druhého parametru. Druhý parametr je typu \texttt{vector<color>}, kde \texttt{color} je struktura definovaná v \texttt{gif2bmp}.
+
+Pro použití stačí instanciovat třídu a zavolat metodu \texttt{Store} s příslušnými parametry. Ta vytvoří, případně přepíše, zadaný soubor s novými daty.
+
+
+\section{Závěr}
+
+Úspěšně se podařilo implementovat převod souboru grafického formátu GIF na soubor grafického formátu BMP. Knihovna byla otestována na přiložených souborech, kde všechny obrázky s verzí GIF89a konvertovala úspěšně. Vytvořené BMP soubory jsou zobrazitelné dostupnými editory (např. Adobe Photoshop CC) a prohlížeči (např. IrfanView).
+\end{document}
