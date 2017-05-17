@@ -24,6 +24,10 @@ int gif2bmp(tGIF2BMP *gif2bmp, FILE *inputFile, FILE *outputFile) {
 
 	bmp.Store(outputFile, gif.GetData());
 
+	// fseek just for assurance
+	fseek(outputFile, 0L, SEEK_END);
+	fseek(inputFile, 0L, SEEK_END);
+
 	gif2bmp->bmpSize = ftell(outputFile);
 	gif2bmp->gifSize = ftell(inputFile);
 
