@@ -1,3 +1,13 @@
+/**
+  * Main program which uses gif2bmp library function a encapsulates the arguments
+  * parsing for I/O files and logging.
+  *
+  * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * Date: 2017/05/07
+  *
+  * file: main.cpp
+  */
+
 #include <iostream>
 #include <unistd.h>
 #define __STDC_FORMAT_MACROS

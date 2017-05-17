@@ -1,3 +1,14 @@
+/**
+  * GIF class definition. Implements operations with GIF include LZW
+  * decompression and colour handling.
+  *
+  * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * Date: 2017/05/07
+  *
+  * file: gif.h
+  */
+
+
 #pragma once
 
 #include <sys/types.h>

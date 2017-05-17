@@ -1,3 +1,13 @@
+/**
+  * GIF class implementation. Implements operations with GIF include LZW
+  * decompression and colour handling.
+  *
+  * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * Date: 2017/05/07
+  *
+  * file: gif.cpp
+  */
+
 #include "gif.h"
 
 using namespace std;

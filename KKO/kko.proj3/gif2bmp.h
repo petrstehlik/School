@@ -1,3 +1,13 @@
+/**
+  * gif2bmp base header and GIFError exception.
+  *
+  * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * Date: 2017/05/07
+  *
+  * file: gif2bmp.h
+  */
+
+
 #pragma once
 
 #include <sys/types.h>

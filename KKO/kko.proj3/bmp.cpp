@@ -1,3 +1,12 @@
+/**
+  * BMP class implementation. Handles all BMP file operations.
+  *
+  * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * Date: 2017/05/07
+  *
+  * file: bmp.cpp
+  */
+
 #include "bmp.h"
 
 using namespace std;

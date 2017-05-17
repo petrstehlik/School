@@ -1,3 +1,13 @@
+/**
+  * gif2bmp implementation, only uses GIF and BMP classes and computes the
+  * file sizes for tGIF2BMP struct.
+  *
+  * Author: Petr Stehlik <xstehl14@stud.fit.vutbr.cz>
+  * Date: 2017/05/07
+  *
+  * file: gif2bmp.cpp
+  */
+
 #include "gif2bmp.h"
 #include "bmp.h"
 #include "gif.h"
