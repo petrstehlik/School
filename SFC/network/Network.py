@@ -22,7 +22,7 @@ class Network():
     def __create_network(self):
         index = 0
 
-        self.layers.append([Neuron() for i in range(self.inputs)])
+        # self.layers.append([Neuron() for i in range(self.inputs)])
 
         for i in self.layers_num:
             layer = []
@@ -31,6 +31,7 @@ class Network():
                 self.log.debug("Create neuron %s in layer %s" % (j, index))
                 layer.append(Neuron(inputs = i))
 
+            self.log.debug(layer)
             self.layers.append(layer)
             index += 1
 
@@ -39,5 +40,18 @@ class Network():
         for i in self.layers:
             print(i)
 
-    def forward_propagate(self):
-        pass
+    def forward_propagate(self, input_data):
+        """
+        input_data is the data which are transmitted by the first layer of neurons
+        """
+        for layer in self.layers:
+            print(layer)
+            new_inputs = []
+            for n in layer:
+                n.activate(input_data)
+                n.output = n.transfer()
+                new_inputs.append(n.output)
+
+            input_data = new_inputs
+        return input_data
+
