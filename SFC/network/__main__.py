@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.DEBUG)
 from network import Network
 from neuron import Neuron
 
-network = Network(5, [3,3], 1)
+network = Network(5, [3, 3, 2])
 
 res = network.forward_propagate([
         0.25,
@@ -16,3 +16,4 @@ res = network.forward_propagate([
     ])
 
 print(res)
+network.backward_propagate_error([0, 1])
