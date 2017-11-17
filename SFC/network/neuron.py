@@ -1,6 +1,7 @@
 from random import random
 import time
 from math import exp
+import logging
 
 class Neuron:
     def __init__(self, inputs = 0):
@@ -9,10 +10,15 @@ class Neuron:
 
         Weight for each input and one for the bias
         """
+        self.log = logging.getLogger(__name__)
+
         self.bias = random()
         self.input_weights = [random() for i in range(inputs)]
-        self.output = 0
+        self.output = 0.0
+        self.delta = 0.0
         self.inputs = []
+
+        self.log.debug("CREATE: Weights {0}:Bias {1:.2f}".format(self.input_weights, self.bias))
 
     def activate(self, inputs):
         self.activation = self.bias
@@ -23,7 +29,8 @@ class Neuron:
         """
         The sigmoid transfer function
         """
-        return 1.0 / (1.0 + exp(-self.activation))
+        self.output = 1.0 / (1.0 + exp(-self.activation))
+        return(self.output)
 
     def transfer_derivative(self):
         return(self.output * (1.0 - self.output))
