@@ -1,0 +1,51 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,25cm},top=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+
+\graphicspath{ {figs/} }
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Soft Computing}\\
+	\Large{Job Performance Evaluation Using Back-propagation Network}
+	\vspace{0.5cm}
+
+    \begin{centering}
+    \small{
+        Bc. Petr Stehlík <xstehl14@stud.fit.vutbr.cz>
+        }
+    \end{centering}
+
+	\vspace{0.2cm}
+
+\end{center}
+
+\section{Assignment}
+The aim of the project is to assemble a mechanical device and create software for acquiring 2D hand geometry using a line camera.
+A solution for camera mount and hand placement is proposed in the following sections for best geometry acquisition and image reconstruction.
+
+\input{theory}
+
+\input{data}
+
+\input{implementation}
+
+\section{Achieved Results}
+\label{sec:res}
+Solution described in this report was assembled and implemented with excellent results. Integration of all hardware parts and software control results
+in images being scanned quickly in resolution exceeding 60 MPx. During testing it was proved to be effective to not only scan images
+of hand geometry but also fingerprints which leads to general purpose sensoric solution for capturing multiple biometric data. Furthermore,
+the solution is able to function with very limited resources necessary and provides instant access to scanned images via a web serber. Complete scan of both of the subject's
+hands can be done under 1 minute.
+
+\section{Summary}
+\label{sec:sum}
+
+\end{document}
