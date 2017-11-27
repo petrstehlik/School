@@ -105,7 +105,7 @@ class Network():
                 sys.stdout.flush()
                 break
 
-            if epoch % 1000 == 0:
+            if epoch % 1 == 0:
                 print("epoch = {0}, error = {1:.5f}".format(epoch, sum_error),end='\r')
                 sys.stdout.flush()
 

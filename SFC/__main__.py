@@ -1,5 +1,9 @@
 import logging
 import sys
+import json
+import numpy as np
+
+np.set_printoptions(threshold='nan')
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("MAIN")
@@ -8,10 +12,11 @@ print(sys.argv)
 
 from network import Network
 from neuron import Neuron
+import analyzer
 
-network = Network([2, 3, 3, 2])
+network = Network([60, 20, 14, 1])
 
-network.print_network()
+#network.print_network()
 
 dataset = [
     [2.7810836,2.550537003,     [1, 0]],
@@ -25,9 +30,29 @@ dataset = [
 	[8.675418651,-0.242068655,  [0, 1]]
 	]
 
+log.info("Loading data")
+
+with open('data.json') as fp:
+    data = json.load(fp)
+
+analyzer.stats(data)
+stretched_data = []
+
+for job in data:
+    for metric in analyzer.metrics:
+        data = analyzer.stretch(job[metric]['data'], size=60)
+        data = data.tolist()
+        data.append([1 if job[metric]['suspicious'] else 0])
+        stretched_data.append(data)
+    #stretched_data.append(metrics)
+
 log.info("Starting training")
+#print(stretched_data[0])
+#print(len(stretched_data[:-220]))
 
-network.train(dataset, 0.5, epsilon = 0.0001)
+#print(stretched_data)
 
-print("Expected: [0, 1]")
-print(network.predict([7.673756466,3.508563011]))
+network.train(stretched_data[:-220], 0.5, epsilon = 0.1, epochs = 10000)
+
+print("Expected: {}".format(stretched_data[-1][-1]))
+print(network.predict(stretched_data[-1][:-1]))
