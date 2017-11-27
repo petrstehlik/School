@@ -5,7 +5,7 @@ import numpy as np
 
 np.set_printoptions(threshold='nan')
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("MAIN")
 
 print(sys.argv)
@@ -40,6 +40,18 @@ stretched_data = []
 
 for job in data:
     for metric in analyzer.metrics:
+
+        if metric == "job_ips":
+            for point in job[metric]['data']:
+                point[1] = point[1]/(8000000000.0)
+        elif metric == "job_CPU1_Temp" or metric == "job_CPU2_Temp":
+            # Skip temperatures
+            continue
+        else:
+            for point in job[metric]['data']:
+                # normalize to fraction percentage
+                point[1] = point[1]/(100.0)
+
         data = analyzer.stretch(job[metric]['data'], size=60)
         data = data.tolist()
         data.append([1 if job[metric]['suspicious'] else 0])
