@@ -2,7 +2,8 @@ import logging
 import sys
 import json
 import numpy as np
-from multiprocessing import Process
+from multiprocessing import Process, Manager
+from multiprocessing.managers import BaseManager
 
 np.set_printoptions(threshold='nan')
 
@@ -67,8 +68,12 @@ def prepare_data(metric, input_data):
         #stretched_data.append(metrics)
 
 if __name__ == "__main__":
-    #network_C6 = Network([INPUTS, INPUTS/20, 3, 1])
-    #network_C3 = Network([INPUTS, INPUTS/20, 3, 1])
+    BaseManager.register('Network', Network)
+    manager = BaseManager()
+    manager.start()
+
+    network_C6 = manager.Network([INPUTS, INPUTS/20, 3, 1])
+    network_C3 = manager.Network([INPUTS, INPUTS/20, 3, 1])
 
     network = Network([INPUTS, INPUTS/20, 3, 1])
 
@@ -92,35 +97,27 @@ if __name__ == "__main__":
             point_data.append([1 if job[metric]['suspicious'] else 0])
             metric_data[metric].append(point_data)
 
-    #analyzer.stats(data)
-    stretched_data = dict()
-
-    for metric in analyzer.metrics:
-        stretched_data[metric] = prepare_data(metric, data)
-
     log.info("Starting training")
 
-    """jobs.append(Process(target=network_C6.train,
+    jobs.append(Process(target=network_C6.train,
             args=(
-                stretched_data["job_C6res"][:-5],
+                metric_data["job_C6res"][:-5],
                 0.5
             ),
             kwargs={
-                'epsilon' : 0.01,
+                'epsilon' : 0.1,
                 'epochs' : 10000
             }))
-            """
 
-    """jobs.append(Process(target=network_C3.train,
+    jobs.append(Process(target=network_C3.train,
             args=(
-                stretched_data["job_C3res"][:-5],
+                metric_data["job_C3res"][:-5],
                 0.5
             ),
             kwargs={
                 'epsilon' : 0.001,
                 'epochs' : 10000
             }))
-    """
 
     """jobs.append(Process(target=network.train,
             args=(
@@ -138,16 +135,12 @@ if __name__ == "__main__":
     for job in jobs:
         job.join()
 
-    network.train(metric_data["job_C6res"][:-3], 0.5, epsilon = 0.01, epochs = 10000)
+    network.train(metric_data["job_C6res"], 0.5, epochs = 1500)
 
+    print("--------------")
     for item in metric_data["job_C6res"]:
-        res = network.predict(item[:-1])
-        print("Expected: {}, Got: {}".format(item[-1], res))
+       print("Expected: {}, Got: {}".format(item[-1], network_C6.predict(item[:-1])))
 
-    #print("--------------")
-
-    #for item in stretched_data["job_C3res"]:
-    #    print("Expected: {}, Got: {}".format(item[-1], network_C3.predict(item[:-1])))
-
-    #for item in stretched_data["job_ips"]:
-    #    print("Expected: {}, Got: ".format(item[-1], network.predict(item[:-1])))
+    print("--------------")
+    for item in metric_data["job_C6res"]:
+       print("Expected: {}, Got: {}".format(item[-1], network.predict(item[:-1])))
