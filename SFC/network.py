@@ -7,8 +7,6 @@ import sys
 from neuron import Neuron
 
 class Network():
-    layers = []
-
     def __init__(self, *args):
         """
         inputs: number on input neurons
@@ -17,6 +15,7 @@ class Network():
         outputs: number of outputs
         """
         seed(int(time.time()))
+        self.layers = list()
         self.log = logging.getLogger(__name__)
         self.layers_list = args[0]
         print(self.layers_list)
