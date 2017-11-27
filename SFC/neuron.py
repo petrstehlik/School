@@ -36,7 +36,13 @@ class Neuron:
 
         output = 1.0 / (1.0 + e^(-activation))
         """
-        self._output = 1.0 / (1.0 + exp(-self._activation))
+        original_output = self._output
+        try:
+		    self._output = 1.0 / (1.0 + exp(-self._activation))
+        except Exception as e:
+		    self.log.debug(e)
+		    self.log.debug(self._activation)
+		    self._output = original_output
         return self._output
 
     def transfer_derivative(self):
