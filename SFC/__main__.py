@@ -8,13 +8,11 @@ np.set_printoptions(threshold='nan')
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("MAIN")
 
-print(sys.argv)
-
 from network import Network
 from neuron import Neuron
 import analyzer
 
-network = Network([60, 20, 14, 1])
+network = Network([120, 20, 3, 3, 1])
 
 #network.print_network()
 
@@ -35,12 +33,36 @@ log.info("Loading data")
 with open('data.json') as fp:
     data = json.load(fp)
 
+def normalize(job):
+    for metric in analyzer.metrics:
+        if metric == "job_ips":
+            for point in job[metric]['data']:
+                point[1] = point[1]/(8000000000.0)
+        elif metric == "job_CPU1_Temp" or metric == "job_CPU2_Temp":
+            # Skip temperatures
+            continue
+        else:
+            for point in job[metric]['data']:
+                # normalize to fraction percentage
+                point[1] = point[1]/(100.0)
+
+    return job
+
+
 analyzer.stats(data)
 stretched_data = []
 
 for job in data:
-    for metric in analyzer.metrics:
+    njob = normalize(job)
 
+    data = analyzer.stretch(njob["job_load_core"]['data'], size=120)
+    data = data.tolist()
+    data.append([1 if njob["job_load_core"]['suspicious'] else 0])
+    stretched_data.append(data)
+
+
+    """
+    for metric in analyzer.metrics:
         if metric == "job_ips":
             for point in job[metric]['data']:
                 point[1] = point[1]/(8000000000.0)
@@ -56,15 +78,18 @@ for job in data:
         data = data.tolist()
         data.append([1 if job[metric]['suspicious'] else 0])
         stretched_data.append(data)
+        """
+
     #stretched_data.append(metrics)
 
 log.info("Starting training")
-#print(stretched_data[0])
-#print(len(stretched_data[:-220]))
+network.train(stretched_data[:-3], 0.5, epsilon = 0.5, epochs = 10000)
 
-#print(stretched_data)
+print("Expected: {}".format(stretched_data[-3][-1]))
+print(network.predict(stretched_data[-3][:-1]))
 
-network.train(stretched_data[:-220], 0.5, epsilon = 0.1, epochs = 10000)
+print("Expected: {}".format(stretched_data[-2][-1]))
+print(network.predict(stretched_data[-2][:-1]))
 
 print("Expected: {}".format(stretched_data[-1][-1]))
 print(network.predict(stretched_data[-1][:-1]))

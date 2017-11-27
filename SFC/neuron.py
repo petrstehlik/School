@@ -27,8 +27,8 @@ class Neuron:
         Calculate activation of the neuron where last weight is the bias
         """
         self._activation = self._weights[-1]
-        for i, weight in enumerate(self._weights[:-1]):
-            self._activation += weight * inputs[i]
+        for i in range(len(self._weights[:-1])):
+            self._activation += self._weights[i] * inputs[i]
 
     def transfer(self):
         """
