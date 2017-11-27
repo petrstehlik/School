@@ -2,6 +2,7 @@ import logging
 import sys
 import json
 import numpy as np
+from multiprocessing import Process
 
 np.set_printoptions(threshold='nan')
 
@@ -12,33 +13,15 @@ from network import Network
 from neuron import Neuron
 import analyzer
 
-network = Network([120, 20, 3, 3, 1])
-
-#network.print_network()
-
-dataset = [
-    [2.7810836,2.550537003,     [1, 0]],
-	[1.465489372,2.362125076,   [1, 0]],
-	[3.396561688,4.400293529,   [1, 0]],
-	[1.38807019,1.850220317,    [1, 0]],
-	[3.06407232,3.005305973,    [1, 0]],
-	[7.627531214,2.759262235,   [0, 1]],
-	[5.332441248,2.088626775,   [0, 1]],
-	[6.922596716,1.77106367,    [0, 1]],
-	[8.675418651,-0.242068655,  [0, 1]]
-	]
-
-log.info("Loading data")
-
-with open('data.json') as fp:
-    data = json.load(fp)
+INPUTS = 60
 
 def normalize(job):
     for metric in analyzer.metrics:
         if metric == "job_ips":
-            for point in job[metric]['data']:
-                point[1] = point[1]/(8000000000.0)
-        elif metric == "job_CPU1_Temp" or metric == "job_CPU2_Temp":
+            continue
+            #for point in job[metric]['data']:
+             #   point[1] = point[1]/(8000000000.0)
+        if metric == "job_CPU1_Temp" or metric == "job_CPU2_Temp":
             # Skip temperatures
             continue
         else:
@@ -48,17 +31,18 @@ def normalize(job):
 
     return job
 
+def prepare_data(metric, input_data):
+    prep_data = []
+    data = None
+    for job in input_data:
+        njob = normalize(job)
 
-analyzer.stats(data)
-stretched_data = []
+        data = analyzer.stretch(njob[metric]['data'], size=INPUTS)
+        data = data.tolist()
+        data.append([1 if njob[metric]['suspicious'] else 0])
+        prep_data.append(data)
 
-for job in data:
-    njob = normalize(job)
-
-    data = analyzer.stretch(njob["job_load_core"]['data'], size=120)
-    data = data.tolist()
-    data.append([1 if njob["job_load_core"]['suspicious'] else 0])
-    stretched_data.append(data)
+    return(prep_data)
 
 
     """
@@ -78,18 +62,92 @@ for job in data:
         data = data.tolist()
         data.append([1 if job[metric]['suspicious'] else 0])
         stretched_data.append(data)
-        """
+    """
 
-    #stretched_data.append(metrics)
+        #stretched_data.append(metrics)
 
-log.info("Starting training")
-network.train(stretched_data[:-3], 0.5, epsilon = 0.5, epochs = 10000)
+if __name__ == "__main__":
+    #network_C6 = Network([INPUTS, INPUTS/20, 3, 1])
+    #network_C3 = Network([INPUTS, INPUTS/20, 3, 1])
 
-print("Expected: {}".format(stretched_data[-3][-1]))
-print(network.predict(stretched_data[-3][:-1]))
+    network = Network([INPUTS, INPUTS/20, 3, 1])
 
-print("Expected: {}".format(stretched_data[-2][-1]))
-print(network.predict(stretched_data[-2][:-1]))
+    metric_data = dict()
+    jobs = []
 
-print("Expected: {}".format(stretched_data[-1][-1]))
-print(network.predict(stretched_data[-1][:-1]))
+    log.info("Loading data")
+    with open('data.json') as fp:
+        data = json.load(fp)
+
+    log.info("Normalizing dataset")
+    for job in data:
+        job = normalize(job)
+
+    # Reorganize and interpolate data so that metrics from jobs are together
+    for metric in analyzer.metrics:
+        metric_data[metric] = []
+        for job in data:
+            point_data = analyzer.stretch(job[metric]['data'], size = INPUTS)
+            point_data = point_data.tolist()
+            point_data.append([1 if job[metric]['suspicious'] else 0])
+            metric_data[metric].append(point_data)
+
+    #analyzer.stats(data)
+    stretched_data = dict()
+
+    for metric in analyzer.metrics:
+        stretched_data[metric] = prepare_data(metric, data)
+
+    log.info("Starting training")
+
+    """jobs.append(Process(target=network_C6.train,
+            args=(
+                stretched_data["job_C6res"][:-5],
+                0.5
+            ),
+            kwargs={
+                'epsilon' : 0.01,
+                'epochs' : 10000
+            }))
+            """
+
+    """jobs.append(Process(target=network_C3.train,
+            args=(
+                stretched_data["job_C3res"][:-5],
+                0.5
+            ),
+            kwargs={
+                'epsilon' : 0.001,
+                'epochs' : 10000
+            }))
+    """
+
+    """jobs.append(Process(target=network.train,
+            args=(
+                stretched_data["job_load_core"][:-5],
+                0.5
+            ),
+            kwargs={
+                'epsilon' : 0.01,
+                'epochs' : 10000
+            }))"""
+
+    for job in jobs:
+        job.start()
+
+    for job in jobs:
+        job.join()
+
+    network.train(metric_data["job_C6res"][:-3], 0.5, epsilon = 0.01, epochs = 10000)
+
+    for item in metric_data["job_C6res"]:
+        res = network.predict(item[:-1])
+        print("Expected: {}, Got: {}".format(item[-1], res))
+
+    #print("--------------")
+
+    #for item in stretched_data["job_C3res"]:
+    #    print("Expected: {}, Got: {}".format(item[-1], network_C3.predict(item[:-1])))
+
+    #for item in stretched_data["job_ips"]:
+    #    print("Expected: {}, Got: ".format(item[-1], network.predict(item[:-1])))
