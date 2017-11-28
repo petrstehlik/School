@@ -83,9 +83,13 @@ def argparser():
             action="store_true",
             help='Train the network using data.json dataset')
     parser.add_argument('--eval',
-            dest='config_dir',
+            dest='config_eval',
             default='configs',
             help='Evaluate learned network with data.json dataset')
+    parser.add_argument('--dir',
+            dest='config_dir',
+            default='configs',
+            help='Where to store configs')
     parser.add_argument('--max-epochs',
             dest="epochs",
             type=int,
@@ -109,6 +113,7 @@ if __name__ == "__main__":
         job = normalize(job)
 
     # Reorganize and interpolate data so that metrics from jobs are together
+    metric_data["jobber"] = []
     for metric in metrics[:-1]:
         metric_data[metric] = []
         for job in data:
@@ -144,7 +149,7 @@ if __name__ == "__main__":
         log.info("Starting training")
 
         try:
-            p = Pool(initializer=initializer)
+            p = Pool(processes = 13, initializer=initializer)
 
             p.map(runner, range(13))
             p.close()
@@ -158,7 +163,7 @@ if __name__ == "__main__":
         network = None
 
         for x, metric in enumerate(metrics):
-            with open(os.path.join(args.config_dir, metric + '_network.json'),) as fp:
+            with open(os.path.join(args.config_eval, metric + '_network.json'),) as fp:
                 network = Network.load(json.load(fp))
 
             print("-- {}".format(metric))
