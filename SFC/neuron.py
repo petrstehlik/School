@@ -38,7 +38,8 @@ class Neuron:
         try:
             self._output = 1.0 / (1.0 + exp(-self._activation))
         except Exception as e:
-            self.log.error(e, self._output)
+            self.log.error(e)
+            self.log.debug(self._output)
             self.log.debug(self._activation)
             self._output = original_output
         return self._output
