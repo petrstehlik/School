@@ -11,6 +11,8 @@ import analyzer
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("MAIN")
+metric_data = dict()
+networks = list()
 
 class NetworkList:
     C6              = 0
@@ -25,6 +27,21 @@ class NetworkList:
     l3_bound        = 9
     front_end_bound = 10
     back_end_bound  = 11
+
+metrics = [
+    "job_C6res",
+    "job_C3res",
+    "job_load_core",
+    "job_ips",
+    "job_Sys_Utilization",
+    "job_IO_Utilization",
+    "job_Mem_Utilization",
+    "job_CPU_Utilization",
+    "job_L1L2_Bound",
+    "job_L3_Bound",
+    "job_front_end_bound",
+    "job_back_end_bound"
+        ]
 
 
 INPUTS = 80
@@ -78,15 +95,18 @@ def prepare_data(metric, input_data):
         stretched_data.append(data)
     """
 
-        #stretched_data.append(metrics)
+def runner(x):
+    global metrics
+
+    networks[x].train(metric_data[metrics[x]], 0.5, epochs = 20000, epsilon = 0.1)
+    with open('configs/' + metrics[x] + '_network.json', 'w+') as fp:
+        json.dump(networks[x].export(), fp)
 
 if __name__ == "__main__":
     BaseManager.register('Network', Network)
     manager = BaseManager()
     manager.start()
-    networks = list()
 
-    metric_data = dict()
     jobs = []
 
     log.info("Loading data")
@@ -106,123 +126,51 @@ if __name__ == "__main__":
             point_data.append([1 if job[metric]['suspicious'] else 0])
             metric_data[metric].append(point_data)
 
-    if len(sys.argv) > 1:
-        with open(sys.argv[1], "r") as fp:
-            networks_config = json.load(fp)
-            networks = [Network.load(cfg) for cfg in networks_config]
+    #if len(sys.argv) > 1:
+    #    with open(sys.argv[1], "r") as fp:
+    #        networks_config = json.load(fp)
+    #        networks = [Network.load(cfg) for cfg in networks_config]
 
-    else:
+    if len(sys.argv) == 2 and sys.argv[1] == "learn":
         networks = [
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "C6res"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "C3res"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "load_core"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "ips"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "Sys_Utilization"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "IO_Utilization"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "Mem_Utilization"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "CPU_Utilization"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "L1L2_Bound"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "L3_Bound"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "front_end_bound"),
-            manager.Network([INPUTS, INPUTS/20, 3, 1], "back_end_bound")
+            Network([INPUTS, INPUTS/20, 3, 1], "C6res"),
+            Network([INPUTS, INPUTS/20, 3, 1], "C3res"),
+            Network([INPUTS, INPUTS/20, 3, 1], "load_core"),
+            Network([INPUTS, INPUTS/20, 3, 1], "ips"),
+            Network([INPUTS, INPUTS/20, 3, 1], "Sys_Utilization"),
+            Network([INPUTS, INPUTS/20, 3, 1], "IO_Utilization"),
+            Network([INPUTS, INPUTS/20, 3, 1], "Mem_Utilization"),
+            Network([INPUTS, INPUTS/20, 3, 1], "CPU_Utilization"),
+            Network([INPUTS, INPUTS/20, 3, 1], "L1L2_Bound"),
+            Network([INPUTS, INPUTS/20, 3, 1], "L3_Bound"),
+            Network([INPUTS, INPUTS/20, 3, 1], "front_end_bound"),
+            Network([INPUTS, INPUTS/20, 3, 1], "back_end_bound")
             ]
 
         log.info("Starting training")
 
-        def_kwargs = {
-                    'epsilon' : 1.0,
-                    'epochs' : 5000
-                }
+        p = Pool(processes = 12)
 
-        p = Pool()
+        p.map(runner, range(12))
+        p.close()
+        p.join()
 
-        jobs.append(Process(target=networks[NetworkList.C6].train,
-                args=(
-                    metric_data["job_C6res"][:-5],
-                    0.5
-                ),
-                kwargs={
-                    'epsilon' : 0.1,
-                    'epochs' : 10000
-                }))
+    elif len(sys.argv) == 2 and sys.argv[1] == "eval":
+        networks = [None] * (len(metrics) + 1)
 
-        jobs.append(Process(target=networks[NetworkList.C3].train,
-                args=(
-                    metric_data["job_C3res"][28:],
-                    0.5
-                ),
-                kwargs={
-                    'epsilon' : 0.001,
-                    'epochs' : 10000
-                }))
+        for x, metric in enumerate(metrics):
+            print('configs/' + metric + '_network.json')
+            with open('configs/' + metric + '_network.json') as fp:
+                networks[x] = Network.load(json.load(fp))
 
-        jobs.append(Process(target=networks[NetworkList.load_core].train,
-                args=(
-                    metric_data["job_load_core"][:-5],
-                    0.5
-                ), kwargs=def_kwargs))
+        print("-------------- C6res")
+        for item in metric_data["job_C6res"][-5:]:
+            print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.C6].predict(item[:-1])[0])))
 
-        jobs.append(Process(target=networks[NetworkList.ips].train,
-                args=(
-                    metric_data["job_ips"][:-5],
-                    0.5
-                ), kwargs=def_kwargs))
+        print("-------------- IPS")
+        for item in metric_data["job_ips"][-5:]:
+            print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.ips].predict(item[:-1])[0])))
 
-        jobs.append(Process(target=networks[NetworkList.sys_util].train,
-                args=(
-                    metric_data["job_Sys_Utilization"][:-5],
-                    0.5
-                ), kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.mem_util].train,
-                args=(metric_data["job_Mem_Utilization"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.io_util].train,
-                args=(metric_data["job_IO_Utilization"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.cpu_util].train,
-                args=(metric_data["job_CPU_Utilization"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.l1l2_bound].train,
-                args=(metric_data["job_L1L2_Bound"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.l3_bound].train,
-                args=(metric_data["job_L3_Bound"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.front_end_bound].train,
-                args=(metric_data["job_front_end_bound"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        jobs.append(Process(target=networks[NetworkList.back_end_bound].train,
-                args=(metric_data["job_back_end_bound"][:-5], 0.5),
-                kwargs=def_kwargs))
-
-        for job in jobs:
-            job.start()
-
-        for job in jobs:
-            job.join()
-
-        #network.train(metric_data["job_C6res"], 0.5, epochs = 1000)
-
-        if len(sys.argv) <= 1:
-            networks_export = [network.export() for network in networks]
-            with open("networks.json", "w+") as fp:
-                json.dump(networks_export, fp)
-
-    print("-------------- C6res")
-    for item in metric_data["job_C6res"][-5:]:
-        print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.C6].predict(item[:-1])[0])))
-
-    print("-------------- IPS")
-    for item in metric_data["job_ips"][-5:]:
-        print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.ips].predict(item[:-1])[0])))
-
-    print("-------------- BE Bound")
-    for item in metric_data["job_back_end_bound"][-5:]:
-        print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.back_end_bound].predict(item[:-1])[0])))
+        print("-------------- BE Bound")
+        for item in metric_data["job_back_end_bound"][-10:]:
+            print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.back_end_bound].predict(item[:-1])[0])))
