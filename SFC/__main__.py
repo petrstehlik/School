@@ -2,19 +2,32 @@ import logging
 import sys
 import json
 import numpy as np
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Manager, Pool
 from multiprocessing.managers import BaseManager
-
-np.set_printoptions(threshold='nan')
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger("MAIN")
-
+import pickle
 from network import Network
 from neuron import Neuron
 import analyzer
 
-INPUTS = 60
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("MAIN")
+
+class NetworkList:
+    C6              = 0
+    C3              = 1
+    load_core       = 2
+    ips             = 3
+    sys_util        = 4
+    io_util         = 5
+    mem_util        = 6
+    cpu_util        = 7
+    l1l2_bound      = 8
+    l3_bound        = 9
+    front_end_bound = 10
+    back_end_bound  = 11
+
+
+INPUTS = 80
 
 def normalize(job):
     for metric in analyzer.metrics:
@@ -71,11 +84,7 @@ if __name__ == "__main__":
     BaseManager.register('Network', Network)
     manager = BaseManager()
     manager.start()
-
-    network_C6 = manager.Network([INPUTS, INPUTS/20, 3, 1])
-    network_C3 = manager.Network([INPUTS, INPUTS/20, 3, 1])
-
-    network = Network([INPUTS, INPUTS/20, 3, 1])
+    networks = list()
 
     metric_data = dict()
     jobs = []
@@ -97,50 +106,123 @@ if __name__ == "__main__":
             point_data.append([1 if job[metric]['suspicious'] else 0])
             metric_data[metric].append(point_data)
 
-    log.info("Starting training")
+    if len(sys.argv) > 1:
+        with open(sys.argv[1], "r") as fp:
+            networks_config = json.load(fp)
+            networks = [Network.load(cfg) for cfg in networks_config]
 
-    jobs.append(Process(target=network_C6.train,
-            args=(
-                metric_data["job_C6res"][:-5],
-                0.5
-            ),
-            kwargs={
-                'epsilon' : 0.1,
-                'epochs' : 10000
-            }))
+    else:
+        networks = [
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "C6res"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "C3res"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "load_core"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "ips"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "Sys_Utilization"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "IO_Utilization"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "Mem_Utilization"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "CPU_Utilization"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "L1L2_Bound"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "L3_Bound"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "front_end_bound"),
+            manager.Network([INPUTS, INPUTS/20, 3, 1], "back_end_bound")
+            ]
 
-    jobs.append(Process(target=network_C3.train,
-            args=(
-                metric_data["job_C3res"][:-5],
-                0.5
-            ),
-            kwargs={
-                'epsilon' : 0.001,
-                'epochs' : 10000
-            }))
+        log.info("Starting training")
 
-    """jobs.append(Process(target=network.train,
-            args=(
-                stretched_data["job_load_core"][:-5],
-                0.5
-            ),
-            kwargs={
-                'epsilon' : 0.01,
-                'epochs' : 10000
-            }))"""
+        def_kwargs = {
+                    'epsilon' : 1.0,
+                    'epochs' : 5000
+                }
 
-    for job in jobs:
-        job.start()
+        p = Pool()
 
-    for job in jobs:
-        job.join()
+        jobs.append(Process(target=networks[NetworkList.C6].train,
+                args=(
+                    metric_data["job_C6res"][:-5],
+                    0.5
+                ),
+                kwargs={
+                    'epsilon' : 0.1,
+                    'epochs' : 10000
+                }))
 
-    network.train(metric_data["job_C6res"], 0.5, epochs = 1500)
+        jobs.append(Process(target=networks[NetworkList.C3].train,
+                args=(
+                    metric_data["job_C3res"][28:],
+                    0.5
+                ),
+                kwargs={
+                    'epsilon' : 0.001,
+                    'epochs' : 10000
+                }))
 
-    print("--------------")
-    for item in metric_data["job_C6res"]:
-       print("Expected: {}, Got: {}".format(item[-1], network_C6.predict(item[:-1])))
+        jobs.append(Process(target=networks[NetworkList.load_core].train,
+                args=(
+                    metric_data["job_load_core"][:-5],
+                    0.5
+                ), kwargs=def_kwargs))
 
-    print("--------------")
-    for item in metric_data["job_C6res"]:
-       print("Expected: {}, Got: {}".format(item[-1], network.predict(item[:-1])))
+        jobs.append(Process(target=networks[NetworkList.ips].train,
+                args=(
+                    metric_data["job_ips"][:-5],
+                    0.5
+                ), kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.sys_util].train,
+                args=(
+                    metric_data["job_Sys_Utilization"][:-5],
+                    0.5
+                ), kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.mem_util].train,
+                args=(metric_data["job_Mem_Utilization"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.io_util].train,
+                args=(metric_data["job_IO_Utilization"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.cpu_util].train,
+                args=(metric_data["job_CPU_Utilization"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.l1l2_bound].train,
+                args=(metric_data["job_L1L2_Bound"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.l3_bound].train,
+                args=(metric_data["job_L3_Bound"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.front_end_bound].train,
+                args=(metric_data["job_front_end_bound"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        jobs.append(Process(target=networks[NetworkList.back_end_bound].train,
+                args=(metric_data["job_back_end_bound"][:-5], 0.5),
+                kwargs=def_kwargs))
+
+        for job in jobs:
+            job.start()
+
+        for job in jobs:
+            job.join()
+
+        #network.train(metric_data["job_C6res"], 0.5, epochs = 1000)
+
+        if len(sys.argv) <= 1:
+            networks_export = [network.export() for network in networks]
+            with open("networks.json", "w+") as fp:
+                json.dump(networks_export, fp)
+
+    print("-------------- C6res")
+    for item in metric_data["job_C6res"][-5:]:
+        print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.C6].predict(item[:-1])[0])))
+
+    print("-------------- IPS")
+    for item in metric_data["job_ips"][-5:]:
+        print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.ips].predict(item[:-1])[0])))
+
+    print("-------------- BE Bound")
+    for item in metric_data["job_back_end_bound"][-5:]:
+        print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.back_end_bound].predict(item[:-1])[0])))

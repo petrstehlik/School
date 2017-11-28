@@ -16,9 +16,9 @@ class Network():
         """
         seed(int(time.time()))
         self.layers = list()
-        self.log = logging.getLogger(__name__)
         self.layers_list = args[0]
-        print(self.layers_list)
+        self.name = args[1] if len(args) == 2 else "unnamed"
+        self.log = logging.getLogger(__name__ + ':' + args[1])
         self.__create_network()
 
     def __create_network(self):
@@ -82,8 +82,8 @@ class Network():
                 # Update weights in the whole layer
                 neuron.update_weights(lrate, inputs)
 
-    def train(self, dataset, lrate, epochs = sys.maxint, epsilon = 0.0001 ):
-        print("Max epochs = {}, epsilon = {}, learning rate = {}".format(epochs, epsilon, lrate))
+    def train(self, dataset, lrate, epochs = sys.maxsize, epsilon = 0.0001 ):
+        self.log.info("Max epochs = {}, epsilon = {}, learning rate = {}".format(epochs, epsilon, lrate))
 
         total_epochs = 0
         for epoch in xrange(epochs):
