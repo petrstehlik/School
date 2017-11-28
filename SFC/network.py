@@ -100,18 +100,38 @@ class Network():
                 self.update_weights(data, lrate)
 
             if sum_error < epsilon:
-                print("epoch={0}, lrate={1}, error={2:.5f}".format(epoch, lrate, sum_error), end='\r')
-                sys.stdout.flush()
+                self.log.info("epoch={0}, lrate={1}, error={2:.5f}".format(epoch, lrate, sum_error))
+                #sys.stdout.flush()
                 break
 
-            if epoch % 1 == 0:
-                print("epoch = {0}, error = {1:.5f}".format(epoch, sum_error),end='\r')
+            if epoch % 100 == 0:
+                self.log.info("epoch = {0}, error = {1:.5f}".format(epoch, sum_error))
                 sys.stdout.flush()
 
-        print(" "*100, end="\r")
-        print("epochs = {0}, error = {1:.5f}".format(epoch, sum_error))
+        #print(" "*100, end="\r")
+        self.log.info("epochs = {0}, error = {1:.5f}".format(epoch, sum_error))
 
     def predict(self, data):
         output = self.forward_propagate(data)
         return output
+
+    def export(self):
+        export_layers = []
+        for layer in self.layers:
+            export_layers.append([neuron.export() for neuron in layer])
+
+        return({
+            "layers" : export_layers,
+            "configuration" : self.layers_list,
+            "name" : self.name
+            })
+
+    @classmethod
+    def load(self, settings):
+        network = Network(settings['configuration'], settings['name'])
+        network.layers = []
+
+        for layer in settings['layers']:
+            network.layers.append([Neuron.load(neuron) for neuron in layer])
+        return(network)
 
