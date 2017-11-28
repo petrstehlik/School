@@ -155,21 +155,14 @@ if __name__ == "__main__":
         p.join()
 
     elif len(sys.argv) == 2 and sys.argv[1] == "eval":
-        networks = [None] * (len(metrics) + 1)
+        # networks = [None] * (len(metrics) + 1)
+        network = None
 
         for x, metric in enumerate(metrics):
             print('configs/' + metric + '_network.json')
             with open('configs/' + metric + '_network.json') as fp:
-                networks[x] = Network.load(json.load(fp))
+                network = Network.load(json.load(fp))
 
-        print("-------------- C6res")
-        for item in metric_data["job_C6res"][-5:]:
-            print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.C6].predict(item[:-1])[0])))
-
-        print("-------------- IPS")
-        for item in metric_data["job_ips"][-5:]:
-            print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.ips].predict(item[:-1])[0])))
-
-        print("-------------- BE Bound")
-        for item in metric_data["job_back_end_bound"][-10:]:
-            print("Expected: {0}, Got: {1:.2f}".format(item[-1], (networks[NetworkList.back_end_bound].predict(item[:-1])[0])))
+            print("-- {}".format(metric))
+            for item in metric_data[metric][-5:]:
+                print("Expected: {0}, Got: {1:.2f}".format(item[-1], (network.predict(item[:-1])[0])))
