@@ -43,7 +43,8 @@ metrics = [
     "job_L1L2_Bound",
     "job_L3_Bound",
     "job_front_end_bound",
-    "job_back_end_bound"
+    "job_back_end_bound",
+    "jobber"
         ]
 
 
@@ -108,13 +109,20 @@ if __name__ == "__main__":
         job = normalize(job)
 
     # Reorganize and interpolate data so that metrics from jobs are together
-    for metric in analyzer.metrics:
+    for metric in metrics[:-1]:
         metric_data[metric] = []
         for job in data:
+            # Prepare metric data
             point_data = analyzer.stretch(job[metric]['data'], size = INPUTS)
             point_data = point_data.tolist()
             point_data.append([1 if job[metric]['suspicious'] else 0])
+
+            # Prepare jobber data
+            record = [1 if job[m]['suspicious'] else 0 for m in metrics[:-1]]
+            record.append([1 if job['suspicious'] else 0])
+
             metric_data[metric].append(point_data)
+            metric_data["jobber"].append(record)
 
     if args.train:
         networks = [
@@ -130,15 +138,15 @@ if __name__ == "__main__":
             Network([INPUTS, INPUTS/20, 3, 1], "L3_Bound"),
             Network([INPUTS, INPUTS/20, 3, 1], "front_end_bound"),
             Network([INPUTS, INPUTS/20, 3, 1], "back_end_bound"),
-            Network([14, 7, 3, 1], "jobber")
+            Network([12, 6, 3, 1], "jobber")
             ]
 
         log.info("Starting training")
 
         try:
-            p = Pool(processes = 12, initializer=initializer)
+            p = Pool(initializer=initializer)
 
-            p.map(runner, range(12))
+            p.map(runner, range(13))
             p.close()
         except KeyboardInterrupt:
             p.terminate()
