@@ -49,9 +49,8 @@ INPUTS = 80
 def normalize(job):
     for metric in analyzer.metrics:
         if metric == "job_ips":
-            continue
-            #for point in job[metric]['data']:
-             #   point[1] = point[1]/(8000000000.0)
+            for point in job[metric]['data']:
+               point[1] = point[1]/(8000000000.0)
         if metric == "job_CPU1_Temp" or metric == "job_CPU2_Temp":
             # Skip temperatures
             continue
@@ -98,7 +97,7 @@ def prepare_data(metric, input_data):
 def runner(x):
     global metrics
 
-    networks[x].train(metric_data[metrics[x]], 0.5, epochs = 20000, epsilon = 0.1)
+    networks[x].train(metric_data[metrics[x]], 0.5, epochs = 10000, epsilon = 0.1)
     with open('configs/' + metrics[x] + '_network.json', 'w+') as fp:
         json.dump(networks[x].export(), fp)
 
