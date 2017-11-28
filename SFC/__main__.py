@@ -2,9 +2,10 @@ import logging
 import sys
 import json
 import numpy as np
-from multiprocessing import Process, Manager, Pool
-from multiprocessing.managers import BaseManager
-import pickle
+from multiprocessing import Pool
+import argparse
+import os
+
 from network import Network
 from neuron import Neuron
 import analyzer
@@ -13,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("MAIN")
 metric_data = dict()
 networks = list()
+args = dict()
 
 class NetworkList:
     C6              = 0
@@ -96,18 +98,34 @@ def prepare_data(metric, input_data):
 
 def runner(x):
     global metrics
+    global args
 
-    networks[x].train(metric_data[metrics[x]], 0.5, epochs = 10000, epsilon = 0.1)
-    with open('configs/' + metrics[x] + '_network.json', 'w+') as fp:
+    networks[x].train(metric_data[metrics[x]], 0.5, epochs = args.epochs, epsilon = 0.1)
+    with open(os.path.join(args.config_dir, metrics[x] + '_network.json'), 'w+') as fp:
         json.dump(networks[x].export(), fp)
 
+def argparser():
+    global args
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train',
+            action="store_true",
+            help='Train the network using data.json dataset')
+    parser.add_argument('--eval',
+            dest='config_dir',
+            default='configs',
+            help='Evaluate learned network with data.json dataset')
+    parser.add_argument('--max-epochs',
+            dest="epochs",
+            type=int,
+            help="Maximum number of epochs (default: 10 000)",
+            default=10000)
+
+    args = parser.parse_args()
+    print(args)
+    print(args.config_dir)
+
 if __name__ == "__main__":
-    BaseManager.register('Network', Network)
-    manager = BaseManager()
-    manager.start()
-
-    jobs = []
-
+    argparser()
     log.info("Loading data")
     with open('data.json') as fp:
         data = json.load(fp)
@@ -130,7 +148,7 @@ if __name__ == "__main__":
     #        networks_config = json.load(fp)
     #        networks = [Network.load(cfg) for cfg in networks_config]
 
-    if len(sys.argv) == 2 and sys.argv[1] == "learn":
+    if args.train:
         networks = [
             Network([INPUTS, INPUTS/20, 3, 1], "C6res"),
             Network([INPUTS, INPUTS/20, 3, 1], "C3res"),
@@ -154,13 +172,12 @@ if __name__ == "__main__":
         p.close()
         p.join()
 
-    elif len(sys.argv) == 2 and sys.argv[1] == "eval":
+    else:
         # networks = [None] * (len(metrics) + 1)
         network = None
 
         for x, metric in enumerate(metrics):
-            print('configs/' + metric + '_network.json')
-            with open('configs/' + metric + '_network.json') as fp:
+            with open(os.path.join(args.config_dir, metric + '_network.json'),) as fp:
                 network = Network.load(json.load(fp))
 
             print("-- {}".format(metric))
