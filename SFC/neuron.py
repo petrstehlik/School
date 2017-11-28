@@ -1,6 +1,7 @@
 from random import random
 from math import exp
 import logging
+logging.basicConfig(level=logging.INFO)
 
 class Neuron:
     def __init__(self, inputs):
