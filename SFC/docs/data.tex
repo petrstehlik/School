@@ -1,7 +1,7 @@
 \section{Data}
 \label{sec:data}
 
-As previously stated in \ref{sec:examon} data are gather via Examon framework and stored in Cassandra database. We can split the data into two categories. Job data and metric data.
+As previously stated in \ref{sec:examon} data are gathered via Examon framework and stored in Cassandra database. We can split the data into two categories. Job data and metric data.
 
 The job data come from PBSPro hooks which report various info about the job, mainly the allocated nodes, cores and other computational resources. The timestamps and events which are triggered by PBSPro during the lifecycle of the job. We use this data for determining the runtime of a job, its resource allocations and location of the job in a cluster (node names and core numbers). The job data are sent via MQTT and stored directly to a Cassandra cluster.
 
@@ -32,4 +32,4 @@ back-end bounds         & back\_end\_bound    & \%  & 2s  & per-core \\ \hline
 
 KairosDB provides us with a REST API for querying metric data in various ways. The queries are formed using JSON objects and results are also returned as JSON objects. The KairosDB limits all stored data to 21 days
 
-For complete data acquisition we combined the job data and metric data together and queried only jobs which fit several conditions described in \ref{sec:data-filter}.
+For complete data acquisition, we combined the job data and metric data together and queried only jobs which fit several conditions described in \ref{sec:data-filter}.
