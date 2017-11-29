@@ -184,9 +184,10 @@ if __name__ == "__main__":
 
         for i in range(5):
             job = []
+            j = len(metric_data[metrics[x]]) - 5 + i
             for x, network in enumerate(networks[:-1]):
-                job.append(network.predict(metric_data[metrics[x]][-i][:-1])[0])
+                job.append(network.predict(metric_data[metrics[x]][j][:-1])[0])
 
             res = networks[-1].predict(job)
-            print("Expected: {1}, Got: {0:.2f}".format(res[0], metric_data['jobber'][-i][-1][0]))
+            print("Expected: {1}, Got: {0:.2f}".format(res[0], metric_data['jobber'][j][-1][0]))
 
