@@ -32,19 +32,19 @@ class NetworkList:
     back_end_bound  = 11
 
 metrics = [
-    "job_C6res",
-    "job_C3res",
-    "job_load_core",
-    "job_ips",
-    "job_Sys_Utilization",
-    "job_IO_Utilization",
-    "job_Mem_Utilization",
-    "job_CPU_Utilization",
-    "job_L1L2_Bound",
-    "job_L3_Bound",
-    "job_front_end_bound",
-    "job_back_end_bound",
-    "jobber"
+        "job_C6res",
+        "job_C3res",
+        "job_load_core",
+        "job_ips",
+        "job_Sys_Utilization",
+        "job_IO_Utilization",
+        "job_Mem_Utilization",
+        "job_CPU_Utilization",
+        "job_L1L2_Bound",
+        "job_L3_Bound",
+        "job_front_end_bound",
+        "job_back_end_bound",
+        "jobber"
         ]
 
 
@@ -54,7 +54,7 @@ def normalize(job):
     for metric in analyzer.metrics:
         if metric == "job_ips":
             for point in job[metric]['data']:
-               point[1] = point[1]/(8000000000.0)
+                point[1] = point[1]/(8000000000.0)
         if metric == "job_CPU1_Temp" or metric == "job_CPU2_Temp":
             # Skip temperatures
             continue
@@ -72,9 +72,8 @@ def runner(x):
         networks[x].train(metric_data[metrics[x]], 0.5, epochs = args.epochs, epsilon = 0.1)
     except Exception as e:
         log.error("Exception: {}, dumping config for {}".format(str(e), metrics[x]))
-    finally:
-        with open(os.path.join(args.config_dir, metrics[x] + '_network.json'), 'w+') as fp:
-            json.dump(networks[x].export(), fp)
+    with open(os.path.join(args.config_dir, metrics[x] + '_network.json'), 'w+') as fp:
+        json.dump(networks[x].export(), fp)
 
 def argparser():
     global args
@@ -121,30 +120,37 @@ if __name__ == "__main__":
             point_data = analyzer.stretch(job[metric]['data'], size = INPUTS)
             point_data = point_data.tolist()
             point_data.append([1 if job[metric]['suspicious'] else 0])
-
-            # Prepare jobber data
-            record = [1 if job[m]['suspicious'] else 0 for m in metrics[:-1]]
-            record.append([1 if job['suspicious'] else 0])
-
             metric_data[metric].append(point_data)
-            metric_data["jobber"].append(record)
+
+    for job in data:
+        # Prepare jobber data
+        record = [1 if job[m]['suspicious'] else 0 for m in metrics[:-1]]
+        record.append([1 if job['suspicious'] else 0])
+
+        metric_data["jobber"].append(record)
+
 
     if args.train:
+        # Create folder for networks configurations
+        try:
+            os.makedirs(args.config_dir)
+        except Exception as e:
+            log.info("Folder exists, overwriting existings configurations")
         networks = [
-            Network([INPUTS, INPUTS/20, 3, 1], "C6res"),
-            Network([INPUTS, INPUTS/20, 3, 1], "C3res"),
-            Network([INPUTS, INPUTS/20, 3, 1], "load_core"),
-            Network([INPUTS, INPUTS/20, 3, 1], "ips"),
-            Network([INPUTS, INPUTS/20, 3, 1], "Sys_Utilization"),
-            Network([INPUTS, INPUTS/20, 3, 1], "IO_Utilization"),
-            Network([INPUTS, INPUTS/20, 3, 1], "Mem_Utilization"),
-            Network([INPUTS, INPUTS/20, 3, 1], "CPU_Utilization"),
-            Network([INPUTS, INPUTS/20, 3, 1], "L1L2_Bound"),
-            Network([INPUTS, INPUTS/20, 3, 1], "L3_Bound"),
-            Network([INPUTS, INPUTS/20, 3, 1], "front_end_bound"),
-            Network([INPUTS, INPUTS/20, 3, 1], "back_end_bound"),
-            Network([12, 6, 3, 1], "jobber")
-            ]
+                Network([INPUTS, INPUTS/20, 3, 1], "C6res"),
+                Network([INPUTS, INPUTS/20, 3, 1], "C3res"),
+                Network([INPUTS, INPUTS/20, 3, 1], "load_core"),
+                Network([INPUTS, INPUTS/20, 3, 1], "ips"),
+                Network([INPUTS, INPUTS/20, 3, 1], "Sys_Utilization"),
+                Network([INPUTS, INPUTS/20, 3, 1], "IO_Utilization"),
+                Network([INPUTS, INPUTS/20, 3, 1], "Mem_Utilization"),
+                Network([INPUTS, INPUTS/20, 3, 1], "CPU_Utilization"),
+                Network([INPUTS, INPUTS/20, 3, 1], "L1L2_Bound"),
+                Network([INPUTS, INPUTS/20, 3, 1], "L3_Bound"),
+                Network([INPUTS, INPUTS/20, 3, 1], "front_end_bound"),
+                Network([INPUTS, INPUTS/20, 3, 1], "back_end_bound"),
+                Network([12, 4, 1], "jobber")
+                ]
 
         log.info("Starting training")
 
@@ -153,13 +159,12 @@ if __name__ == "__main__":
 
             p.map(runner, range(13))
             p.close()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
+            print(e)
             p.terminate()
-        finally:
-            p.join()
+        p.join()
 
     else:
-        # networks = [None] * (len(metrics) + 1)
         network = None
 
         for x, metric in enumerate(metrics):
@@ -170,3 +175,18 @@ if __name__ == "__main__":
             for item in metric_data[metric][-5:]:
                 print("Expected: {0}, Got: {1:.2f}"
                         .format(item[-1], (network.predict(item[:-1])[0])))
+
+        print("Complex Job Evaluating")
+        networks = [None] * (len(metrics))
+        for x, metric in enumerate(metrics):
+            with open(os.path.join(args.config_eval, metric + '_network.json'),) as fp:
+                networks[x] = Network.load(json.load(fp))
+
+        for i in range(5):
+            job = []
+            for x, network in enumerate(networks[:-1]):
+                job.append(network.predict(metric_data[metrics[x]][-i][:-1])[0])
+
+            res = networks[-1].predict(job)
+            print("Expected: {1}, Got: {0:.2f}".format(res[0], metric_data['jobber'][-i][-1][0]))
+
