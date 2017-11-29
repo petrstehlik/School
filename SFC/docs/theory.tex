@@ -42,7 +42,7 @@ Back-propagation is used only when one trains the network and is one of the base
     \label{eq:err}
 \end{equation}
 
-The change of weights is calcuted using equation \ref{eq:delta} where $ \nabla E_p $ is the derived error gradient and $ \mu $ the learning rate.
+The change of weights is calculated using equation \ref{eq:delta} where $ \nabla E_p $ is the derived error gradient and $ \mu $ the learning rate.
 
 \begin{equation}
     \Delta \vec{w_p} = -\mu \nabla E_p
@@ -63,18 +63,18 @@ For the output layer $ L $ of the network we use formula \ref{eq:output-err}.
     \label{eq:output-err}
 \end{equation}
 
-For hidden layers of the network we use the same principle propagating the error backward from the output layer as shown in equation \ref{eq:prop-err} where $\lambda = 1$ and therefore left out.
+For hidden layers of the network we use the same principle propagating the error backwards from the output layer as shown in equation \ref{eq:prop-err} where $\lambda = 1$ and therefore left out.
 
 \begin{equation}
     \Delta {^l w}_{ji} = \mu {^l\delta}_j {^lx}_i = \mu \sum_{k = 1}^{n_{l+1}} (^{l+1}\delta_k {^{l+1}w}_{kj}) {^ly}_j (1 - ^ly_j){^lx}_i
     \label{eq:prop-err}
 \end{equation}
 
-Each repetition of forward and backward propagation of all inputs is called an epoch. Finally we can choose when to update the weights, in batches after all input vectors were processed or using stochastic method where weights are updated after processing each input.
+Each repetition of forward and backward propagation of all inputs is called an epoch. Finally, we can choose when to update the weights, in batches after all input vectors were processed or using the stochastic method where weights are updated after processing each input.
 
 \subsection{Examon}
 \label{sec:examon}
-Examon\cite{examon} framework is used for exascale monitoring of supercomputing facilities. It is built on top of MQTT protocol\cite{locke2010mqtt} which allows measured metrics to be send to a central broker where received data are processed and stored in KairosDB\cite{KAIROS} database utilizing Cassandra\cite{CASSANDRA} cluster.
+Examon\cite{examon} framework is used for exascale monitoring of supercomputing facilities. It is built on top of MQTT protocol\cite{locke2010mqtt} which allows measured metrics to be sent to a central broker where received data are processed and stored in KairosDB\cite{KAIROS} database utilizing Cassandra\cite{CASSANDRA} cluster.
 
 \begin{figure}[ht]
     \centering
