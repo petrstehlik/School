@@ -1,0 +1,4 @@
+ 50000, epsilon = 0.1, learning rate 
+ 0 4.22255
+4, lrate=0.5, error
+ 4 0.09447
