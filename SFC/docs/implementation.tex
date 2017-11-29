@@ -1,3 +1,20 @@
 \section{Implementation}
+In this section we describe the implementation phase of the project. The project was implemented using Python 2.7.13. External library SciPy\cite{scipy} was used for linear data interpolation.
+
 \label{sec:implementation}
+
+\subsection{Data Acquisition}
+\label{sec:data-filter}
+First, job data were queried and filtered according to several rules:
+\begin{itemize}
+    \item job run time must be between 10 and 60 minutes
+    \item job must occupy the whole node (multiplies of 16 cores)
+    \item job must be run in 15-day period
+\end{itemize}
+
+\subsection{Data Labelling}
+
+\subsection{Metric Networks}
+
+\subsection{Job Network}
 
