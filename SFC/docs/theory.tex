@@ -49,17 +49,17 @@ The change of weights is calculated using equation \ref{eq:delta} where $ \nabla
     \label{eq:delta}
 \end{equation}
 
-To calculate one particular change of weight we use formula \ref{eq:neuron-delta} where $ L $ is the given layer of the network, $ j $ is the $j$-th neuron in layer $ L $ and $ i $ is the $i$-th input of the neuron $ j $.
+To calculate one particular change of weight we use formula \ref{eq:neuron-delta} where $ l $ is the given layer of the network, $ j $ is the $j$-th neuron in layer $ L $ and $ i $ is the $i$-th input of the neuron $ j $.
 
 \begin{equation}
-    \Delta w_{ji}^L = \mu \delta_j^L x_i^L
+    \Delta {^lw}_{ji} = \mu {^l\delta}_j {^lx}_i
     \label{eq:neuron-delta}
 \end{equation}
 
-For the output layer $ L $ of the network we use formula \ref{eq:output-err}.
+For the output layer $ l $ of the network we use formula \ref{eq:output-err}.
 
 \begin{equation}
-    \delta_j^L = (d_j - y_j^L) y_j^L(1 - y_j^L)
+    \delta_j^L = (d_j - {^ly}_j) {^ly}_j(1 - {^ly}_j)
     \label{eq:output-err}
 \end{equation}
 
