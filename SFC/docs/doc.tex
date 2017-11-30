@@ -97,6 +97,21 @@ Using the intermediate input from metric networks it can be used for intelligent
 
 This work is the base for my master thesis and will be further expanded to provide complex insights on users' jobs.
 
+\section{Program Manual}
+
+The Python code can se run using command \texttt{python jobclassfier} from the root folder of the project. The program makes available following arguments:
+\begin{itemize}
+       % \setlength\itemsep{0em}
+    \item \texttt{-h, -{}-help} show help
+    \item \texttt{-{}-train} train the networks using \texttt{data.json} dataset
+    \item \texttt{-{}-dir CONFIG\_DIR} where to store configurations for trained networks
+    \item \texttt{-{}-max-epochs EPOCHS} train the network using \texttt{data.json} dataset
+    \item \texttt{-{}-eval CONFIG\_EVAL} maximum number of epochs (default: 10 000)
+\end{itemize}
+
+An example command for training the networks: \texttt{python jobclassifier -{}-train -{}-dir example} and example command for evaluating the dataset using networks trained from previous example: \texttt{python jobclassifier -{}-eval example}.
+
+
 \subsection*{Acknowledgements}
 This work was done using the Examon framework created by F. Beneventi, A. Bartolini, A. Borghesi and collective at UNIBO, Italy. Examon Web was created by P. Stehlík during the PRACE Summer of HPC stay at CINECA, Bologna, Italy. Data used in this project were collected using the CINECA infrastructure and Galileo supercomputer and anonymized before any use in this project.
 
