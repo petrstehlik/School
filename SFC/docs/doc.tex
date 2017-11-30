@@ -28,9 +28,9 @@
 \end{center}
 
 \section{Introduction}
-Every user of a supercomputer needs to know whether their submitted job finished successfully and performed well. So far these tedious tasks are usually performed manually using only the output of their program and over-simplified metrics such as job runtime and utilized resources.
+Every user of a supercomputer needs to know whether their submitted job finished successfully and performed well. So far these tedious tasks are usually performed manually using only the output of their program and over-simplified metrics such as job runtime and total utilized resources.
 
-The aim of this project is to create a back-propagation neural network which can classify a job run whether it run well or it was in some way suspicious of unwanted behaviours such as poor performance or execution failure.
+The aim of this project is to create a back-propagation neural network which can classify whether a job ran well or if it is in some way suspicious of unwanted behaviours such as poor performance or execution failure.
 
 The network itself is supplied with fine-granular metric data acquired via Examon framework\cite{examon} which was run on Galileo supercomputer located in CINECA, Bologna, Italy. Where all job and metric data were gathered.
 
@@ -91,22 +91,24 @@ Even with these sum errors the job classifier labelled the evaluation dataset co
 \section{Summary}
 \label{sec:sum}
 
-As a proof of concept for classifying jobs on HPC cluster it was verified that such classificator can be made using a set of backpropagation networks. With rather small dataset to train and evaluate on the error rate wasn't minimal and can be further reduced using a larger labelled dataset and users' feedback.
+As a proof of concept for classifying jobs on HPC cluster, it was verified that such classification can be made using a set of backpropagation networks. With rather a small dataset to train and evaluate the networks the error rate wasn't minimal and can be further reduced using a larger labelled dataset and users' feedback.
+
+The dataset itself cannot be randomly generated because of too complex dependencies between all metrics. Having randomly generated data we even couldn't determine whether such artificial job would be really suspicious or not.
 
 Using the intermediate input from metric networks it can be used for intelligent dashboards in Examon Web where only suspicious metrics can be shown in combination with several fixed ones.
 
-This work is the base for my master thesis and will be further expanded to provide complex insights on users' jobs.
+This work is the base for my master thesis and will be further expanded to provide complex insights on users' jobs suggesting the possible cause of the suspicious behaviour.
 
 \section{Program Manual}
 
-The Python code can se run using command \texttt{python jobclassfier} from the root folder of the project. The program makes available following arguments:
+The Python code can be run using command \texttt{python jobclassifier} from the root folder of the project. The program makes available following arguments:
 \begin{itemize}
        % \setlength\itemsep{0em}
     \item \texttt{-h, -{}-help} show help
     \item \texttt{-{}-train} train the networks using \texttt{data.json} dataset
     \item \texttt{-{}-dir CONFIG\_DIR} where to store configurations for trained networks
-    \item \texttt{-{}-max-epochs EPOCHS} train the network using \texttt{data.json} dataset
-    \item \texttt{-{}-eval CONFIG\_EVAL} maximum number of epochs (default: 10 000)
+    \item \texttt{-{}-max-epochs EPOCHS} train the network using \texttt{data.json} dataset (default: 10 000)
+    \item \texttt{-{}-eval CONFIG\_EVAL} maximum number of epochs
 \end{itemize}
 
 An example command for training the networks: \texttt{python jobclassifier -{}-train -{}-dir example} and example command for evaluating the dataset using networks trained from previous example: \texttt{python jobclassifier -{}-eval example}.
