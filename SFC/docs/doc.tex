@@ -45,6 +45,49 @@ The structure of this document is as follows: in section \ref{sec:theory} the th
 \section{Achieved Results}
 \label{sec:res}
 
+The sum error was calculated using equation \ref{eq:err}. Each metric had its sum error as presented in table \ref{tab:errors}. As one can see the sum error varies through the dataset but sum errors below $1.0$ can be considered as acceptable. The largest error comes from core's load and CPU utilization since these two metrics are very similar.
+
+\begin{table}[ht]
+    \parbox{.48\linewidth}{
+        \centering
+        \begin{tabular}{lll}
+        Name                    & Epochs & Sum Error \\
+        core's load             & 49999  & 5.81947   \\
+        C6 states               & 1506   & 0.07591   \\
+        C3 states               & 4      & 0.09447   \\
+        instructions per second & 49999  & 3.18977   \\
+        system utilization      & 17988  & 0.09695   \\
+        CPU utilization         & 49999  & 7.65817   \\
+        IO utilization          & 49999  & 0.94946   \\
+        memory utilization      & 49999  & 0.82774   \\
+        L1 and L2 bounds        & 49999  & 0.52690   \\
+        L3 bounds               & 49999  & 0.77589   \\
+        front-end bounds        & 49999  & 2.72293   \\
+        back-end bounds         & 49999  & 4.63103   \\
+        job classifier          & 49999  & 0.73037
+        \end{tabular}
+        \caption{Overview of sum errors for all networks}
+        \label{tab:errors}
+    }
+    \hfill
+    \parbox{.48\linewidth}{
+        \centering
+        \begin{tabular}{lll}
+        Job \# & Expected & Result \\
+        1   & 0 & 0.04   \\
+        2   & 0 & 0.05   \\
+        3   & 0 & 0.58   \\
+        4   & 1 & 1.0    \\
+        5   & 1 & 0.96
+        \end{tabular}
+        \caption{Sum error for job evaluation dataset}
+        \label{tab:joberr}
+    }
+
+\end{table}
+
+Even with these sum errors the job classifier labelled the evaluation dataset correctly with minor errors as seen in table \ref{tab:joberr}
+
 \section{Summary}
 \label{sec:sum}
 
