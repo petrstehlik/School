@@ -57,7 +57,7 @@ def stats(data):
     log.info("{} datapoints".format(datapoints))
 
 if __name__ == "__main__":
-    with open('data.json') as fp:
+    with open('../data.json') as fp:
         data = json.load(fp)
 
     stats(data)
