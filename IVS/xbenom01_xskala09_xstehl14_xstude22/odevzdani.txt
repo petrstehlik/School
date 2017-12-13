@@ -1,0 +1,4 @@
+Dátum a čas odevzdání: 25.4.2016 00:08
+Odovzdanie: Komplentý projekt uložený na IVS servery v zložke /ivs-proj2/odevzdane/xstude22
+Archíve uložení na IVS servery obsahuje všetky požadované súbory k projektu.
+Oproti odovzdanému archívu v IS fit, obsahuje programovú dokumentáciu, kópiu gitu, a debian balíček.   

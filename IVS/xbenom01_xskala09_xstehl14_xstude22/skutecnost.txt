@@ -1,0 +1,22 @@
+Rozdiely oproti planu projektu IVS Proj2 - xstude22:
+
+Pri vyvoji práce bola hlavná časť termínov dodržaná. Malé rozdiely nastali pri vývoji palikácie, niektoré stanovené termíny boli prekročené približne o 2 - 3 dni. Pôvodný plán ponúkal značnú časovú rezervu, z tohoto dôvodu jeho prekročenie nespôsobilo žiadne časové problémy.
+
+Základné GUI vytvorené 12.4.
+Matematické funkcie 22.4
+Parsovanie vstupu , background 22.4
+
+Makefile, ant, inštalátor 23.4 
+Finálna verzia 24.5
+
+Rozdelenie úloh:
+
+Pri rozdelení úloh  následné rozdiely:
+
+background aplikácie: 		xskala09
+prevody číselných sústav:   xbenom01
+ant: 						xstude22
+debuggovacie screenshoty:	xstude22, xskala09, xbenom01
+doxifile: 					xskala09
+inštalátor:					xbenom01
+prezentácia: 				xstehl14

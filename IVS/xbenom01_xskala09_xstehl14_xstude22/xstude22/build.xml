@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="build" name="xstude22">
+
+    <property name="ant.project.name" value="xstude22"/>
+    <property name="main_class_name" value="Calculator"/>
+    <property name="jarname"  value="ivskalkulacka.jar"/> 
+    <property name="src" location="src"/>
+    <property name="tests" location="tests"/>
+    <property name="bin"  location="bin"/>
+    <property name="target" value="1.8"/>
+    <property name="source" value="1.8"/>
+
+    <path id="classpath">
+        <pathelement location="${src}"/>
+        <pathelement location="${tests}"/>
+        <pathelement location="${bin}"/>
+        <pathelement location="lib/junit.jar"/>
+        <pathelement location="lib/org.hamcrest.core.jar"/>
+    </path>
+
+    <path id="srcfolders">
+        <pathelement location="${src}"/>
+        <pathelement location="${tests}"/>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${bin}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${bin}"/>
+        <delete file="${jarname}"/>
+    </target>
+    
+    <target depends="init" name="build">
+        <javac destdir="${bin}" includeantruntime="false" source="${source}" target="${target}" classpathref="classpath" >
+            <src refid="srcfolders"/>
+        </javac>
+    </target>
+
+    <target name="compile" depends="build" description="generate the distribution" >
+        <manifestclasspath property="jar.classpath" jarfile="${ant.project.name}.jar">
+           <classpath refid="classpath"/>
+        </manifestclasspath>
+        <jar destfile="${jarname}" basedir="${bin}">
+          <manifest>
+            <attribute name="Main-Class" value="${main_class_name}"/>
+            <attribute name="Class-Path" value="${jar.classpath}"/>
+          </manifest>
+        </jar>
+    </target>
+
+    <target depends="compile" name="run" description="run jar archive" >
+        <java fork="true" jar="${jarname}">
+          <classpath>
+                <path refid="classpath"/>
+          </classpath>
+        </java>  
+    </target> 
+
+    <target depends="build" name="test" description="run tests">
+      <junit printsummary="yes" haltonfailure="no">
+        <classpath>
+          <path refid="classpath"/>
+          <pathelement location="bin" />    
+        </classpath>
+        <batchtest>
+            <fileset dir="tests" />
+        </batchtest>
+        <formatter type="plain" usefile="false" />
+
+      </junit>
+    </target>
+    
+</project>
