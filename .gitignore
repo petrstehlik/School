@@ -46,3 +46,5 @@ tags
 
 *.dSYM
 .DS_Store
+
+.idea
