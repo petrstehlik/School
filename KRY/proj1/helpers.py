@@ -1,19 +1,15 @@
-def xor(a, b):
-    """XOR two strings together.
-
-    :param a:
-    :param b:
-    :return:
-    """
-    res = ''
-    for i, j in zip(a, b):
-        res += chr(i ^ j)
-    return res
-
-
 SUB = [0, 1, 1, 0, 1, 0, 1, 0]
 N_B = 32
 N = 8 * N_B
+
+
+def xor(x, y):
+    # XOR 2 bytearrays into one
+    result = []
+    for a, b in zip(x, y):
+        result.append(a ^ b)
+    return bytearray(result)
+
 
 # Next keystream
 def step(x):
