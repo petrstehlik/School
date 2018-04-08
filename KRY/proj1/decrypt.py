@@ -2,10 +2,6 @@
 
 from helpers import xor, step, N_B
 
-key = []
-
-SUB = [0, 1, 1, 0, 1, 0, 1, 0]
-
 
 def get_base_keystream():
     """Get the base keystream used for obtaining the key itself."""
