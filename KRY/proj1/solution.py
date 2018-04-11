@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import re
 
 SUB = [0, 1, 1, 0, 1, 0, 1, 0]
 GROUP_SUB = {
@@ -115,4 +116,13 @@ if __name__ == '__main__':
         keystream = rev_next(keystream)
 
     # print the secret which is represented as int
-    print(keystream.to_bytes(32, byteorder='little')[:29].decode())
+    key = keystream.to_bytes(32, byteorder='little').decode()
+
+    regex = r'KRY\{.*\}'
+
+    matches = re.findall(regex, key)
+
+    try:
+        print(matches[0], end='')
+    except KeyError as e:
+        print(matches, end='')
