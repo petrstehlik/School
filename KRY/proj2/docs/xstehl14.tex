@@ -1,0 +1,96 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[left=2cm,text={17cm,25cm},top=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{algorithmicx}
+\usepackage{amsmath}
+\usepackage{listings}
+
+\begin{document}
+
+\begin{center}
+	\LARGE{Kryptografie -- dokumentace k projektu 2}\\
+	\large{Vysoké učení technické v Brně}
+	\vspace{0.2cm}
+
+	Petr Stehlík <xstehl14@stud.fit.vutbr.cz>     \today
+
+\end{center}
+
+\section{Zadání}
+
+Cílem projektu bylo vytvořit program pro generování parametrů pro algoritmus RSA, šifrování a dešifrování zprávy.
+Program také implemetuje prolomení RSA pomocí faktorizace slabého veřejného modulu a jakéhokoliv složeného čísla do 96 bitů.
+
+\section{Implementace generování parametrů}
+
+Algoritmus generování parametrů $P, Q, N, E$ a $D$ pro RSA pracuje následovně:
+
+\begin{itemize}
+    \item Generuj dvě velká prvočísla $P$ a $Q$
+    \item $N = P * Q$
+    \item $\phi(n) = (P - 1) * (Q - 1)$
+    \item Zvol náhodně $E$ mezi $1$ a $\phi(N)$ tak, že $gcd(e, \phi(N)) = 1$
+    \item Vypočítej $D = inv(E, \phi(N))$ - $inv$ je operace nalezení inverzního prvku
+    \item Veřejný klíč je dvojice $(E, N)$
+    \item Soukromý klíč je dvojice $(D, N)$
+\end{itemize}
+
+Pro generování korektních parametrů $P$, $Q$ a $N$ platí, že pokud požadujeme $N$ o velikosti $n$ bitů, musí být parametry
+$P$ a $Q$ z intervalu $(\sqrt[]2 \times 2^{n/2 - 1}, 2^{n/2})$\footnote{\url{https://bit.ly/2KHkVVi}}.
+
+Pro generování čísel v daném rozsahu byla použita metoda třídy \texttt{gmp\_randclass.get\_z\_range} z knihovny GMP
+následujícím způsobem: \texttt{get\_z\_range(end - start) + start}. Kde \texttt{start} a \texttt{end} označují začátek,
+resp. konec intervalu.
+
+Tyto čísla následně byla zkontrolována metodou Miller-Rabin zda jsou prvočísla. Pokud nebyly, generovaly se nová čísla
+dokud nebylo generované číslo prvočíslem.
+
+Následně se vypočítalo $\phi$ a $E$, kde pomocí euklidovy metody hledání největšího společného
+dělitele\footnote{\url{https://en.wikipedia.org/wiki/Euclidean_algorithm}} se generoval vhodný parametr $E$.
+
+Parametr $D$ se získal operací nalezení inverzního prvku rozšířeným euklidovským algoritmem\footnote{
+\url{https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Modular_integers}}.
+
+Tímto postupem byly získány všechny potřebné parametry pro šifrování a dešifrování pomocí algoritmu RSA, které jsou
+v hexadecimální podobě vypsání na standardní výstup oddělené mezerou v daném pořadí: $P, Q, N, E, D$.
+
+\section{Implementace šifrování a dešifrování}
+
+Pro šifrování algoritmem RSA je nutná dvojice $(E, N)$ a zpráva $M$. Šifrování probíhá následovně:
+\begin{center}
+    $C \equiv M^E \mod N$.
+\end{center}
+
+\noindent Dešifrovací algoritmus je následující:
+\begin{center}
+    $M \equiv C^D \mod N$.
+\end{center}
+
+\noindent V obou algoritmech je $C$ označením zašifrované a $M$ nezašifrované zprávy. Pro odstranění side-channel útoků
+byla použita bezpečná funkce \texttt{mpz\_powm\_sec}\footnote{\url{https://gmplib.org/manual/Integer-Exponentiation.html}}.
+
+\section{Implementace faktorizace}
+Faktorizace je tvořena dvěma algoritmy. První, naivní, algoritmus vyzkouší všechna lichá čísla do $1000000$ zda nejsou
+celočíselným dělitelem daného čísla.
+
+Pro komplexnější řešení byl zvolen algoritmus Pollard Rho\footnote{\url{https://en.wikipedia.org/wiki/Pollard's_rho_algorithm}}.
+Tento algoritmus již využívá teorie čísel a ze vztahu $N = P \times Q$ hledá faktor $P$. Dále disponuje funkcí
+$g(x) = (x^2 + 1) \mod N$, která generuje pseudo-náhodnou posloupnost čísel. Tato posloupnost je konečná a tudíž je
+nutné detekovat zacyklení. To je kontrolováno pomocí Floydova algoritmu, který nalezne největšího společného dělitele
+absolutního rozdílu dvou po sobě následujících pseudonáhodných $X$ a čísla $N$. Jakmile je tento faktor větší než $1$,
+našli jsme hledané číslo $P$.
+
+Hledaný faktor je následně vypsán jako hexadecimální číslo na standardní výstup a program je ukončen.
+
+\section{Závěr}
+
+Program úspěšně implemetuje generování parametrů pro algoritmus RSA, šifrování a dešifrování zprávy a faktorizaci parametru $N$.
+Program pro testované vstupy vždy faktorizoval 96bitová čísla do 120 sekund od spuštění programu.
+
+\end{document}
+
