@@ -14,7 +14,6 @@
 #include <gmp.h>
 #include <gmpxx.h>
 #include <random>
-#include <chrono>
 
 using namespace std;
 
@@ -31,28 +30,36 @@ mpz_class modInverse(mpz_class a, mpz_class m) {
        if ((a*x) % m == 1)
           return x;
 
-    throw MATH_ERREXCEPT;
+    throw invalid_argument("can't find multiplicative inverse");
 }
 
 // https://stackoverflow.com/questions/23745526/calculate-the-multiplicative-inverse-of-large-numbers-using-c
-mpz_class mulInverse(mpz_class a, mpz_class n)
-{
-    mpz_class t = 0;
+mpz_class mulInverse(mpz_class &a, mpz_class &n) {
+	mpz_class t = 0;
     mpz_class newt = 1;
     mpz_class r = n;
     mpz_class newr = a;
-    mpz_class quotient;
+    mpz_class quot, tmp;
 
     while (newr != 0) {
-        quotient = r / newr;
-        tie(t, newt) = make_tuple(newt, t - quotient * newt);
-        tie(r, newr) = make_tuple(newr, newr = r - quotient * newr);
+        quot = r / newr;
+
+        tmp = t;
+        t = newt;
+        newt = tmp - quot * newt;
+
+        tmp = r;
+        r = newr;
+        newr = tmp - quot * newr;
     }
 
-    if (r > 1)
-        throw runtime_error("this number is not invertible");
-    if (t < 0)
-        t += n;
+    if (r > 1) {
+        throw invalid_argument("no multiplication inverse can be found");
+    }
+
+    if (t < 0) {
+        t = t + n;
+    }
 
     return t;
 }
@@ -62,7 +69,7 @@ bool millerRabinPrimeCheck(mpz_class n) {
     if (n == 1 || n == 3) {
         return true;
     } else if(n < 0) {
-        throw MATH_ERREXCEPT;
+        throw invalid_argument("can't check negative prime numbers");
     }
 
     mpz_class s, p;
@@ -75,7 +82,7 @@ bool millerRabinPrimeCheck(mpz_class n) {
         s++;
     }
 
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < 10; i++) {
         mpz_class a = rand_generator.get_z_range(n - 2) % (n - 1) + 1;
         mpz_class tmp = p;
         mpz_class mod;
@@ -101,10 +108,10 @@ bool millerRabinPrimeCheck(mpz_class n) {
 
 // generate a prime number with checks by Miller-Rabin algorithm
 mpz_class generatePrime(mpz_class start, mpz_class end) {
-    mpz_class prime = (rand_generator.get_z_range(end - start) + start + 1) | 1;
+    mpz_class prime = rand_generator.get_z_range(end - start) + start;
 
     while(!millerRabinPrimeCheck(prime))
-        prime += 2;
+        prime = rand_generator.get_z_range(end - start) + start;
 
     return prime;
 }
@@ -144,14 +151,28 @@ void generate(int b) {
 
     mpz_class s, end, n, start, phi, d;
 
-    mpz_pow_ui(s.get_mpz_t(), two.get_mpz_t(), b - 1);
-    mpz_pow_ui(end.get_mpz_t(), two.get_mpz_t(), b);
+    // generate P and Q in given range
+    // https://crypto.stackexchange.com/questions/19263/generation-of-n-bit-prime-numbers-what-is-the-actual-range/19264#19264
+    int start_power = (int)b / 2 - 1;
+    int end_power = (int)b / 2;
 
-    start = s * sqrt(2);
+    if (start_power >= end_power) {
+        end_power++;
+    }
+
+    mpz_pow_ui(s.get_mpz_t(), two.get_mpz_t(), start_power);
+    mpz_pow_ui(end.get_mpz_t(), two.get_mpz_t(), end_power);
+
+    start = s * sqrt(2) + 1;
 
     // generate P and Q
     mpz_class p = generatePrime(start, end);
     mpz_class q = generatePrime(start, end);
+
+    // in small ranges the numbers can generated the same, this shouldn't happen
+    while (q == p) {
+        q = generatePrime(start, end);
+    }
 
     // calculate PHI
     phi = (p-1) * (q-1);
@@ -159,7 +180,7 @@ void generate(int b) {
     // calculate E
     mpz_class e = rand_generator.get_z_range(phi);
 
-    while(binaryGCD(e, phi) != 1) {
+    while(binaryGCD(e, phi) > 1) {
         e = rand_generator.get_z_range(phi);
     }
 
@@ -190,6 +211,47 @@ void decrypt(mpz_class d, mpz_class n, mpz_class ciphertext) {
     cout << hex << showbase << plaintext << endl;
 }
 
+mpz_class rhoFactorization(mpz_class n) {
+    mpz_class factor = 1;
+    mpz_class cycle_size = 2;
+    mpz_class x = 2;
+    mpz_class x_fixed = 2;
+
+    while (factor == 1) {
+        for (mpz_class count = 1; count <= cycle_size && factor <= 1; count++) {
+            mpz_pow_ui(x.get_mpz_t(), x.get_mpz_t(), 2);
+             x = x - 1 % n;
+
+			factor = binaryGCD(x - x_fixed, n);
+		}
+
+		cycle_size *= 2;
+		x_fixed = x;
+	}
+
+    return factor;
+}
+
+void factorize(mpz_class n) {
+    mpz_class result = 0;
+
+    // naive factorization
+    for (int i = 2; i < 1000000; i++) {
+        if (n % i == 0) {
+            result = n/i;
+            break;
+        }
+    }
+
+    if (result == 0) {
+        cout << "no naive result" << endl;
+        result = rhoFactorization(n);
+    }
+
+    cout << hex << showbase << result << endl;
+
+}
+
 int main (int argc, char *argv[])
 {
     rand_generator.seed(time(NULL));
@@ -202,7 +264,7 @@ int main (int argc, char *argv[])
                     try {
                         generate(stoi(argv[2]));
                         break;
-                    } catch (const runtime_error &e) {}
+                    } catch (const invalid_argument &e) {}
                 }
                 break;
             case 'e': {
@@ -219,6 +281,12 @@ int main (int argc, char *argv[])
                 n = argv[3];
                 c = argv[4];
                 decrypt(d, n, c);
+                break;
+            }
+            case 'b': {
+                mpz_class n;
+                n = argv[2];
+                factorize(n);
                 break;
             }
 			case 'h':

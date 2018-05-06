@@ -99,7 +99,7 @@ fi
 rm -rf $LOGDIR
 mkdir -p $LOGDIR
 echo -n "" >$LOGFILE
-for i in $(seq 15 $LIMIT)
+for i in $(seq 6 $LIMIT)
 do
     { time test_size $i ; } 2>&1 |tee -a "$LOGFILE"
     echo "====================================" |tee -a "$LOGFILE"
