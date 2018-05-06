@@ -220,14 +220,13 @@ mpz_class rhoFactorization(mpz_class n) {
     while (factor == 1) {
         for (mpz_class count = 1; count <= cycle_size && factor <= 1; count++) {
             mpz_pow_ui(x.get_mpz_t(), x.get_mpz_t(), 2);
-             x = x - 1 % n;
+            x = (x + 1) % n;
+            factor = binaryGCD(abs(x - x_fixed), n);
+        }
 
-			factor = binaryGCD(x - x_fixed, n);
-		}
-
-		cycle_size *= 2;
-		x_fixed = x;
-	}
+        cycle_size *= 2;
+        x_fixed = x;
+    }
 
     return factor;
 }
@@ -236,7 +235,8 @@ void factorize(mpz_class n) {
     mpz_class result = 0;
 
     // naive factorization
-    for (int i = 2; i < 1000000; i++) {
+    // we can test only even numbers
+    for (int i = 3; i < 1000000; i+=2) {
         if (n % i == 0) {
             result = n/i;
             break;
@@ -244,7 +244,6 @@ void factorize(mpz_class n) {
     }
 
     if (result == 0) {
-        cout << "no naive result" << endl;
         result = rhoFactorization(n);
     }
 
