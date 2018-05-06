@@ -21,19 +21,16 @@ gmp_randclass rand_generator(gmp_randinit_mt);
 mpz_class two = 2;
 
 void printHelp() {
-    cout << "Print help" << endl;
-}
-
-mpz_class modInverse(mpz_class a, mpz_class m) {
-    a = a % m;
-    for (mpz_class x = 1; x < m; x++)
-       if ((a*x) % m == 1)
-          return x;
-
-    throw invalid_argument("can't find multiplicative inverse");
+    cout << "KRY project #2 | Petr Stehlik <xstehl14@stud.fit.vutbr.cz>" << endl;
+    cout << "usage ./kry [OPTIONS] [ARGS]" << endl;
+    cout << "-g BITS    generate P Q N E D, bit range <6,96>" << endl;
+    cout << "-e E N M   encypt M" << endl;
+    cout << "-d D N C   decrypt C" << endl;
+    cout << "-b N       factorize N" << endl;
 }
 
 // https://stackoverflow.com/questions/23745526/calculate-the-multiplicative-inverse-of-large-numbers-using-c
+// https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Modular_integers
 mpz_class mulInverse(mpz_class &a, mpz_class &n) {
 	mpz_class t = 0;
     mpz_class newt = 1;
@@ -128,9 +125,9 @@ mpz_class findGCD(mpz_class a, mpz_class b) {
     return gcd;
 }
 
-// fast GCD
+// fast euclid GCD
 // https://www.codeproject.com/tips/156748/fast-greatest-common-divisor-gcd-algorithm
-mpz_class binaryGCD(mpz_class a, mpz_class b) {
+mpz_class euclidGCD(mpz_class a, mpz_class b) {
     mpz_class gcd;
 	while (b != 0) {
 		gcd = b;
@@ -141,28 +138,26 @@ mpz_class binaryGCD(mpz_class a, mpz_class b) {
 }
 
 void generate(int b) {
-    if (b > 96) {
-        cerr << "Too many bits to generate" << endl;
-        exit(1);
-    } else if (b < 6) {
-        cerr << "Too little bits to generate" << endl;
+    if (b < 6) {
+        cerr << "Too few bits to generate" << endl;
         exit(1);
     }
 
     mpz_class s, end, n, start, phi, d;
 
-    // generate P and Q in given range
-    // https://crypto.stackexchange.com/questions/19263/generation-of-n-bit-prime-numbers-what-is-the-actual-range/19264#19264
+    // get bit length for P and Q
     int start_power = (int)b / 2 - 1;
     int end_power = (int)b / 2;
 
+    // For odd number of bits
     if (start_power >= end_power) {
         end_power++;
     }
 
+    // get the range in which we can generate P and Q
+    // https://crypto.stackexchange.com/questions/19263/generation-of-n-bit-prime-numbers-what-is-the-actual-range/19264#19264
     mpz_pow_ui(s.get_mpz_t(), two.get_mpz_t(), start_power);
     mpz_pow_ui(end.get_mpz_t(), two.get_mpz_t(), end_power);
-
     start = s * sqrt(2) + 1;
 
     // generate P and Q
@@ -179,8 +174,7 @@ void generate(int b) {
 
     // calculate E
     mpz_class e = rand_generator.get_z_range(phi);
-
-    while(binaryGCD(e, phi) > 1) {
+    while(euclidGCD(e, phi) > 1) {
         e = rand_generator.get_z_range(phi);
     }
 
@@ -197,20 +191,17 @@ void generate(int b) {
 
 void encrypt(mpz_class e, mpz_class n, mpz_class m) {
     mpz_class ciphertext;
-
     mpz_powm_sec(ciphertext.get_mpz_t(), m.get_mpz_t(), e.get_mpz_t(), n.get_mpz_t());
-
     cout << hex << showbase << ciphertext << endl;
 }
 
 void decrypt(mpz_class d, mpz_class n, mpz_class ciphertext) {
     mpz_class plaintext;
-
     mpz_powm_sec(plaintext.get_mpz_t(), ciphertext.get_mpz_t(), d.get_mpz_t(), n.get_mpz_t());
-
     cout << hex << showbase << plaintext << endl;
 }
 
+// https://en.wikipedia.org/wiki/Pollard's_rho_algorithm
 mpz_class rhoFactorization(mpz_class n) {
     mpz_class factor = 1;
     mpz_class cycle_size = 2;
@@ -221,7 +212,7 @@ mpz_class rhoFactorization(mpz_class n) {
         for (mpz_class count = 1; count <= cycle_size && factor <= 1; count++) {
             mpz_pow_ui(x.get_mpz_t(), x.get_mpz_t(), 2);
             x = (x + 1) % n;
-            factor = binaryGCD(abs(x - x_fixed), n);
+            factor = euclidGCD(abs(x - x_fixed), n);
         }
 
         cycle_size *= 2;
@@ -238,7 +229,7 @@ void factorize(mpz_class n) {
     // we can test only even numbers
     for (int i = 3; i < 1000000; i+=2) {
         if (n % i == 0) {
-            result = n/i;
+            result = i;
             break;
         }
     }
@@ -288,14 +279,16 @@ int main (int argc, char *argv[])
                 factorize(n);
                 break;
             }
-			case 'h':
-				printHelp();
-				return EXIT_SUCCESS;
-			default:
-				cerr << "Unsupported argument"<< endl;
-				printHelp();
-				return EXIT_FAILURE;
-		}
-	}
+            case 'h':
+                printHelp();
+                return EXIT_SUCCESS;
+            default:
+                cerr << "Unsupported argument"<< endl;
+                printHelp();
+                return EXIT_FAILURE;
+        }
+    }
+
+    return 0;
 }
 
