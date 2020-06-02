@@ -1,0 +1,26 @@
+\begin{thebibliography}{1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{Dostupné z: \textless}
+\providecommand{\urlsuffix}{\textgreater}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi:\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{doi:\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+\providecommand{\selectlanguage}[1]{\relax}
+\providecommand{\tg}[1]{\textgreater .}
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem{bib:schema}
+\emph{Materiály k předmětu paralelní a distribuované algoritmy}  [online].
+  2017
+  \urlprefix\url{https://www.fit.vutbr.cz/study/courses/PDA/private/pda.htm}\urlsuffix.
+
+\bibitem{bib:openmpi}
+\emph{Open MPI: Open Source High Performance Computing}  [online]. 2017
+  \urlprefix\url{https://www.open-mpi.org}\urlsuffix.
+
+\bibitem{bib:sushi}
+Yasuura, H.; Takagi, N.; Yajima, S. : The Parallel Enumeration Sorting Scheme
+  for VLSI. \emph{IEEE Transactions on Computers}, roč.~31, č.~12, 1982.
+
+\end{thebibliography}

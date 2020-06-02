@@ -1,0 +1,56 @@
+This is BibTeX, Version 0.99d (TeX Live 2017)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: xstehl14.aux
+The style file: czechiso.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: literature.bib
+Warning--to sort, need author or key in bib:openmpi
+Warning--to sort, need author or key in bib:schema
+Warning--missing publisher in bib:schema
+Warning--missing publisher in bib:openmpi
+You've used 3 entries,
+            3572 wiz_defined-function locations,
+            716 strings with 6388 characters,
+and the built_in function-call counts, 1528 in all, are:
+= -- 104
+> -- 23
+< -- 2
++ -- 14
+- -- 6
+* -- 63
+:= -- 121
+add.period$ -- 6
+call.type$ -- 3
+change.case$ -- 9
+chr.to.int$ -- 0
+cite$ -- 7
+duplicate$ -- 194
+empty$ -- 164
+format.name$ -- 7
+if$ -- 339
+int.to.chr$ -- 0
+int.to.str$ -- 3
+missing$ -- 54
+newline$ -- 21
+num.names$ -- 2
+pop$ -- 141
+preamble$ -- 1
+purify$ -- 9
+quote$ -- 0
+skip$ -- 76
+stack$ -- 0
+substring$ -- 16
+swap$ -- 83
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 12
+warning$ -- 4
+while$ -- 2
+width$ -- 4
+write$ -- 36
+(There were 4 warnings)
